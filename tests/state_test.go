@@ -8,8 +8,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/hashicorp/go-hclog"
-
 	state "github.com/0xPolygon/eth-state-transition"
 	"github.com/0xPolygon/eth-state-transition/runtime/evm"
 	"github.com/0xPolygon/eth-state-transition/runtime/precompiled"
@@ -49,7 +47,7 @@ func RunSpecificTest(file string, t *testing.T, c stateCase, name, fork string, 
 	s, _, pastRoot := buildState(t, c.Pre)
 	forks := config.At(uint64(env.Number))
 
-	xxx := state.NewExecutor(&chain.Params{Forks: config, ChainID: 1}, s, hclog.NewNullLogger())
+	xxx := state.NewExecutor(&chain.Params{Forks: config, ChainID: 1}, s)
 	xxx.SetRuntime(precompiled.NewPrecompiled())
 	xxx.SetRuntime(evm.NewEVM())
 

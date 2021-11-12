@@ -5,7 +5,6 @@ import (
 
 	"github.com/0xPolygon/polygon-sdk/helper/hex"
 	"github.com/0xPolygon/polygon-sdk/types"
-	"github.com/hashicorp/go-hclog"
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/umbracle/fastrlp"
 )
@@ -84,7 +83,7 @@ func (kv *KVStorage) Close() error {
 	return kv.db.Close()
 }
 
-func NewLevelDBStorage(path string, logger hclog.Logger) (Storage, error) {
+func NewLevelDBStorage(path string) (Storage, error) {
 	db, err := leveldb.OpenFile(path, nil)
 	if err != nil {
 		return nil, err

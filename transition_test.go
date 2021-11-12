@@ -6,7 +6,6 @@ import (
 
 	"github.com/0xPolygon/eth-state-transition/runtime"
 	"github.com/0xPolygon/polygon-sdk/types"
-	"github.com/hashicorp/go-hclog"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -15,8 +14,7 @@ func newTestTransition(preState map[types.Address]*PreState) *Transition {
 		preState = defaultPreState
 	}
 	return &Transition{
-		logger: hclog.NewNullLogger(),
-		state:  newTestTxn(preState),
+		state: newTestTxn(preState),
 	}
 }
 
