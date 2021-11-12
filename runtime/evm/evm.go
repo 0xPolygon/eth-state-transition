@@ -2,7 +2,6 @@ package evm
 
 import (
 	"github.com/0xPolygon/eth-state-transition/runtime"
-	"github.com/0xPolygon/polygon-sdk/chain"
 )
 
 var _ runtime.Runtime = &EVM{}
@@ -17,7 +16,7 @@ func NewEVM() *EVM {
 }
 
 // CanRun implements the runtime interface
-func (e *EVM) CanRun(*runtime.Contract, runtime.Host, *chain.ForksInTime) bool {
+func (e *EVM) CanRun(*runtime.Contract, runtime.Host, *runtime.ForksInTime) bool {
 	return true
 }
 
@@ -27,7 +26,7 @@ func (e *EVM) Name() string {
 }
 
 // Run implements the runtime interface
-func (e *EVM) Run(c *runtime.Contract, host runtime.Host, config *chain.ForksInTime) *runtime.ExecutionResult {
+func (e *EVM) Run(c *runtime.Contract, host runtime.Host, config *runtime.ForksInTime) *runtime.ExecutionResult {
 
 	contract := acquireState()
 	contract.resetReturnData()

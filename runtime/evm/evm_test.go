@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/0xPolygon/eth-state-transition/runtime"
-	"github.com/0xPolygon/polygon-sdk/chain"
 	"github.com/0xPolygon/polygon-sdk/types"
 	"github.com/stretchr/testify/assert"
 )
@@ -34,7 +33,7 @@ func (m *mockHost) GetStorage(addr types.Address, key types.Hash) types.Hash {
 	panic("Not implemented in tests")
 }
 
-func (m *mockHost) SetStorage(addr types.Address, key types.Hash, value types.Hash, config *chain.ForksInTime) runtime.StorageStatus {
+func (m *mockHost) SetStorage(addr types.Address, key types.Hash, value types.Hash, config *runtime.ForksInTime) runtime.StorageStatus {
 	panic("Not implemented in tests")
 }
 
@@ -88,7 +87,7 @@ func TestRun(t *testing.T) {
 		value    *big.Int
 		gas      uint64
 		code     []byte
-		config   *chain.ForksInTime
+		config   *runtime.ForksInTime
 		expected *runtime.ExecutionResult
 	}{
 		{
@@ -133,7 +132,7 @@ func TestRun(t *testing.T) {
 			gas:   5000,
 			// Stack size and offset for return value first
 			code: []byte{PUSH1, 0x00, PUSH1, 0x00, REVERT},
-			config: &chain.ForksInTime{
+			config: &runtime.ForksInTime{
 				Byzantium: true,
 			},
 			expected: &runtime.ExecutionResult{
@@ -152,7 +151,7 @@ func TestRun(t *testing.T) {
 			host := &mockHost{}
 			config := tt.config
 			if config == nil {
-				config = &chain.ForksInTime{}
+				config = &runtime.ForksInTime{}
 			}
 			res := evm.Run(contract, host, config)
 			assert.Equal(t, tt.expected, res)

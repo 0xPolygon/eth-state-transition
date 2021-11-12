@@ -27,7 +27,7 @@ type GetHashByNumberHelper = func(*types.Header) GetHashByNumber
 
 // Executor is the main entity
 type Executor struct {
-	config   *chain.Params
+	config   *runtime.Params
 	runtimes []runtime.Runtime
 	state    State
 	GetHash  GetHashByNumberHelper
@@ -36,7 +36,7 @@ type Executor struct {
 }
 
 // NewExecutor creates a new executor
-func NewExecutor(config *chain.Params, s State) *Executor {
+func NewExecutor(config *runtime.Params, s State) *Executor {
 	return &Executor{
 		config:   config,
 		runtimes: []runtime.Runtime{},
@@ -112,7 +112,7 @@ func (e *Executor) StateAt(root types.Hash) (Snapshot, error) {
 }
 
 // GetForksInTime returns the active forks at the given block height
-func (e *Executor) GetForksInTime(blockNumber uint64) chain.ForksInTime {
+func (e *Executor) GetForksInTime(blockNumber uint64) runtime.ForksInTime {
 	return e.config.Forks.At(blockNumber)
 }
 
@@ -158,7 +158,7 @@ type Transition struct {
 	block *types.Block
 
 	r       *Executor
-	config  chain.ForksInTime
+	config  runtime.ForksInTime
 	state   *Txn
 	getHash GetHashByNumber
 	ctx     runtime.TxContext
@@ -571,7 +571,7 @@ func (t *Transition) applyCreate(c *runtime.Contract, host runtime.Host) *runtim
 	return result
 }
 
-func (t *Transition) SetStorage(addr types.Address, key types.Hash, value types.Hash, config *chain.ForksInTime) runtime.StorageStatus {
+func (t *Transition) SetStorage(addr types.Address, key types.Hash, value types.Hash, config *runtime.ForksInTime) runtime.StorageStatus {
 	return t.state.SetStorage(addr, key, value, config)
 }
 

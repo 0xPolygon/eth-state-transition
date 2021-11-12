@@ -6,7 +6,6 @@ import (
 
 	"github.com/0xPolygon/eth-state-transition/helper"
 	"github.com/0xPolygon/eth-state-transition/runtime"
-	"github.com/0xPolygon/polygon-sdk/chain"
 	"github.com/0xPolygon/polygon-sdk/types"
 	"github.com/stretchr/testify/assert"
 )
@@ -131,7 +130,7 @@ func TestCreate(t *testing.T) {
 		name        string
 		op          OpCode
 		contract    *runtime.Contract
-		config      *chain.ForksInTime
+		config      *runtime.ForksInTime
 		initState   *state
 		resultState *state
 		mockHost    *mockHostForCreate
@@ -143,7 +142,7 @@ func TestCreate(t *testing.T) {
 				Static:  false,
 				Address: addr1,
 			},
-			config: &chain.ForksInTime{},
+			config: &runtime.ForksInTime{},
 			initState: &state{
 				gas: 1000,
 				sp:  3,
@@ -182,7 +181,7 @@ func TestCreate(t *testing.T) {
 			contract: &runtime.Contract{
 				Static: true,
 			},
-			config: &chain.ForksInTime{},
+			config: &runtime.ForksInTime{},
 			initState: &state{
 				gas: 1000,
 				sp:  3,
@@ -218,7 +217,7 @@ func TestCreate(t *testing.T) {
 			name:     "should throw errOpCodeNotFound when op is CREATE2 and config.Constantinople is disabled",
 			op:       CREATE2,
 			contract: &runtime.Contract{},
-			config: &chain.ForksInTime{
+			config: &runtime.ForksInTime{
 				Constantinople: false,
 			},
 			initState: &state{
@@ -259,7 +258,7 @@ func TestCreate(t *testing.T) {
 				Static:  false,
 				Address: addr1,
 			},
-			config: &chain.ForksInTime{
+			config: &runtime.ForksInTime{
 				Homestead: true,
 			},
 			initState: &state{
@@ -307,7 +306,7 @@ func TestCreate(t *testing.T) {
 				Static:  false,
 				Address: addr1,
 			},
-			config: &chain.ForksInTime{
+			config: &runtime.ForksInTime{
 				Homestead: true,
 			},
 			initState: &state{

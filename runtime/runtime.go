@@ -4,7 +4,6 @@ import (
 	"errors"
 	"math/big"
 
-	"github.com/0xPolygon/polygon-sdk/chain"
 	"github.com/0xPolygon/polygon-sdk/types"
 )
 
@@ -57,7 +56,7 @@ func (s StorageStatus) String() string {
 type Host interface {
 	AccountExists(addr types.Address) bool
 	GetStorage(addr types.Address, key types.Hash) types.Hash
-	SetStorage(addr types.Address, key types.Hash, value types.Hash, config *chain.ForksInTime) StorageStatus
+	SetStorage(addr types.Address, key types.Hash, value types.Hash, config *ForksInTime) StorageStatus
 	GetBalance(addr types.Address) *big.Int
 	GetCodeSize(addr types.Address) int
 	GetCodeHash(addr types.Address) types.Hash
@@ -123,8 +122,8 @@ const (
 
 // Runtime can process contracts
 type Runtime interface {
-	Run(c *Contract, host Host, config *chain.ForksInTime) *ExecutionResult
-	CanRun(c *Contract, host Host, config *chain.ForksInTime) bool
+	Run(c *Contract, host Host, config *ForksInTime) *ExecutionResult
+	CanRun(c *Contract, host Host, config *ForksInTime) bool
 	Name() string
 }
 

@@ -5,14 +5,14 @@ import (
 	"fmt"
 	"math/bits"
 
-	"github.com/0xPolygon/polygon-sdk/chain"
+	"github.com/0xPolygon/eth-state-transition/runtime"
 )
 
 type blake2f struct {
 	p *Precompiled
 }
 
-func (e *blake2f) gas(input []byte, config *chain.ForksInTime) uint64 {
+func (e *blake2f) gas(input []byte, config *runtime.ForksInTime) uint64 {
 	if len(input) != 213 {
 		return 0
 	}

@@ -9,7 +9,6 @@ import (
 
 	"github.com/0xPolygon/eth-state-transition/helper"
 	"github.com/0xPolygon/eth-state-transition/runtime"
-	"github.com/0xPolygon/polygon-sdk/chain"
 	"github.com/0xPolygon/polygon-sdk/types"
 )
 
@@ -51,7 +50,7 @@ type state struct {
 
 	host   runtime.Host
 	msg    *runtime.Contract // change with msg
-	config *chain.ForksInTime
+	config *runtime.ForksInTime
 
 	// memory
 	memory      []byte

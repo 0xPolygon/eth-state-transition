@@ -17,12 +17,12 @@ import (
 	"github.com/0xPolygon/polygon-sdk/types"
 )
 
-var mainnetChainConfig = chain.Params{
-	Forks: &chain.Forks{
-		Homestead: chain.NewFork(1150000),
-		EIP150:    chain.NewFork(2463000),
-		EIP158:    chain.NewFork(2675000),
-		Byzantium: chain.NewFork(4370000),
+var mainnetChainConfig = runtime.Params{
+	Forks: &runtime.Forks{
+		Homestead: runtime.NewFork(1150000),
+		EIP150:    runtime.NewFork(2463000),
+		EIP158:    runtime.NewFork(2675000),
+		Byzantium: runtime.NewFork(4370000),
 	},
 }
 
