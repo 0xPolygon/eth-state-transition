@@ -5,16 +5,10 @@ import (
 
 	"github.com/0xPolygon/eth-state-transition/helper"
 	"github.com/0xPolygon/polygon-sdk/types"
-	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/umbracle/fastrlp"
 )
 
 var parserPool fastrlp.ParserPool
-
-var (
-	// codePrefix is the code prefix for leveldb
-	codePrefix = []byte("code")
-)
 
 type Batch interface {
 	Put(k, v []byte)
@@ -30,119 +24,6 @@ type Storage interface {
 	GetCode(hash types.Hash) ([]byte, bool)
 
 	Close() error
-}
-
-// KVStorage is a k/v storage on memory using leveldb
-type KVStorage struct {
-	db *leveldb.DB
-}
-
-// KVBatch is a batch write for leveldb
-type KVBatch struct {
-	db    *leveldb.DB
-	batch *leveldb.Batch
-}
-
-func (b *KVBatch) Put(k, v []byte) {
-	b.batch.Put(k, v)
-}
-
-func (b *KVBatch) Write() {
-	b.db.Write(b.batch, nil)
-}
-
-func (kv *KVStorage) SetCode(hash types.Hash, code []byte) {
-	kv.Put(append(codePrefix, hash.Bytes()...), code)
-}
-
-func (kv *KVStorage) GetCode(hash types.Hash) ([]byte, bool) {
-	return kv.Get(append(codePrefix, hash.Bytes()...))
-}
-
-func (kv *KVStorage) Batch() Batch {
-	return &KVBatch{db: kv.db, batch: &leveldb.Batch{}}
-}
-
-func (kv *KVStorage) Put(k, v []byte) {
-	kv.db.Put(k, v, nil)
-}
-
-func (kv *KVStorage) Get(k []byte) ([]byte, bool) {
-	data, err := kv.db.Get(k, nil)
-	if err != nil {
-		if err.Error() == "leveldb: not found" {
-			return nil, false
-		} else {
-			panic(err)
-		}
-	}
-	return data, true
-}
-
-func (kv *KVStorage) Close() error {
-	return kv.db.Close()
-}
-
-func NewLevelDBStorage(path string) (Storage, error) {
-	db, err := leveldb.OpenFile(path, nil)
-	if err != nil {
-		return nil, err
-	}
-	return &KVStorage{db}, nil
-}
-
-type memStorage struct {
-	db   map[string][]byte
-	code map[string][]byte
-}
-
-type memBatch struct {
-	db *map[string][]byte
-}
-
-// NewMemoryStorage creates an inmemory trie storage
-func NewMemoryStorage() Storage {
-	return &memStorage{db: map[string][]byte{}, code: map[string][]byte{}}
-}
-
-func (m *memStorage) Put(p []byte, v []byte) {
-	buf := make([]byte, len(v))
-	copy(buf[:], v[:])
-	m.db[helper.EncodeToHex(p)] = buf
-}
-
-func (m *memStorage) Get(p []byte) ([]byte, bool) {
-	v, ok := m.db[helper.EncodeToHex(p)]
-	if !ok {
-		return []byte{}, false
-	}
-	return v, true
-}
-
-func (m *memStorage) SetCode(hash types.Hash, code []byte) {
-	m.code[hash.String()] = code
-}
-
-func (m *memStorage) GetCode(hash types.Hash) ([]byte, bool) {
-	code, ok := m.code[hash.String()]
-	return code, ok
-}
-
-func (m *memStorage) Batch() Batch {
-	return &memBatch{db: &m.db}
-}
-
-func (m *memStorage) Close() error {
-	return nil
-}
-
-func (m *memBatch) Put(p, v []byte) {
-	buf := make([]byte, len(v))
-	copy(buf[:], v[:])
-	(*m.db)[helper.EncodeToHex(p)] = buf
-}
-
-func (m *memBatch) Write() {
 }
 
 // GetNode retrieves a node from storage
@@ -232,4 +113,58 @@ func decodeNode(v *fastrlp.Value, s Storage) (Node, error) {
 		return nc, nil
 	}
 	return nil, fmt.Errorf("node has incorrect number of leafs")
+}
+
+type memStorage struct {
+	db   map[string][]byte
+	code map[string][]byte
+}
+
+type memBatch struct {
+	db *map[string][]byte
+}
+
+// NewMemoryStorage creates an inmemory trie storage
+func NewMemoryStorage() Storage {
+	return &memStorage{db: map[string][]byte{}, code: map[string][]byte{}}
+}
+
+func (m *memStorage) Put(p []byte, v []byte) {
+	buf := make([]byte, len(v))
+	copy(buf[:], v[:])
+	m.db[helper.EncodeToHex(p)] = buf
+}
+
+func (m *memStorage) Get(p []byte) ([]byte, bool) {
+	v, ok := m.db[helper.EncodeToHex(p)]
+	if !ok {
+		return []byte{}, false
+	}
+	return v, true
+}
+
+func (m *memStorage) SetCode(hash types.Hash, code []byte) {
+	m.code[hash.String()] = code
+}
+
+func (m *memStorage) GetCode(hash types.Hash) ([]byte, bool) {
+	code, ok := m.code[hash.String()]
+	return code, ok
+}
+
+func (m *memStorage) Batch() Batch {
+	return &memBatch{db: &m.db}
+}
+
+func (m *memStorage) Close() error {
+	return nil
+}
+
+func (m *memBatch) Put(p, v []byte) {
+	buf := make([]byte, len(v))
+	copy(buf[:], v[:])
+	(*m.db)[helper.EncodeToHex(p)] = buf
+}
+
+func (m *memBatch) Write() {
 }
