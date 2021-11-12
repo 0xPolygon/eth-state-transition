@@ -22,7 +22,7 @@ var emptyCodeHashTwo = types.BytesToHash(helper.Keccak256(nil))
 // GetHashByNumber returns the hash function of a block number
 type GetHashByNumber = func(i uint64) types.Hash
 
-type GetHashByNumberHelper = func(*types.Header) GetHashByNumber
+type GetHashByNumberHelper = func(num uint64, hash types.Hash) GetHashByNumber
 
 // Executor is the main entity
 type Executor struct {
@@ -61,7 +61,7 @@ func (e *Executor) ProcessBlock(parentRoot types.Hash, block *types.Block, block
 		return nil, err
 	}
 
-	txn.block = block
+	// txn.block = block
 	for _, t := range block.Transactions {
 		if err := txn.Write(t); err != nil {
 			return nil, err
@@ -115,7 +115,7 @@ func (e *Executor) BeginTxn(parentRoot types.Hash, header *types.Header, coinbas
 		r:        e,
 		ctx:      env2,
 		state:    newTxn,
-		getHash:  e.GetHash(header),
+		getHash:  e.GetHash(header.Number, header.Hash),
 		auxState: e.state,
 		config:   config,
 		gasPool:  uint64(env2.GasLimit),
@@ -131,7 +131,7 @@ type Transition struct {
 	auxState State
 
 	// the current block being processed
-	block *types.Block
+	// block *types.Block
 
 	r       *Executor
 	config  runtime.ForksInTime
@@ -156,8 +156,6 @@ func (t *Transition) TotalGas() uint64 {
 func (t *Transition) Receipts() []*types.Receipt {
 	return t.receipts
 }
-
-var emptyFrom = types.Address{}
 
 // Write writes another transaction to the executor
 func (t *Transition) Write(txn *types.Transaction) error {
@@ -238,10 +236,6 @@ func (t *Transition) SetTxn(txn *Txn) {
 
 func (t *Transition) Txn() *Txn {
 	return t.state
-}
-
-func (t *Transition) GetTxnHash() types.Hash {
-	return t.block.Hash()
 }
 
 // Apply applies a new transaction

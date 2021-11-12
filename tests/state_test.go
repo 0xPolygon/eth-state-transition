@@ -60,7 +60,7 @@ func RunSpecificTest(file string, t *testing.T, c stateCase, name, fork string, 
 			t.Txn().Suicide(ripemd)
 		}
 	}
-	xxx.GetHash = func(*types.Header) func(i uint64) types.Hash {
+	xxx.GetHash = func(num uint64, hash types.Hash) func(i uint64) types.Hash {
 		return vmTestBlockHash
 	}
 
