@@ -6,10 +6,9 @@ import (
 	iradix "github.com/hashicorp/go-immutable-radix"
 	lru "github.com/hashicorp/golang-lru"
 
+	"github.com/0xPolygon/eth-state-transition/helper"
 	"github.com/0xPolygon/eth-state-transition/runtime"
 	"github.com/0xPolygon/polygon-sdk/chain"
-	"github.com/0xPolygon/polygon-sdk/crypto"
-	"github.com/0xPolygon/polygon-sdk/helper/keccak"
 	"github.com/0xPolygon/polygon-sdk/types"
 )
 
@@ -30,7 +29,7 @@ type Txn struct {
 	snapshots []*iradix.Tree
 	txn       *iradix.Txn
 	codeCache *lru.Cache
-	hash      *keccak.Keccak
+	hash      *helper.Keccak
 }
 
 func NewTxn(state State, snapshot Snapshot) *Txn {
@@ -48,7 +47,7 @@ func newTxn(state State, snapshot Snapshot) *Txn {
 		snapshots: []*iradix.Tree{},
 		txn:       i.Txn(),
 		codeCache: codeCache,
-		hash:      keccak.NewKeccak256(),
+		hash:      helper.NewKeccak256(),
 	}
 }
 
@@ -373,7 +372,7 @@ func (txn *Txn) GetNonce(addr types.Address) uint64 {
 // SetCode sets the code for an address
 func (txn *Txn) SetCode(addr types.Address, code []byte) {
 	txn.upsertAccount(addr, true, func(object *StateObject) {
-		object.Account.CodeHash = crypto.Keccak256(code)
+		object.Account.CodeHash = helper.Keccak256(code)
 		object.DirtyCode = true
 		object.Code = code
 	})

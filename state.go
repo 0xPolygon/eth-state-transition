@@ -8,7 +8,7 @@ import (
 	iradix "github.com/hashicorp/go-immutable-radix"
 	"github.com/umbracle/fastrlp"
 
-	"github.com/0xPolygon/polygon-sdk/crypto"
+	"github.com/0xPolygon/eth-state-transition/helper"
 	"github.com/0xPolygon/polygon-sdk/types"
 )
 
@@ -102,7 +102,7 @@ func (a *Account) Copy() *Account {
 	return aa
 }
 
-var emptyCodeHash = crypto.Keccak256(nil)
+var emptyCodeHash = helper.Keccak256(nil)
 
 // StateObject is the internal representation of the account
 type StateObject struct {

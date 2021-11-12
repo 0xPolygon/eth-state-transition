@@ -34,6 +34,5 @@ func MustDecodeHex(str string) []byte {
 	if err != nil {
 		panic(fmt.Errorf("could not decode hex: %v", err))
 	}
-
 	return buf
 }

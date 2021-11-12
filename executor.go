@@ -5,9 +5,9 @@ import (
 	"math"
 	"math/big"
 
+	"github.com/0xPolygon/eth-state-transition/helper"
 	"github.com/0xPolygon/eth-state-transition/runtime"
 	"github.com/0xPolygon/polygon-sdk/chain"
-	"github.com/0xPolygon/polygon-sdk/crypto"
 	"github.com/0xPolygon/polygon-sdk/types"
 )
 
@@ -18,7 +18,7 @@ const (
 	TxGasContractCreation uint64 = 53000 // Per transaction that creates a contract
 )
 
-var emptyCodeHashTwo = types.BytesToHash(crypto.Keccak256(nil))
+var emptyCodeHashTwo = types.BytesToHash(helper.Keccak256(nil))
 
 // GetHashByNumber returns the hash function of a block number
 type GetHashByNumber = func(i uint64) types.Hash
@@ -181,17 +181,6 @@ var emptyFrom = types.Address{}
 
 // Write writes another transaction to the executor
 func (t *Transition) Write(txn *types.Transaction) error {
-	signer := crypto.NewSigner(t.config, uint64(t.r.config.ChainID))
-
-	var err error
-	if txn.From == emptyFrom {
-		// Decrypt the from address
-		txn.From, err = signer.Sender(txn)
-		if err != nil {
-			return NewTransitionApplicationError(err, false)
-		}
-	}
-
 	// Make a local copy and apply the transaction
 	msg := txn.Copy()
 
@@ -230,7 +219,7 @@ func (t *Transition) Write(txn *types.Transaction) error {
 
 	// if the transaction created a contract, store the creation address in the receipt.
 	if msg.To == nil {
-		receipt.ContractAddress = crypto.CreateAddress(msg.From, txn.Nonce)
+		receipt.ContractAddress = helper.CreateAddress(msg.From, txn.Nonce)
 	}
 
 	// Set the receipt logs and create a bloom for filtering
@@ -426,7 +415,7 @@ func (t *Transition) apply(msg *types.Transaction) (*runtime.ExecutionResult, er
 }
 
 func (t *Transition) Create2(caller types.Address, code []byte, value *big.Int, gas uint64) *runtime.ExecutionResult {
-	address := crypto.CreateAddress(caller, t.state.GetNonce(caller))
+	address := helper.CreateAddress(caller, t.state.GetNonce(caller))
 	contract := runtime.NewContractCreation(1, caller, caller, address, value, gas, code)
 	return t.applyCreate(contract, t)
 }

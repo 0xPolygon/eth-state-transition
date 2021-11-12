@@ -5,9 +5,8 @@ import (
 
 	"golang.org/x/crypto/ripemd160" //nolint:staticcheck
 
+	"github.com/0xPolygon/eth-state-transition/helper"
 	"github.com/0xPolygon/polygon-sdk/chain"
-	"github.com/0xPolygon/polygon-sdk/crypto"
-	"github.com/0xPolygon/polygon-sdk/helper/keccak"
 )
 
 type ecrecover struct {
@@ -28,16 +27,16 @@ func (e *ecrecover) run(input []byte) ([]byte, error) {
 		}
 	}
 	v := input[63] - 27
-	if !crypto.ValidateSignatureValues(v, input[64:96], input[96:128]) {
+	if !helper.ValidateSignatureValues(v, input[64:96], input[96:128]) {
 		return nil, nil
 	}
 
-	pubKey, err := crypto.Ecrecover(input[:32], append(input[64:128], v))
+	pubKey, err := helper.Ecrecover(input[:32], append(input[64:128], v))
 	if err != nil {
 		return nil, nil
 	}
 
-	dst := keccak.Keccak256(nil, pubKey[1:])
+	dst := helper.Keccak256To(nil, pubKey[1:])
 	dst = e.p.leftPad(dst[12:], 32)
 
 	return dst, nil

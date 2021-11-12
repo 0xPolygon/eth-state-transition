@@ -6,9 +6,8 @@ import (
 	"math/bits"
 	"sync"
 
+	"github.com/0xPolygon/eth-state-transition/helper"
 	"github.com/0xPolygon/eth-state-transition/runtime"
-	"github.com/0xPolygon/polygon-sdk/crypto"
-	"github.com/0xPolygon/polygon-sdk/helper/keccak"
 	"github.com/0xPolygon/polygon-sdk/types"
 )
 
@@ -534,7 +533,7 @@ func opSha3(c *state) {
 		return
 	}
 
-	c.tmp = keccak.Keccak256(c.tmp[:0], c.tmp)
+	c.tmp = helper.Keccak256To(c.tmp[:0], c.tmp)
 
 	v := c.push1()
 	v.SetBytes(c.tmp)
@@ -1290,9 +1289,9 @@ func (c *state) buildCreateContract(op OpCode) (*runtime.Contract, error) {
 	// Calculate address
 	var address types.Address
 	if op == CREATE {
-		address = crypto.CreateAddress(c.msg.Address, c.host.GetNonce(c.msg.Address))
+		address = helper.CreateAddress(c.msg.Address, c.host.GetNonce(c.msg.Address))
 	} else {
-		address = crypto.CreateAddress2(c.msg.Address, bigToHash(salt), input)
+		address = helper.CreateAddress2(c.msg.Address, bigToHash(salt), input)
 	}
 	contract := runtime.NewContractCreation(c.msg.Depth+1, c.msg.Origin, c.msg.Address, address, value, gas, input)
 	return contract, nil

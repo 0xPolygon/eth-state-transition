@@ -14,10 +14,7 @@ import (
 	"github.com/0xPolygon/eth-state-transition/runtime"
 	"github.com/0xPolygon/eth-state-transition/runtime/evm"
 	"github.com/0xPolygon/polygon-sdk/chain"
-	"github.com/0xPolygon/polygon-sdk/helper/keccak"
 	"github.com/0xPolygon/polygon-sdk/types"
-
-	"github.com/0xPolygon/polygon-sdk/crypto"
 )
 
 var mainnetChainConfig = chain.Params{
@@ -118,8 +115,8 @@ func rlpHashLogs(logs []*types.Log) (res types.Hash) {
 	ar := &fastrlp.Arena{}
 	v := r.MarshalLogsWith(ar)
 
-	keccak.Keccak256Rlp(res[:0], v)
-	return
+	dst := helper.Keccak256(v.MarshalTo(nil))
+	return types.BytesToHash(dst)
 }
 
 func TestEVM(t *testing.T) {
@@ -169,5 +166,5 @@ func TestEVM(t *testing.T) {
 }
 
 func vmTestBlockHash(n uint64) types.Hash {
-	return types.BytesToHash(crypto.Keccak256([]byte(big.NewInt(int64(n)).String())))
+	return types.BytesToHash(helper.Keccak256([]byte(big.NewInt(int64(n)).String())))
 }

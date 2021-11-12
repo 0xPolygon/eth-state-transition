@@ -15,7 +15,6 @@ import (
 	itrie "github.com/0xPolygon/eth-state-transition/immutable-trie"
 	"github.com/0xPolygon/eth-state-transition/runtime"
 	"github.com/0xPolygon/polygon-sdk/chain"
-	"github.com/0xPolygon/polygon-sdk/crypto"
 	"github.com/0xPolygon/polygon-sdk/types"
 )
 
@@ -343,11 +342,11 @@ func (t *stTransaction) UnmarshalJSON(input []byte) error {
 		if err != nil {
 			return err
 		}
-		key, err := crypto.ParsePrivateKey(secretKey)
+		key, err := helper.ParsePrivateKey(secretKey)
 		if err != nil {
 			return fmt.Errorf("invalid private key: %v", err)
 		}
-		t.From = crypto.PubKeyToAddress(&key.PublicKey)
+		t.From = helper.PubKeyToAddress(&key.PublicKey)
 	}
 
 	if dec.To != "" {

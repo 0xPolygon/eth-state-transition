@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/0xPolygon/eth-state-transition/helper"
 )
 
 type TestCase struct {
@@ -37,8 +37,8 @@ func ReadTestCase(t *testing.T, path string, f func(t *testing.T, c *TestCase)) 
 		c := &TestCase{
 			Name:     i.Name,
 			Gas:      i.Gas,
-			Input:    hexutil.MustDecode("0x" + i.Input),
-			Expected: hexutil.MustDecode("0x" + i.Expected),
+			Input:    helper.MustDecodeHex("0x" + i.Input),
+			Expected: helper.MustDecodeHex("0x" + i.Expected),
 		}
 		t.Run(i.Name, func(t *testing.T) {
 			f(t, c)

@@ -4,9 +4,9 @@ import (
 	"math/big"
 	"testing"
 
+	"github.com/0xPolygon/eth-state-transition/helper"
 	"github.com/0xPolygon/eth-state-transition/runtime"
 	"github.com/0xPolygon/polygon-sdk/chain"
-	"github.com/0xPolygon/polygon-sdk/crypto"
 	"github.com/0xPolygon/polygon-sdk/types"
 	"github.com/stretchr/testify/assert"
 )
@@ -160,7 +160,7 @@ func TestCreate(t *testing.T) {
 				gas: 500,
 				sp:  1,
 				stack: []*big.Int{
-					addressToBigInt(crypto.CreateAddress(addr1, 0)), // contract address
+					addressToBigInt(helper.CreateAddress(addr1, 0)), // contract address
 					big.NewInt(0x00),
 					big.NewInt(0x00),
 				},
