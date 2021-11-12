@@ -145,6 +145,10 @@ type Transition struct {
 	totalGas uint64
 }
 
+func (t *Transition) Snapshot() Snapshot {
+	return t.state.snapshot
+}
+
 func (t *Transition) TotalGas() uint64 {
 	return t.totalGas
 }
@@ -187,7 +191,9 @@ func (t *Transition) Write(txn *types.Transaction) error {
 		}
 
 	} else {
-		ss, aux := t.state.Commit(t.config.EIP155)
+		objs := t.state.Commit(t.config.EIP155)
+		ss, aux := t.state.snapshot.Commit(objs)
+
 		t.state = NewTxn(t.auxState, ss)
 		root = aux
 		receipt.Root = types.BytesToHash(root)
@@ -208,7 +214,8 @@ func (t *Transition) Write(txn *types.Transaction) error {
 
 // Commit commits the final result
 func (t *Transition) Commit() (Snapshot, types.Hash) {
-	s2, root := t.state.Commit(t.config.EIP155)
+	objs := t.state.Commit(t.config.EIP155)
+	s2, root := t.state.snapshot.Commit(objs)
 
 	return s2, types.BytesToHash(root)
 }

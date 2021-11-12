@@ -72,7 +72,7 @@ func RunSpecificTest(file string, t *testing.T, c stateCase, name, fork string, 
 	// mining rewards
 	txn.AddSealingReward(env.Coinbase, big.NewInt(0))
 
-	_, root := txn.Commit(forks.EIP158)
+	_, root := executor.Snapshot().Commit(txn.Commit(forks.EIP158))
 	if !bytes.Equal(root, p.Root.Bytes()) {
 		t.Fatalf("root mismatch (%s %s %s %d): expected %s but found %s", file, name, fork, index, p.Root.String(), helper.EncodeToHex(root))
 	}

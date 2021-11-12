@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/0xPolygon/polygon-sdk v0.0.0-20211108192127-ce793fa5dfcc
-	github.com/ethereum/go-ethereum v1.10.12
+	github.com/btcsuite/btcd v0.21.0-beta
 	github.com/hashicorp/go-immutable-radix v1.3.1
 	github.com/hashicorp/golang-lru v0.5.5-0.20210104140557-80c98217689d
 	github.com/stretchr/testify v1.7.0
@@ -15,8 +15,8 @@ require (
 )
 
 require (
-	github.com/btcsuite/btcd v0.21.0-beta // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/ethereum/go-ethereum v1.10.12 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/hashicorp/errwrap v1.0.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.0 // indirect
