@@ -7,9 +7,9 @@ import (
 
 	"sync"
 
+	"github.com/0xPolygon/eth-state-transition/helper"
 	"github.com/0xPolygon/eth-state-transition/runtime"
 	"github.com/0xPolygon/polygon-sdk/chain"
-	"github.com/0xPolygon/polygon-sdk/helper/hex"
 	"github.com/0xPolygon/polygon-sdk/types"
 )
 
@@ -321,7 +321,7 @@ func (c *state) Show() string {
 			j = len(c.memory)
 		}
 
-		str = append(str, hex.EncodeToHex(c.memory[i:j]))
+		str = append(str, helper.EncodeToHex(c.memory[i:j]))
 	}
 	return strings.Join(str, "\n")
 }

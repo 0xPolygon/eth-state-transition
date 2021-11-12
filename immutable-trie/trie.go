@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	state "github.com/0xPolygon/eth-state-transition"
-	"github.com/0xPolygon/polygon-sdk/helper/hex"
+	"github.com/0xPolygon/eth-state-transition/helper"
 	"github.com/0xPolygon/polygon-sdk/types"
 	"github.com/umbracle/fastrlp"
 	"golang.org/x/crypto/sha3"
@@ -584,14 +584,14 @@ func show(obj interface{}, label int, d int) {
 	switch n := obj.(type) {
 	case *ShortNode:
 		if h, ok := n.Hash(); ok {
-			fmt.Printf("%s%d SHash: %s\n", depth(d), label, hex.EncodeToHex(h))
+			fmt.Printf("%s%d SHash: %s\n", depth(d), label, helper.EncodeToHex(h))
 			//return
 		}
-		fmt.Printf("%s%d Short: %s\n", depth(d), label, hex.EncodeToHex(n.key))
+		fmt.Printf("%s%d Short: %s\n", depth(d), label, helper.EncodeToHex(n.key))
 		show(n.child, 0, d)
 	case *FullNode:
 		if h, ok := n.Hash(); ok {
-			fmt.Printf("%s%d FHash: %s\n", depth(d), label, hex.EncodeToHex(h))
+			fmt.Printf("%s%d FHash: %s\n", depth(d), label, helper.EncodeToHex(h))
 			//return
 		}
 		fmt.Printf("%s%d Full\n", depth(d), label)
@@ -605,9 +605,9 @@ func show(obj interface{}, label int, d int) {
 		}
 	case *ValueNode:
 		if n.hash {
-			fmt.Printf("%s%d  Hash: %s\n", depth(d), label, hex.EncodeToHex(n.buf))
+			fmt.Printf("%s%d  Hash: %s\n", depth(d), label, helper.EncodeToHex(n.buf))
 		} else {
-			fmt.Printf("%s%d  Value: %s\n", depth(d), label, hex.EncodeToHex(n.buf))
+			fmt.Printf("%s%d  Value: %s\n", depth(d), label, helper.EncodeToHex(n.buf))
 		}
 	default:
 		fmt.Printf("%s Nil\n", depth(d))

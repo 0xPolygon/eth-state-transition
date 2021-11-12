@@ -3,7 +3,7 @@ package precompiled
 import (
 	"testing"
 
-	"github.com/0xPolygon/polygon-sdk/helper/hex"
+	"github.com/0xPolygon/eth-state-transition/helper"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -16,11 +16,11 @@ type precompiledTest struct {
 func testPrecompiled(t *testing.T, p contract, cases []precompiledTest) {
 	for _, c := range cases {
 		t.Run(c.Name, func(t *testing.T) {
-			h, _ := hex.DecodeString(c.Input)
+			h, _ := helper.DecodeString(c.Input)
 			found, err := p.run(h)
 
 			assert.NoError(t, err)
-			assert.Equal(t, c.Expected, hex.EncodeToString(found))
+			assert.Equal(t, c.Expected, helper.EncodeToString(found))
 		})
 	}
 }

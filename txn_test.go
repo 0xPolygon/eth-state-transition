@@ -7,7 +7,7 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/0xPolygon/polygon-sdk/helper/hex"
+	"github.com/0xPolygon/eth-state-transition/helper"
 	"github.com/0xPolygon/polygon-sdk/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/umbracle/fastrlp"
@@ -39,7 +39,7 @@ type mockSnapshot struct {
 }
 
 func (m *mockSnapshot) Get(k []byte) ([]byte, bool) {
-	v, ok := m.data[hex.EncodeToHex(k)]
+	v, ok := m.data[helper.EncodeToHex(k)]
 	return v, ok
 }
 
@@ -70,7 +70,7 @@ func newStateWithPreState(preState map[types.Address]*PreState) (*mockState, *mo
 				panic(err)
 			}
 		*/
-		snapshot.data[hex.EncodeToHex(hashit(addr.Bytes()))] = accountRlp
+		snapshot.data[helper.EncodeToHex(hashit(addr.Bytes()))] = accountRlp
 	}
 
 	return state, snapshot

@@ -10,10 +10,10 @@ import (
 	"github.com/umbracle/fastrlp"
 
 	state "github.com/0xPolygon/eth-state-transition"
+	"github.com/0xPolygon/eth-state-transition/helper"
 	"github.com/0xPolygon/eth-state-transition/runtime"
 	"github.com/0xPolygon/eth-state-transition/runtime/evm"
 	"github.com/0xPolygon/polygon-sdk/chain"
-	"github.com/0xPolygon/polygon-sdk/helper/hex"
 	"github.com/0xPolygon/polygon-sdk/helper/keccak"
 	"github.com/0xPolygon/polygon-sdk/types"
 
@@ -84,7 +84,7 @@ func testVMCase(t *testing.T, name string, c *VMCase) {
 	if c.Out == "" {
 		c.Out = "0x"
 	}
-	if ret := hex.EncodeToHex(result.ReturnValue); ret != c.Out {
+	if ret := helper.EncodeToHex(result.ReturnValue); ret != c.Out {
 		t.Fatalf("return mismatch: got %s, want %s", ret, c.Out)
 	}
 

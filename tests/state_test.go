@@ -9,10 +9,10 @@ import (
 	"testing"
 
 	state "github.com/0xPolygon/eth-state-transition"
+	"github.com/0xPolygon/eth-state-transition/helper"
 	"github.com/0xPolygon/eth-state-transition/runtime/evm"
 	"github.com/0xPolygon/eth-state-transition/runtime/precompiled"
 	"github.com/0xPolygon/polygon-sdk/chain"
-	"github.com/0xPolygon/polygon-sdk/helper/hex"
 	"github.com/0xPolygon/polygon-sdk/types"
 )
 
@@ -73,7 +73,7 @@ func RunSpecificTest(file string, t *testing.T, c stateCase, name, fork string, 
 
 	_, root := txn.Commit(forks.EIP158)
 	if !bytes.Equal(root, p.Root.Bytes()) {
-		t.Fatalf("root mismatch (%s %s %s %d): expected %s but found %s", file, name, fork, index, p.Root.String(), hex.EncodeToHex(root))
+		t.Fatalf("root mismatch (%s %s %s %d): expected %s but found %s", file, name, fork, index, p.Root.String(), helper.EncodeToHex(root))
 	}
 
 	if logs := rlpHashLogs(txn.Logs()); logs != p.Logs {

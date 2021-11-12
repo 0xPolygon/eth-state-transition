@@ -3,7 +3,7 @@ package itrie
 import (
 	"fmt"
 
-	"github.com/0xPolygon/polygon-sdk/helper/hex"
+	"github.com/0xPolygon/eth-state-transition/helper"
 	"github.com/0xPolygon/polygon-sdk/types"
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/umbracle/fastrlp"
@@ -108,11 +108,11 @@ func NewMemoryStorage() Storage {
 func (m *memStorage) Put(p []byte, v []byte) {
 	buf := make([]byte, len(v))
 	copy(buf[:], v[:])
-	m.db[hex.EncodeToHex(p)] = buf
+	m.db[helper.EncodeToHex(p)] = buf
 }
 
 func (m *memStorage) Get(p []byte) ([]byte, bool) {
-	v, ok := m.db[hex.EncodeToHex(p)]
+	v, ok := m.db[helper.EncodeToHex(p)]
 	if !ok {
 		return []byte{}, false
 	}
@@ -139,7 +139,7 @@ func (m *memStorage) Close() error {
 func (m *memBatch) Put(p, v []byte) {
 	buf := make([]byte, len(v))
 	copy(buf[:], v[:])
-	(*m.db)[hex.EncodeToHex(p)] = buf
+	(*m.db)[helper.EncodeToHex(p)] = buf
 }
 
 func (m *memBatch) Write() {

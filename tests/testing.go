@@ -11,11 +11,11 @@ import (
 	"testing"
 
 	state "github.com/0xPolygon/eth-state-transition"
+	"github.com/0xPolygon/eth-state-transition/helper"
 	itrie "github.com/0xPolygon/eth-state-transition/immutable-trie"
 	"github.com/0xPolygon/eth-state-transition/runtime"
 	"github.com/0xPolygon/polygon-sdk/chain"
 	"github.com/0xPolygon/polygon-sdk/crypto"
-	"github.com/0xPolygon/polygon-sdk/helper/hex"
 	"github.com/0xPolygon/polygon-sdk/types"
 )
 
@@ -276,7 +276,7 @@ func (t *stTransaction) At(i indexes) (*types.Transaction, error) {
 		Value:    new(big.Int).Set(t.Value[i.Value]),
 		Gas:      t.GasLimit[i.Gas],
 		GasPrice: new(big.Int).Set(t.GasPrice),
-		Input:    hex.MustDecodeHex(t.Data[i.Data]),
+		Input:    helper.MustDecodeHex(t.Data[i.Data]),
 	}
 
 	msg.From = t.From
