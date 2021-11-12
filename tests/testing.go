@@ -10,12 +10,12 @@ import (
 	"strings"
 	"testing"
 
+	state "github.com/0xPolygon/eth-state-transition"
+	itrie "github.com/0xPolygon/eth-state-transition/immutable-trie"
+	"github.com/0xPolygon/eth-state-transition/runtime"
 	"github.com/0xPolygon/polygon-sdk/chain"
 	"github.com/0xPolygon/polygon-sdk/crypto"
 	"github.com/0xPolygon/polygon-sdk/helper/hex"
-	"github.com/0xPolygon/polygon-sdk/state"
-	itrie "github.com/0xPolygon/polygon-sdk/state/immutable-trie"
-	"github.com/0xPolygon/polygon-sdk/state/runtime"
 	"github.com/0xPolygon/polygon-sdk/types"
 )
 

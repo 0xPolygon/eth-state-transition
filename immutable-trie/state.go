@@ -5,7 +5,7 @@ import (
 
 	lru "github.com/hashicorp/golang-lru"
 
-	"github.com/0xPolygon/polygon-sdk/state"
+	state "github.com/0xPolygon/eth-state-transition"
 	"github.com/0xPolygon/polygon-sdk/types"
 )
 

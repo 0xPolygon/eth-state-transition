@@ -10,12 +10,12 @@ import (
 	"github.com/hashicorp/go-hclog"
 	"github.com/umbracle/fastrlp"
 
+	state "github.com/0xPolygon/eth-state-transition"
+	"github.com/0xPolygon/eth-state-transition/runtime"
+	"github.com/0xPolygon/eth-state-transition/runtime/evm"
 	"github.com/0xPolygon/polygon-sdk/chain"
 	"github.com/0xPolygon/polygon-sdk/helper/hex"
 	"github.com/0xPolygon/polygon-sdk/helper/keccak"
-	"github.com/0xPolygon/polygon-sdk/state"
-	"github.com/0xPolygon/polygon-sdk/state/runtime"
-	"github.com/0xPolygon/polygon-sdk/state/runtime/evm"
 	"github.com/0xPolygon/polygon-sdk/types"
 
 	"github.com/0xPolygon/polygon-sdk/crypto"

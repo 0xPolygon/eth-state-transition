@@ -3,7 +3,7 @@ package itrie
 import (
 	"testing"
 
-	"github.com/0xPolygon/polygon-sdk/state"
+	state "github.com/0xPolygon/eth-state-transition"
 )
 
 func TestState(t *testing.T) {

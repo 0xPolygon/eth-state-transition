@@ -10,11 +10,11 @@ import (
 
 	"github.com/hashicorp/go-hclog"
 
+	state "github.com/0xPolygon/eth-state-transition"
+	"github.com/0xPolygon/eth-state-transition/runtime/evm"
+	"github.com/0xPolygon/eth-state-transition/runtime/precompiled"
 	"github.com/0xPolygon/polygon-sdk/chain"
 	"github.com/0xPolygon/polygon-sdk/helper/hex"
-	"github.com/0xPolygon/polygon-sdk/state"
-	"github.com/0xPolygon/polygon-sdk/state/runtime/evm"
-	"github.com/0xPolygon/polygon-sdk/state/runtime/precompiled"
 	"github.com/0xPolygon/polygon-sdk/types"
 )
 

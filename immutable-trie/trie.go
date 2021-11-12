@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"fmt"
 
+	state "github.com/0xPolygon/eth-state-transition"
 	"github.com/0xPolygon/polygon-sdk/helper/hex"
-	"github.com/0xPolygon/polygon-sdk/state"
 	"github.com/0xPolygon/polygon-sdk/types"
 	"github.com/umbracle/fastrlp"
 	"golang.org/x/crypto/sha3"
