@@ -7,7 +7,6 @@ import (
 
 	"github.com/0xPolygon/eth-state-transition/helper"
 	"github.com/0xPolygon/eth-state-transition/runtime"
-	"github.com/0xPolygon/polygon-sdk/chain"
 	"github.com/0xPolygon/polygon-sdk/types"
 )
 
@@ -42,29 +41,6 @@ func NewExecutor(config *runtime.Params, s State) *Executor {
 		runtimes: []runtime.Runtime{},
 		state:    s,
 	}
-}
-
-func (e *Executor) WriteGenesis(alloc map[types.Address]*chain.GenesisAccount) types.Hash {
-	snap := e.state.NewSnapshot()
-	txn := NewTxn(e.state, snap)
-
-	for addr, account := range alloc {
-		if account.Balance != nil {
-			txn.AddBalance(addr, account.Balance)
-		}
-		if account.Nonce != 0 {
-			txn.SetNonce(addr, account.Nonce)
-		}
-		if len(account.Code) != 0 {
-			txn.SetCode(addr, account.Code)
-		}
-		for key, value := range account.Storage {
-			txn.SetState(addr, key, value)
-		}
-	}
-
-	_, root := txn.Commit(false)
-	return types.BytesToHash(root)
 }
 
 // SetRuntime adds a runtime to the runtime set
