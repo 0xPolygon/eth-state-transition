@@ -11,8 +11,6 @@ import (
 	state "github.com/0xPolygon/eth-state-transition"
 	"github.com/0xPolygon/eth-state-transition/helper"
 	"github.com/0xPolygon/eth-state-transition/runtime"
-	"github.com/0xPolygon/eth-state-transition/runtime/evm"
-	"github.com/0xPolygon/eth-state-transition/runtime/precompiled"
 	"github.com/0xPolygon/polygon-sdk/chain"
 	"github.com/0xPolygon/polygon-sdk/types"
 )
@@ -49,8 +47,6 @@ func RunSpecificTest(file string, t *testing.T, c stateCase, name, fork string, 
 	forks := config.At(uint64(env.Number))
 
 	xxx := state.NewExecutor(&runtime.Params{Forks: config, ChainID: 1}, s)
-	xxx.SetRuntime(precompiled.NewPrecompiled())
-	xxx.SetRuntime(evm.NewEVM())
 
 	xxx.PostHook = func(t *state.Transition) {
 		if name == "failed_tx_xcf416c53" {
@@ -64,7 +60,7 @@ func RunSpecificTest(file string, t *testing.T, c stateCase, name, fork string, 
 		return vmTestBlockHash
 	}
 
-	executor, _ := xxx.BeginTxn(pastRoot, c.Env.ToHeader(t), env.Coinbase)
+	executor, _ := xxx.BeginTxn(pastRoot, c.Env.ToHeader(t))
 	executor.Apply(msg) //nolint:errcheck
 
 	txn := executor.Txn()

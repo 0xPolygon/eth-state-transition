@@ -7,14 +7,19 @@ import (
 
 	"github.com/0xPolygon/eth-state-transition/helper"
 	"github.com/0xPolygon/eth-state-transition/runtime"
+	"github.com/0xPolygon/eth-state-transition/runtime/evm"
+	"github.com/0xPolygon/eth-state-transition/runtime/precompiled"
 	"github.com/0xPolygon/polygon-sdk/types"
 )
 
 const (
 	spuriousDragonMaxCodeSize = 24576
 
-	TxGas                 uint64 = 21000 // Per transaction not creating a contract
-	TxGasContractCreation uint64 = 53000 // Per transaction that creates a contract
+	// Per transaction not creating a contract
+	TxGas uint64 = 21000
+
+	// Per transaction that creates a contract
+	TxGasContractCreation uint64 = 53000
 )
 
 var emptyCodeHashTwo = types.BytesToHash(helper.Keccak256(nil))
@@ -36,15 +41,19 @@ type Executor struct {
 
 // NewExecutor creates a new executor
 func NewExecutor(config *runtime.Params, s State) *Executor {
-	return &Executor{
+	e := &Executor{
 		config:   config,
 		runtimes: []runtime.Runtime{},
 		state:    s,
 	}
+
+	e.setRuntime(precompiled.NewPrecompiled())
+	e.setRuntime(evm.NewEVM())
+
+	return e
 }
 
-// SetRuntime adds a runtime to the runtime set
-func (e *Executor) SetRuntime(r runtime.Runtime) {
+func (e *Executor) setRuntime(r runtime.Runtime) {
 	e.runtimes = append(e.runtimes, r)
 }
 
@@ -54,6 +63,7 @@ type BlockResult struct {
 	TotalGas uint64
 }
 
+/*
 // ProcessBlock already does all the handling of the whole process, TODO
 func (e *Executor) ProcessBlock(parentRoot types.Hash, block *types.Block, blockCreator types.Address) (*BlockResult, error) {
 	txn, err := e.BeginTxn(parentRoot, block.Header, blockCreator)
@@ -76,6 +86,7 @@ func (e *Executor) ProcessBlock(parentRoot types.Hash, block *types.Block, block
 	}
 	return res, nil
 }
+*/
 
 // StateAt returns snapshot at given root
 func (e *Executor) State() State {
@@ -92,8 +103,8 @@ func (e *Executor) GetForksInTime(blockNumber uint64) runtime.ForksInTime {
 	return e.config.Forks.At(blockNumber)
 }
 
-func (e *Executor) BeginTxn(parentRoot types.Hash, header *types.Header, coinbaseReceiver types.Address) (*Transition, error) {
-	config := e.config.Forks.At(header.Number)
+func (e *Executor) BeginTxn(parentRoot types.Hash, env2 runtime.TxContext) (*Transition, error) {
+	config := e.config.Forks.At(uint64(env2.Number))
 
 	auxSnap2, err := e.state.NewSnapshotAt(parentRoot)
 	if err != nil {
@@ -101,21 +112,13 @@ func (e *Executor) BeginTxn(parentRoot types.Hash, header *types.Header, coinbas
 	}
 
 	newTxn := NewTxn(e.state, auxSnap2)
-
-	env2 := runtime.TxContext{
-		Coinbase:   coinbaseReceiver,
-		Timestamp:  int64(header.Timestamp),
-		Number:     int64(header.Number),
-		Difficulty: types.BytesToHash(new(big.Int).SetUint64(header.Difficulty).Bytes()),
-		GasLimit:   int64(header.GasLimit),
-		ChainID:    int64(e.config.ChainID),
-	}
+	env2.ChainID = int64(e.config.ChainID)
 
 	txn := &Transition{
 		r:        e,
 		ctx:      env2,
 		state:    newTxn,
-		getHash:  e.GetHash(header.Number, header.Hash),
+		getHash:  e.GetHash(uint64(env2.Number), env2.Hash),
 		auxState: e.state,
 		config:   config,
 		gasPool:  uint64(env2.GasLimit),

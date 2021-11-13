@@ -55,7 +55,7 @@ func testVMCase(t *testing.T, name string, c *VMCase) {
 		return vmTestBlockHash
 	}
 
-	e, _ := executor.BeginTxn(root, c.Env.ToHeader(t), env.Coinbase)
+	e, _ := executor.BeginTxn(root, c.Env.ToHeader(t))
 	ctx := e.ContextPtr()
 	ctx.GasPrice = types.BytesToHash(env.GasPrice.Bytes())
 	ctx.Origin = env.Origin

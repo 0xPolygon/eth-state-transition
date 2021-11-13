@@ -113,13 +113,13 @@ func stringToInt64T(t *testing.T, str string) int64 {
 	return int64(n)
 }
 
-func (e *env) ToHeader(t *testing.T) *types.Header {
-	return &types.Header{
-		Miner:      stringToAddressT(t, e.Coinbase),
-		Difficulty: stringToUint64T(t, e.Difficulty),
-		GasLimit:   stringToUint64T(t, e.GasLimit),
-		Number:     stringToUint64T(t, e.Number),
-		Timestamp:  stringToUint64T(t, e.Timestamp),
+func (e *env) ToHeader(t *testing.T) runtime.TxContext {
+	return runtime.TxContext{
+		Coinbase:   stringToAddressT(t, e.Coinbase),
+		Difficulty: stringToHashT(t, e.Difficulty),
+		GasLimit:   stringToInt64T(t, e.GasLimit),
+		Number:     stringToInt64T(t, e.Number),
+		Timestamp:  stringToInt64T(t, e.Timestamp),
 	}
 }
 
