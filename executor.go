@@ -33,18 +33,24 @@ type GetHashByNumberHelper = func(num uint64, hash types.Hash) GetHashByNumber
 type Executor struct {
 	config   *runtime.Params
 	runtimes []runtime.Runtime
-	state    State
-	GetHash  GetHashByNumberHelper
 
+	state State
+	snap  Snapshot
+
+	ctx runtime.TxContext
+
+	GetHash  GetHashByNumberHelper
 	PostHook func(txn *Transition)
 }
 
 // NewExecutor creates a new executor
-func NewExecutor(config *runtime.Params, s State) *Executor {
+func NewExecutor(config *runtime.Params, ctx runtime.TxContext, state State, snap Snapshot) *Executor {
 	e := &Executor{
 		config:   config,
 		runtimes: []runtime.Runtime{},
-		state:    s,
+		state:    state,
+		snap:     snap,
+		ctx:      ctx,
 	}
 
 	e.setRuntime(precompiled.NewPrecompiled())
@@ -88,6 +94,7 @@ func (e *Executor) ProcessBlock(parentRoot types.Hash, block *types.Block, block
 }
 */
 
+/*
 // StateAt returns snapshot at given root
 func (e *Executor) State() State {
 	return e.state
@@ -97,36 +104,32 @@ func (e *Executor) State() State {
 func (e *Executor) StateAt(root types.Hash) (Snapshot, error) {
 	return e.state.NewSnapshotAt(root)
 }
+*/
 
 // GetForksInTime returns the active forks at the given block height
 func (e *Executor) GetForksInTime(blockNumber uint64) runtime.ForksInTime {
 	return e.config.Forks.At(blockNumber)
 }
 
-func (e *Executor) BeginTxn(parentRoot types.Hash, env2 runtime.TxContext) (*Transition, error) {
-	config := e.config.Forks.At(uint64(env2.Number))
+func (e *Executor) BeginTxn() *Transition {
+	config := e.config.Forks.At(uint64(e.ctx.Number))
 
-	auxSnap2, err := e.state.NewSnapshotAt(parentRoot)
-	if err != nil {
-		return nil, err
-	}
-
-	newTxn := NewTxn(e.state, auxSnap2)
-	env2.ChainID = int64(e.config.ChainID)
+	newTxn := NewTxn(e.state, e.snap)
+	e.ctx.ChainID = int64(e.config.ChainID)
 
 	txn := &Transition{
 		r:        e,
-		ctx:      env2,
+		ctx:      e.ctx,
 		state:    newTxn,
-		getHash:  e.GetHash(uint64(env2.Number), env2.Hash),
+		getHash:  e.GetHash(uint64(e.ctx.Number), e.ctx.Hash),
 		auxState: e.state,
 		config:   config,
-		gasPool:  uint64(env2.GasLimit),
+		gasPool:  uint64(e.ctx.GasLimit),
 
 		receipts: []*types.Receipt{},
 		totalGas: 0,
 	}
-	return txn, nil
+	return txn
 }
 
 type Transition struct {

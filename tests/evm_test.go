@@ -46,16 +46,16 @@ func testVMCase(t *testing.T, name string, c *VMCase) {
 	env.GasPrice = types.BytesToHash(c.Exec.GasPrice.Bytes())
 	env.Origin = c.Exec.Origin
 
-	s, _, root := buildState(t, c.Pre)
+	s, snap, _ := buildState(t, c.Pre)
 
 	config := mainnetChainConfig.Forks.At(uint64(env.Number))
 
-	executor := state.NewExecutor(&mainnetChainConfig, s)
+	executor := state.NewExecutor(&mainnetChainConfig, c.Env.ToHeader(t), s, snap)
 	executor.GetHash = func(num uint64, hash types.Hash) func(i uint64) types.Hash {
 		return vmTestBlockHash
 	}
 
-	e, _ := executor.BeginTxn(root, c.Env.ToHeader(t))
+	e := executor.BeginTxn()
 	ctx := e.ContextPtr()
 	ctx.GasPrice = types.BytesToHash(env.GasPrice.Bytes())
 	ctx.Origin = env.Origin

@@ -43,10 +43,10 @@ func RunSpecificTest(file string, t *testing.T, c stateCase, name, fork string, 
 		t.Fatal(err)
 	}
 
-	s, _, pastRoot := buildState(t, c.Pre)
+	s, snap, _ := buildState(t, c.Pre)
 	forks := config.At(uint64(env.Number))
 
-	xxx := state.NewExecutor(&runtime.Params{Forks: config, ChainID: 1}, s)
+	xxx := state.NewExecutor(&runtime.Params{Forks: config, ChainID: 1}, c.Env.ToHeader(t), s, snap)
 
 	xxx.PostHook = func(t *state.Transition) {
 		if name == "failed_tx_xcf416c53" {
@@ -60,7 +60,7 @@ func RunSpecificTest(file string, t *testing.T, c stateCase, name, fork string, 
 		return vmTestBlockHash
 	}
 
-	executor, _ := xxx.BeginTxn(pastRoot, c.Env.ToHeader(t))
+	executor := xxx.BeginTxn()
 	executor.Apply(msg) //nolint:errcheck
 
 	txn := executor.Txn()
