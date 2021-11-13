@@ -39,8 +39,8 @@ type Executor struct {
 
 	ctx runtime.TxContext
 
-	GetHash  GetHashByNumberHelper
-	PostHook func(txn *Transition)
+	GetHash GetHashByNumberHelper
+	// PostHook func(txn *Transition)
 }
 
 // NewExecutor creates a new executor
@@ -252,9 +252,9 @@ func (t *Transition) Apply(msg *types.Transaction) (*runtime.ExecutionResult, er
 		t.state.RevertToSnapshot(s)
 	}
 
-	if t.r.PostHook != nil {
-		t.r.PostHook(t)
-	}
+	//if t.r.PostHook != nil {
+	//		t.r.PostHook(t)
+	//	}
 
 	return result, err
 }

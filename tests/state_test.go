@@ -48,14 +48,17 @@ func RunSpecificTest(file string, t *testing.T, c stateCase, name, fork string, 
 
 	xxx := state.NewExecutor(&runtime.Params{Forks: config, ChainID: 1}, c.Env.ToHeader(t), s, snap)
 
-	xxx.PostHook = func(t *state.Transition) {
-		if name == "failed_tx_xcf416c53" {
-			// create the account
-			t.Txn().TouchAccount(ripemd)
-			// now remove it
-			t.Txn().Suicide(ripemd)
+	/*
+		xxx.PostHook = func(t *state.Transition) {
+			if name == "failed_tx_xcf416c53" {
+				// create the account
+				t.Txn().TouchAccount(ripemd)
+				// now remove it
+				t.Txn().Suicide(ripemd)
+			}
 		}
-	}
+	*/
+
 	xxx.GetHash = func(num uint64, hash types.Hash) func(i uint64) types.Hash {
 		return vmTestBlockHash
 	}
@@ -67,6 +70,14 @@ func RunSpecificTest(file string, t *testing.T, c stateCase, name, fork string, 
 
 	// mining rewards
 	txn.AddSealingReward(env.Coinbase, big.NewInt(0))
+
+	// post-hook
+	if name == "failed_tx_xcf416c53" {
+		// create the account
+		txn.TouchAccount(ripemd)
+		// now remove it
+		txn.Suicide(ripemd)
+	}
 
 	_, root := executor.Snapshot().Commit(txn.Commit(forks.EIP158))
 	if !bytes.Equal(root, p.Root.Bytes()) {
