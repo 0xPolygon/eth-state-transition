@@ -122,6 +122,7 @@ func (t *Trie) GetCode(hash types.Hash) ([]byte, bool) {
 
 var stateStateParserPool fastrlp.ParserPool
 
+/*
 func (t *Trie) GetStorage(root types.Hash, raw types.Hash) types.Hash {
 
 	// Load trie from memory if there is some state
@@ -158,7 +159,9 @@ func (t *Trie) GetStorage(root types.Hash, raw types.Hash) types.Hash {
 
 	return types.BytesToHash(res)
 }
+*/
 
+/*
 func (t *Trie) GetAccount(addr types.Address) (*types.Account, error) {
 	data, ok := t.Get(helper.Keccak256(addr.Bytes()))
 	if !ok {
@@ -172,6 +175,7 @@ func (t *Trie) GetAccount(addr types.Address) (*types.Account, error) {
 	}
 	return &account, nil
 }
+*/
 
 func (t *Trie) Get(k []byte) ([]byte, bool) {
 	txn := t.Txn()
@@ -189,6 +193,7 @@ var accountArenaPool fastrlp.ArenaPool
 
 var stateArenaPool fastrlp.ArenaPool // TODO, Remove once we do update in fastrlp
 
+/*
 func (t *Trie) Commit(objs []*state.Object) (state.Snapshot, []byte) {
 	// Create an insertion batch for all the entries
 	batch := t.storage.Batch()
@@ -266,6 +271,7 @@ func (t *Trie) Commit(objs []*state.Object) (state.Snapshot, []byte) {
 	t.state.AddState(types.BytesToHash(root), nTrie)
 	return &Snapshot{state: t.state, trieRoot: nTrie}, root
 }
+*/
 
 // Hash returns the root hash of the trie. It does not write to the
 // database and can be used even if the trie doesn't have one.

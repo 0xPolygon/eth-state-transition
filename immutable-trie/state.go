@@ -41,7 +41,7 @@ func (s *State) NewSnapshot() state.Snapshot {
 		state:    s,
 		trieRoot: t,
 	}
-	return t
+	//return t
 }
 
 func (s *State) NewSnapshotAt(root types.Hash) (state.Snapshot, error) {
@@ -56,7 +56,7 @@ func (s *State) NewSnapshotAt(root types.Hash) (state.Snapshot, error) {
 		t.state = s
 
 		return &Snapshot{state: s, trieRoot: tt.(*Trie)}, nil
-		return tt.(*Trie), nil
+		//return tt.(*Trie), nil
 	}
 	n, ok, err := GetNode(root.Bytes(), s.storage)
 	if err != nil {
@@ -74,7 +74,7 @@ func (s *State) NewSnapshotAt(root types.Hash) (state.Snapshot, error) {
 		state:    s,
 		trieRoot: t,
 	}, nil
-	return t, nil
+	//return t, nil
 }
 
 func (s *State) AddState(root types.Hash, t *Trie) {

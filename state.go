@@ -14,7 +14,6 @@ import (
 type State interface {
 	NewSnapshotAt(types.Hash) (Snapshot, error)
 	NewSnapshot() Snapshot
-	GetCode(hash types.Hash) ([]byte, bool)
 }
 
 type Snapshot interface {
