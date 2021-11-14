@@ -6,6 +6,7 @@ import (
 	state "github.com/0xPolygon/eth-state-transition"
 	"github.com/0xPolygon/eth-state-transition/helper"
 	"github.com/0xPolygon/eth-state-transition/types"
+	"golang.org/x/crypto/sha3"
 )
 
 // this is a wrapper to represent the new snapshot entity
@@ -153,4 +154,10 @@ func (s *Snapshot) Commit(objs []*state.Object) (state.Snapshot, []byte) {
 	return &Snapshot{state: s.state, trieRoot: nTrie}, root
 
 	// return s.trieRoot.Commit(objs)
+}
+
+func hashit(k []byte) []byte {
+	h := sha3.NewLegacyKeccak256()
+	h.Write(k)
+	return h.Sum(nil)
 }

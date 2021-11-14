@@ -7,7 +7,6 @@ import (
 	"github.com/0xPolygon/eth-state-transition/helper"
 	"github.com/0xPolygon/eth-state-transition/types"
 	"github.com/umbracle/fastrlp"
-	"golang.org/x/crypto/sha3"
 )
 
 // Node represents a node reference
@@ -114,95 +113,9 @@ func (t *Trie) Get(k []byte) ([]byte, bool) {
 	return res, res != nil
 }
 
-func hashit(k []byte) []byte {
-	h := sha3.NewLegacyKeccak256()
-	h.Write(k)
-	return h.Sum(nil)
-}
-
 var accountArenaPool fastrlp.ArenaPool
 
 var stateArenaPool fastrlp.ArenaPool // TODO, Remove once we do update in fastrlp
-
-/*
-func (t *Trie) Commit(objs []*state.Object) (state.Snapshot, []byte) {
-	// Create an insertion batch for all the entries
-	batch := t.storage.Batch()
-
-	tt := t.Txn()
-	tt.batch = batch
-
-	arena := accountArenaPool.Get()
-	defer accountArenaPool.Put(arena)
-
-	ar1 := stateArenaPool.Get()
-	defer stateArenaPool.Put(ar1)
-
-	for _, obj := range objs {
-		if obj.Deleted {
-			tt.Delete(hashit(obj.Address.Bytes()))
-		} else {
-
-			account := types.Account{
-				Balance:  obj.Balance,
-				Nonce:    obj.Nonce,
-				CodeHash: obj.CodeHash.Bytes(),
-				Root:     obj.Root, // old root
-			}
-
-			if len(obj.Storage) != 0 {
-				localSnapshot, err := t.state.NewSnapshotAt(obj.Root)
-				if err != nil {
-					panic(err)
-				}
-
-				localTxn := localSnapshot.(*Snapshot).trieRoot.Txn()
-				localTxn.batch = batch
-
-				for _, entry := range obj.Storage {
-					k := hashit(entry.Key)
-					if entry.Deleted {
-						localTxn.Delete(k)
-					} else {
-						vv := ar1.NewBytes(bytes.TrimLeft(entry.Val, "\x00"))
-						localTxn.Insert(k, vv.MarshalTo(nil))
-					}
-				}
-
-				accountStateRoot, _ := localTxn.Hash()
-				accountStateTrie := localTxn.Commit()
-
-				// Add this to the cache
-				t.state.AddState(types.BytesToHash(accountStateRoot), accountStateTrie)
-
-				account.Root = types.BytesToHash(accountStateRoot)
-			}
-
-			if obj.DirtyCode {
-				t.state.SetCode(obj.CodeHash, obj.Code)
-			}
-
-			vv := account.MarshalWith(arena)
-			data := vv.MarshalTo(nil)
-
-			tt.Insert(hashit(obj.Address.Bytes()), data)
-			arena.Reset()
-		}
-	}
-
-	root, _ := tt.Hash()
-
-	nTrie := tt.Commit()
-	nTrie.state = t.state
-	nTrie.storage = t.storage
-
-	// Write all the entries to db
-	batch.Write()
-
-	t.state.AddState(types.BytesToHash(root), nTrie)
-	return &Snapshot{state: t.state, trieRoot: nTrie}, root
-}
-*/
 
 // Hash returns the root hash of the trie. It does not write to the
 // database and can be used even if the trie doesn't have one.

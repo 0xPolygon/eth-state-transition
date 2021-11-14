@@ -20,7 +20,7 @@ type Snapshot interface {
 var emptyCodeHash = helper.Keccak256(nil)
 
 // StateObject is the internal representation of the account
-type StateObject struct {
+type stateObject struct {
 	Account   *types.Account
 	Code      []byte
 	Suicide   bool
@@ -29,13 +29,13 @@ type StateObject struct {
 	Txn       *iradix.Txn
 }
 
-func (s *StateObject) Empty() bool {
+func (s *stateObject) Empty() bool {
 	return s.Account.Nonce == 0 && s.Account.Balance.Sign() == 0 && bytes.Equal(s.Account.CodeHash, emptyCodeHash)
 }
 
 // Copy makes a copy of the state object
-func (s *StateObject) Copy() *StateObject {
-	ss := new(StateObject)
+func (s *stateObject) Copy() *stateObject {
+	ss := new(stateObject)
 
 	// copy account
 	ss.Account = s.Account.Copy()

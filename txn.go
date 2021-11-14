@@ -74,11 +74,11 @@ func (txn *Txn) GetAccount(addr types.Address) (*types.Account, bool) {
 	return object.Account, true
 }
 
-func (txn *Txn) getStateObject(addr types.Address) (*StateObject, bool) {
+func (txn *Txn) getStateObject(addr types.Address) (*stateObject, bool) {
 	// Try to get state from radix tree which holds transient states during block processing first
 	val, exists := txn.txn.Get(addr.Bytes())
 	if exists {
-		obj := val.(*StateObject)
+		obj := val.(*stateObject)
 		if obj.Deleted {
 			return nil, false
 		}
@@ -93,16 +93,16 @@ func (txn *Txn) getStateObject(addr types.Address) (*StateObject, bool) {
 		return nil, false
 	}
 
-	obj := &StateObject{
+	obj := &stateObject{
 		Account: account.Copy(),
 	}
 	return obj, true
 }
 
-func (txn *Txn) upsertAccount(addr types.Address, create bool, f func(object *StateObject)) {
+func (txn *Txn) upsertAccount(addr types.Address, create bool, f func(object *stateObject)) {
 	object, exists := txn.getStateObject(addr)
 	if !exists && create {
-		object = &StateObject{
+		object = &stateObject{
 			Account: &types.Account{
 				Balance:  big.NewInt(0),
 				CodeHash: emptyCodeHash,
@@ -120,7 +120,7 @@ func (txn *Txn) upsertAccount(addr types.Address, create bool, f func(object *St
 }
 
 func (txn *Txn) AddSealingReward(addr types.Address, balance *big.Int) {
-	txn.upsertAccount(addr, true, func(object *StateObject) {
+	txn.upsertAccount(addr, true, func(object *stateObject) {
 		if object.Suicide {
 			*object = *newStateObject(txn)
 			object.Account.Balance.SetBytes(balance.Bytes())
@@ -132,7 +132,7 @@ func (txn *Txn) AddSealingReward(addr types.Address, balance *big.Int) {
 
 // AddBalance adds balance
 func (txn *Txn) AddBalance(addr types.Address, balance *big.Int) {
-	txn.upsertAccount(addr, true, func(object *StateObject) {
+	txn.upsertAccount(addr, true, func(object *stateObject) {
 		object.Account.Balance.Add(object.Account.Balance, balance)
 	})
 }
@@ -149,7 +149,7 @@ func (txn *Txn) SubBalance(addr types.Address, amount *big.Int) error {
 		return runtime.ErrNotEnoughFunds
 	}
 
-	txn.upsertAccount(addr, true, func(object *StateObject) {
+	txn.upsertAccount(addr, true, func(object *stateObject) {
 		object.Account.Balance.Sub(object.Account.Balance, amount)
 	})
 
@@ -159,7 +159,7 @@ func (txn *Txn) SubBalance(addr types.Address, amount *big.Int) error {
 // SetBalance sets the balance
 func (txn *Txn) SetBalance(addr types.Address, balance *big.Int) {
 	//fmt.Printf("SET BALANCE: %s %s\n", addr.String(), balance.String())
-	txn.upsertAccount(addr, true, func(object *StateObject) {
+	txn.upsertAccount(addr, true, func(object *stateObject) {
 		object.Account.Balance.SetBytes(balance.Bytes())
 	})
 }
@@ -273,7 +273,7 @@ func (txn *Txn) SetStorage(addr types.Address, key types.Hash, value types.Hash,
 
 // SetState change the state of an address
 func (txn *Txn) SetState(addr types.Address, key, value types.Hash) {
-	txn.upsertAccount(addr, true, func(object *StateObject) {
+	txn.upsertAccount(addr, true, func(object *stateObject) {
 		if object.Txn == nil {
 			object.Txn = iradix.New().Txn()
 		}
@@ -311,14 +311,14 @@ func (txn *Txn) GetState(addr types.Address, key types.Hash) types.Hash {
 
 // IncrNonce increases the nonce of the address
 func (txn *Txn) IncrNonce(addr types.Address) {
-	txn.upsertAccount(addr, true, func(object *StateObject) {
+	txn.upsertAccount(addr, true, func(object *stateObject) {
 		object.Account.Nonce++
 	})
 }
 
 // SetNonce reduces the balance
 func (txn *Txn) SetNonce(addr types.Address, nonce uint64) {
-	txn.upsertAccount(addr, true, func(object *StateObject) {
+	txn.upsertAccount(addr, true, func(object *stateObject) {
 		object.Account.Nonce = nonce
 	})
 }
@@ -336,7 +336,7 @@ func (txn *Txn) GetNonce(addr types.Address) uint64 {
 
 // SetCode sets the code for an address
 func (txn *Txn) SetCode(addr types.Address, code []byte) {
-	txn.upsertAccount(addr, true, func(object *StateObject) {
+	txn.upsertAccount(addr, true, func(object *stateObject) {
 		object.Account.CodeHash = helper.Keccak256(code)
 		object.DirtyCode = true
 		object.Code = code
@@ -370,7 +370,7 @@ func (txn *Txn) GetCodeHash(addr types.Address) types.Hash {
 // Suicide marks the given account as suicided
 func (txn *Txn) Suicide(addr types.Address) bool {
 	var suicided bool
-	txn.upsertAccount(addr, false, func(object *StateObject) {
+	txn.upsertAccount(addr, false, func(object *stateObject) {
 		if object == nil || object.Suicide {
 			suicided = false
 		} else {
@@ -430,7 +430,7 @@ func (txn *Txn) GetCommittedState(addr types.Address, key types.Hash) types.Hash
 }
 
 func (txn *Txn) TouchAccount(addr types.Address) {
-	txn.upsertAccount(addr, true, func(obj *StateObject) {
+	txn.upsertAccount(addr, true, func(obj *stateObject) {
 
 	})
 }
@@ -450,25 +450,23 @@ func (txn *Txn) Empty(addr types.Address) bool {
 	return obj.Empty()
 }
 
-func newStateObject(txn *Txn) *StateObject {
-	return &StateObject{
+func newStateObject(txn *Txn) *stateObject {
+	return &stateObject{
 		Account: &types.Account{
 			Balance:  big.NewInt(0),
 			CodeHash: emptyCodeHash,
 			Root:     emptyStateHash,
 		},
-		//Trie: txn.snapshot.NewSnapshot(),
 	}
 }
 
 func (txn *Txn) CreateAccount(addr types.Address) {
-	obj := &StateObject{
+	obj := &stateObject{
 		Account: &types.Account{
 			Balance:  big.NewInt(0),
 			CodeHash: emptyCodeHash,
 			Root:     emptyStateHash,
 		},
-		//Trie: txn.snapshot.NewSnapshot(),
 	}
 
 	prev, ok := txn.getStateObject(addr)
@@ -482,7 +480,7 @@ func (txn *Txn) CreateAccount(addr types.Address) {
 func (txn *Txn) CleanDeleteObjects(deleteEmptyObjects bool) {
 	remove := [][]byte{}
 	txn.txn.Root().Walk(func(k []byte, v interface{}) bool {
-		a, ok := v.(*StateObject)
+		a, ok := v.(*stateObject)
 		if !ok {
 			return false
 		}
@@ -497,7 +495,7 @@ func (txn *Txn) CleanDeleteObjects(deleteEmptyObjects bool) {
 		if !ok {
 			panic("it should not happen")
 		}
-		obj, ok := v.(*StateObject)
+		obj, ok := v.(*stateObject)
 		if !ok {
 			panic("it should not happen")
 		}
@@ -519,7 +517,7 @@ func (txn *Txn) Commit(deleteEmptyObjects bool) []*Object {
 	// Do a more complex thing for now
 	objs := []*Object{}
 	x.Root().Walk(func(k []byte, v interface{}) bool {
-		a, ok := v.(*StateObject)
+		a, ok := v.(*stateObject)
 		if !ok {
 			// We also have logs, avoid those
 			return false
