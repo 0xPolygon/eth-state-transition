@@ -18,15 +18,20 @@ type State interface {
 }
 
 type Snapshot interface {
+	State
+
+	GetStorage(root types.Hash, key types.Hash) types.Hash
 	GetAccount(addr types.Address) (*types.Account, error)
 	Get(k []byte) ([]byte, bool)
 	Commit(objs []*Object) (Snapshot, []byte)
 }
 
+/*
 // account trie
 type accountTrie interface {
 	Get(k []byte) ([]byte, bool)
 }
+*/
 
 /*
 // Account is the account reference in the ethereum state
@@ -108,8 +113,8 @@ var emptyCodeHash = helper.Keccak256(nil)
 
 // StateObject is the internal representation of the account
 type StateObject struct {
-	Account   *types.Account
-	Trie      accountTrie
+	Account *types.Account
+	//Trie      accountTrie
 	Code      []byte
 	Suicide   bool
 	Deleted   bool
@@ -123,6 +128,7 @@ func (s *StateObject) Empty() bool {
 
 var stateStateParserPool fastrlp.ParserPool
 
+/*
 func (s *StateObject) GetCommitedState(key types.Hash) types.Hash {
 	val, ok := s.Trie.Get(key.Bytes())
 	if !ok {
@@ -144,6 +150,7 @@ func (s *StateObject) GetCommitedState(key types.Hash) types.Hash {
 
 	return types.BytesToHash(res)
 }
+*/
 
 // Copy makes a copy of the state object
 func (s *StateObject) Copy() *StateObject {
@@ -160,9 +167,9 @@ func (s *StateObject) Copy() *StateObject {
 	if s.Txn != nil {
 		ss.Txn = s.Txn.CommitOnly().Txn()
 	}
-	if s.Trie != nil {
-		ss.Trie = s.Trie
-	}
+	//if s.Trie != nil {
+	//	ss.Trie = s.Trie
+	//}
 	return ss
 }
 

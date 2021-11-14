@@ -107,8 +107,56 @@ func NewTrie() *Trie {
 	return &Trie{}
 }
 
-func (t *Trie) GetStorage(addr types.Address, slot types.Hash) ([]byte, error) {
-	return nil, nil
+func (t *Trie) NewSnapshotAt(root types.Hash) (state.Snapshot, error) {
+	return t.state.NewSnapshotAt(root)
+	panic("TODO")
+}
+func (t *Trie) NewSnapshot() state.Snapshot {
+	return t.state.NewSnapshot()
+	panic("TODO")
+}
+func (t *Trie) GetCode(hash types.Hash) ([]byte, bool) {
+	return t.state.GetCode(hash)
+	panic("TODO")
+}
+
+var stateStateParserPool fastrlp.ParserPool
+
+func (t *Trie) GetStorage(root types.Hash, raw types.Hash) types.Hash {
+	var err error
+
+	// Load trie from memory if there is some state
+	var trie state.Snapshot
+	if root == types.EmptyRootHash {
+		trie = t.state.NewSnapshot()
+	} else {
+		trie, err = t.state.NewSnapshotAt(root)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	key := helper.Keccak256(raw.Bytes())
+
+	val, ok := trie.Get(key)
+	if !ok {
+		return types.Hash{}
+	}
+
+	p := stateStateParserPool.Get()
+	defer stateStateParserPool.Put(p)
+
+	v, err := p.Parse(val)
+	if err != nil {
+		return types.Hash{}
+	}
+
+	res := []byte{}
+	if res, err = v.GetBytes(res[:0]); err != nil {
+		return types.Hash{}
+	}
+
+	return types.BytesToHash(res)
 }
 
 func (t *Trie) GetAccount(addr types.Address) (*types.Account, error) {

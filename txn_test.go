@@ -38,7 +38,17 @@ type mockSnapshot struct {
 	data map[string][]byte
 }
 
-func (m *mockSnapshot) GetStorage(addr types.Address, slot types.Hash) ([]byte, error) {
+func (m *mockSnapshot) NewSnapshotAt(types.Hash) (Snapshot, error) {
+	panic("TODO")
+}
+func (m *mockSnapshot) NewSnapshot() Snapshot {
+	panic("TODO")
+}
+func (m *mockSnapshot) GetCode(hash types.Hash) ([]byte, bool) {
+	panic("TODO")
+}
+
+func (m *mockSnapshot) GetStorage(root types.Hash, key types.Hash) types.Hash {
 	panic("TODO")
 }
 
