@@ -22,11 +22,9 @@ var (
 
 // Txn is a reference of the state
 type Txn struct {
-	snapshot Snapshot
-	// state     State
+	snapshot  Snapshot
 	snapshots []*iradix.Tree
 	txn       *iradix.Txn
-	//hash      *helper.Keccak
 }
 
 func NewTxn(snapshot Snapshot) *Txn {
@@ -37,23 +35,11 @@ func newTxn(snapshot Snapshot) *Txn {
 	i := iradix.New()
 
 	return &Txn{
-		snapshot: snapshot,
-		//state:     state,
+		snapshot:  snapshot,
 		snapshots: []*iradix.Tree{},
 		txn:       i.Txn(),
-		//hash:      helper.NewKeccak256(),
 	}
 }
-
-/*
-func (txn *Txn) hashit(src []byte) []byte {
-	txn.hash.Reset()
-	txn.hash.Write(src) //nolint
-	// hashit is used to make queries so we do not need to
-	// make copies of the result
-	return txn.hash.Read()
-}
-*/
 
 // Snapshot takes a snapshot at this point in time
 func (txn *Txn) Snapshot() int {
@@ -107,34 +93,8 @@ func (txn *Txn) getStateObject(addr types.Address) (*StateObject, bool) {
 		return nil, false
 	}
 
-	/*
-		data, ok := txn.snapshot.Get(txn.hashit(addr.Bytes()))
-		if !ok {
-			return nil, false
-		}
-		var err error
-		var account Account
-		if err = account.UnmarshalRlp(data); err != nil {
-			return nil, false
-		}
-	*/
-
-	/*
-		var trie accountTrie
-		// Load trie from memory if there is some state
-		if account.Root == emptyStateHash {
-			trie = txn.snapshot.NewSnapshot()
-		} else {
-			trie, err = txn.snapshot.NewSnapshotAt(account.Root)
-			if err != nil {
-				return nil, false
-			}
-		}
-	*/
-
 	obj := &StateObject{
 		Account: account.Copy(),
-		//Trie:    trie,
 	}
 	return obj, true
 }
@@ -148,7 +108,6 @@ func (txn *Txn) upsertAccount(addr types.Address, create bool, f func(object *St
 				CodeHash: emptyCodeHash,
 				Root:     emptyStateHash,
 			},
-			//Trie: txn.snapshot.NewSnapshot(),
 		}
 	}
 
@@ -345,14 +304,7 @@ func (txn *Txn) GetState(addr types.Address, key types.Hash) types.Hash {
 			return types.BytesToHash(val.([]byte))
 		}
 	}
-
-	//if tt, ok := txn.snapshot.(Snapshot2); ok {
 	return txn.snapshot.GetStorage(object.Account.Root, key)
-	//}
-
-	// If the object was not found in the radix trie due to no state update, we fetch it from the trie tre
-	//k := txn.hashit(key.Bytes())
-	//return object.GetCommitedState(types.BytesToHash(k))
 }
 
 // Nonce
@@ -474,11 +426,7 @@ func (txn *Txn) GetCommittedState(addr types.Address, key types.Hash) types.Hash
 	if !ok {
 		return types.Hash{}
 	}
-	//if tt, ok := txn.snapshot.(Snapshot2); ok {
 	return txn.snapshot.GetStorage(obj.Account.Root, key)
-	//}
-
-	//return obj.GetCommitedState(types.BytesToHash(txn.hashit(key.Bytes())))
 }
 
 func (txn *Txn) TouchAccount(addr types.Address) {

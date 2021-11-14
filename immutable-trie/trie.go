@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 
-	state "github.com/0xPolygon/eth-state-transition"
 	"github.com/0xPolygon/eth-state-transition/helper"
 	"github.com/0xPolygon/eth-state-transition/types"
 	"github.com/umbracle/fastrlp"
@@ -107,75 +106,7 @@ func NewTrie() *Trie {
 	return &Trie{}
 }
 
-func (t *Trie) NewSnapshotAt(root types.Hash) (state.Snapshot, error) {
-	return t.state.NewSnapshotAt(root)
-	panic("TODO")
-}
-func (t *Trie) NewSnapshot() state.Snapshot {
-	return t.state.NewSnapshot()
-	panic("TODO")
-}
-func (t *Trie) GetCode(hash types.Hash) ([]byte, bool) {
-	return t.state.GetCode(hash)
-	panic("TODO")
-}
-
 var stateStateParserPool fastrlp.ParserPool
-
-/*
-func (t *Trie) GetStorage(root types.Hash, raw types.Hash) types.Hash {
-
-	// Load trie from memory if there is some state
-	var dummySnap *Snapshot
-	if root == types.EmptyRootHash {
-		dummySnap = t.state.NewSnapshot().(*Snapshot)
-	} else {
-		xx, err := t.state.NewSnapshotAt(root)
-		if err != nil {
-			panic(err)
-		}
-		dummySnap = xx.(*Snapshot)
-	}
-
-	key := helper.Keccak256(raw.Bytes())
-
-	val, ok := dummySnap.trieRoot.Get(key)
-	if !ok {
-		return types.Hash{}
-	}
-
-	p := stateStateParserPool.Get()
-	defer stateStateParserPool.Put(p)
-
-	v, err := p.Parse(val)
-	if err != nil {
-		return types.Hash{}
-	}
-
-	res := []byte{}
-	if res, err = v.GetBytes(res[:0]); err != nil {
-		return types.Hash{}
-	}
-
-	return types.BytesToHash(res)
-}
-*/
-
-/*
-func (t *Trie) GetAccount(addr types.Address) (*types.Account, error) {
-	data, ok := t.Get(helper.Keccak256(addr.Bytes()))
-	if !ok {
-		return nil, nil
-	}
-
-	var err error
-	var account types.Account
-	if err = account.UnmarshalRlp(data); err != nil {
-		return nil, err
-	}
-	return &account, nil
-}
-*/
 
 func (t *Trie) Get(k []byte) ([]byte, bool) {
 	txn := t.Txn()
