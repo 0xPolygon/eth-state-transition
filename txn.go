@@ -26,7 +26,7 @@ type Txn struct {
 	// state     State
 	snapshots []*iradix.Tree
 	txn       *iradix.Txn
-	hash      *helper.Keccak
+	//hash      *helper.Keccak
 }
 
 func NewTxn(state State, snapshot Snapshot) *Txn {
@@ -41,10 +41,11 @@ func newTxn(state State, snapshot Snapshot) *Txn {
 		//state:     state,
 		snapshots: []*iradix.Tree{},
 		txn:       i.Txn(),
-		hash:      helper.NewKeccak256(),
+		//hash:      helper.NewKeccak256(),
 	}
 }
 
+/*
 func (txn *Txn) hashit(src []byte) []byte {
 	txn.hash.Reset()
 	txn.hash.Write(src) //nolint
@@ -52,6 +53,7 @@ func (txn *Txn) hashit(src []byte) []byte {
 	// make copies of the result
 	return txn.hash.Read()
 }
+*/
 
 // Snapshot takes a snapshot at this point in time
 func (txn *Txn) Snapshot() int {

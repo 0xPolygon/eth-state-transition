@@ -123,17 +123,17 @@ func (t *Trie) GetCode(hash types.Hash) ([]byte, bool) {
 var stateStateParserPool fastrlp.ParserPool
 
 func (t *Trie) GetStorage(root types.Hash, raw types.Hash) types.Hash {
-	var err error
 
 	// Load trie from memory if there is some state
-	var trie state.Snapshot
+	var trie *Trie
 	if root == types.EmptyRootHash {
-		trie = t.state.NewSnapshot()
+		trie = t.state.NewSnapshot().(*Trie)
 	} else {
-		trie, err = t.state.NewSnapshotAt(root)
+		xx, err := t.state.NewSnapshotAt(root)
 		if err != nil {
 			panic(err)
 		}
+		trie = xx.(*Trie)
 	}
 
 	key := helper.Keccak256(raw.Bytes())

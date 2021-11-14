@@ -18,11 +18,9 @@ type State interface {
 }
 
 type Snapshot interface {
-	State
-
+	GetCode(hash types.Hash) ([]byte, bool)
 	GetStorage(root types.Hash, key types.Hash) types.Hash
 	GetAccount(addr types.Address) (*types.Account, error)
-	Get(k []byte) ([]byte, bool)
 	Commit(objs []*Object) (Snapshot, []byte)
 }
 
