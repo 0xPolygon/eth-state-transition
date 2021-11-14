@@ -29,11 +29,11 @@ type Txn struct {
 	//hash      *helper.Keccak
 }
 
-func NewTxn(state State, snapshot Snapshot) *Txn {
-	return newTxn(state, snapshot)
+func NewTxn(snapshot Snapshot) *Txn {
+	return newTxn(snapshot)
 }
 
-func newTxn(state State, snapshot Snapshot) *Txn {
+func newTxn(snapshot Snapshot) *Txn {
 	i := iradix.New()
 
 	return &Txn{

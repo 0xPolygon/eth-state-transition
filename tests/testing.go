@@ -190,11 +190,11 @@ func (e *exec) UnmarshalJSON(input []byte) error {
 	return nil
 }
 
-func buildState(t *testing.T, allocs map[types.Address]*types.GenesisAccount) (state.State, state.Snapshot, types.Hash) {
+func buildState(t *testing.T, allocs map[types.Address]*types.GenesisAccount) (state.Snapshot, types.Hash) {
 	s := itrie.NewState(itrie.NewMemoryStorage())
 	snap := s.NewSnapshot()
 
-	txn := state.NewTxn(s, snap)
+	txn := state.NewTxn(snap)
 
 	for addr, alloc := range allocs {
 		txn.CreateAccount(addr)
@@ -211,7 +211,7 @@ func buildState(t *testing.T, allocs map[types.Address]*types.GenesisAccount) (s
 	}
 
 	snap, root := snap.Commit(txn.Commit(false))
-	return s, snap, types.BytesToHash(root)
+	return snap, types.BytesToHash(root)
 }
 
 type indexes struct {

@@ -42,10 +42,10 @@ func RunSpecificTest(file string, t *testing.T, c stateCase, name, fork string, 
 		t.Fatal(err)
 	}
 
-	s, snap, _ := buildState(t, c.Pre)
+	snap, _ := buildState(t, c.Pre)
 	forks := config.At(uint64(env.Number))
 
-	xxx := state.NewExecutor(&runtime.Params{Forks: config, ChainID: 1}, c.Env.ToHeader(t), s, snap)
+	xxx := state.NewExecutor(&runtime.Params{Forks: config, ChainID: 1}, c.Env.ToHeader(t), snap)
 
 	/*
 		xxx.PostHook = func(t *state.Transition) {

@@ -33,9 +33,7 @@ type GetHashByNumberHelper = func(num uint64, hash types.Hash) GetHashByNumber
 type Executor struct {
 	config   *runtime.Params
 	runtimes []runtime.Runtime
-
-	state State
-	snap  Snapshot
+	snap     Snapshot
 
 	ctx runtime.TxContext
 
@@ -44,11 +42,10 @@ type Executor struct {
 }
 
 // NewExecutor creates a new executor
-func NewExecutor(config *runtime.Params, ctx runtime.TxContext, state State, snap Snapshot) *Executor {
+func NewExecutor(config *runtime.Params, ctx runtime.TxContext, snap Snapshot) *Executor {
 	e := &Executor{
 		config:   config,
 		runtimes: []runtime.Runtime{},
-		state:    state,
 		snap:     snap,
 		ctx:      ctx,
 	}
@@ -114,17 +111,16 @@ func (e *Executor) GetForksInTime(blockNumber uint64) runtime.ForksInTime {
 func (e *Executor) BeginTxn() *Transition {
 	config := e.config.Forks.At(uint64(e.ctx.Number))
 
-	newTxn := NewTxn(e.state, e.snap)
+	newTxn := NewTxn(e.snap)
 	e.ctx.ChainID = int64(e.config.ChainID)
 
 	txn := &Transition{
-		r:        e,
-		ctx:      e.ctx,
-		state:    newTxn,
-		getHash:  e.GetHash(uint64(e.ctx.Number), e.ctx.Hash),
-		auxState: e.state,
-		config:   config,
-		gasPool:  uint64(e.ctx.GasLimit),
+		r:       e,
+		ctx:     e.ctx,
+		state:   newTxn,
+		getHash: e.GetHash(uint64(e.ctx.Number), e.ctx.Hash),
+		config:  config,
+		gasPool: uint64(e.ctx.GasLimit),
 
 		receipts: []*types.Receipt{},
 		totalGas: 0,
@@ -133,9 +129,6 @@ func (e *Executor) BeginTxn() *Transition {
 }
 
 type Transition struct {
-	// dummy
-	auxState State
-
 	// the current block being processed
 	// block *types.Block
 
@@ -198,7 +191,7 @@ func (t *Transition) Write(txn *types.Transaction) error {
 		objs := t.state.Commit(t.config.EIP155)
 		ss, aux := t.state.snapshot.Commit(objs)
 
-		t.state = NewTxn(t.auxState, ss)
+		t.state = NewTxn(ss)
 		root = aux
 		receipt.Root = types.BytesToHash(root)
 	}

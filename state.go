@@ -5,16 +5,10 @@ import (
 	"math/big"
 
 	iradix "github.com/hashicorp/go-immutable-radix"
-	"github.com/umbracle/fastrlp"
 
 	"github.com/0xPolygon/eth-state-transition/helper"
 	"github.com/0xPolygon/eth-state-transition/types"
 )
-
-type State interface {
-	NewSnapshotAt(types.Hash) (Snapshot, error)
-	NewSnapshot() Snapshot
-}
 
 type Snapshot interface {
 	GetCode(hash types.Hash) ([]byte, bool)
@@ -23,95 +17,11 @@ type Snapshot interface {
 	Commit(objs []*Object) (Snapshot, []byte)
 }
 
-/*
-// account trie
-type accountTrie interface {
-	Get(k []byte) ([]byte, bool)
-}
-*/
-
-/*
-// Account is the account reference in the ethereum state
-type Account struct {
-	Nonce    uint64
-	Balance  *big.Int
-	Root     types.Hash
-	CodeHash []byte
-	Trie     accountTrie
-}
-
-func (a *Account) MarshalWith(ar *fastrlp.Arena) *fastrlp.Value {
-	v := ar.NewArray()
-	v.Set(ar.NewUint(a.Nonce))
-	v.Set(ar.NewBigInt(a.Balance))
-	v.Set(ar.NewBytes(a.Root.Bytes()))
-	v.Set(ar.NewBytes(a.CodeHash))
-	return v
-}
-
-var accountParserPool fastrlp.ParserPool
-
-func (a *Account) UnmarshalRlp(b []byte) error {
-	p := accountParserPool.Get()
-	defer accountParserPool.Put(p)
-
-	v, err := p.Parse(b)
-	if err != nil {
-		return err
-	}
-	elems, err := v.GetElems()
-	if err != nil {
-		return err
-	}
-	if len(elems) != 4 {
-		return fmt.Errorf("bad")
-	}
-
-	// nonce
-	if a.Nonce, err = elems[0].GetUint64(); err != nil {
-		return err
-	}
-	// balance
-	if a.Balance == nil {
-		a.Balance = new(big.Int)
-	}
-	if err = elems[1].GetBigInt(a.Balance); err != nil {
-		return err
-	}
-	// root
-	if err = elems[2].GetHash(a.Root[:]); err != nil {
-		return err
-	}
-	// codeHash
-	if a.CodeHash, err = elems[3].GetBytes(a.CodeHash[:0]); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (a *Account) String() string {
-	return fmt.Sprintf("%d %s", a.Nonce, a.Balance.String())
-}
-
-func (a *Account) Copy() *Account {
-	aa := new(Account)
-
-	aa.Balance = big.NewInt(1).SetBytes(a.Balance.Bytes())
-	aa.Nonce = a.Nonce
-	aa.CodeHash = a.CodeHash
-	aa.Root = a.Root
-	aa.Trie = a.Trie
-
-	return aa
-}
-*/
-
 var emptyCodeHash = helper.Keccak256(nil)
 
 // StateObject is the internal representation of the account
 type StateObject struct {
-	Account *types.Account
-	//Trie      accountTrie
+	Account   *types.Account
 	Code      []byte
 	Suicide   bool
 	Deleted   bool
@@ -122,32 +32,6 @@ type StateObject struct {
 func (s *StateObject) Empty() bool {
 	return s.Account.Nonce == 0 && s.Account.Balance.Sign() == 0 && bytes.Equal(s.Account.CodeHash, emptyCodeHash)
 }
-
-var stateStateParserPool fastrlp.ParserPool
-
-/*
-func (s *StateObject) GetCommitedState(key types.Hash) types.Hash {
-	val, ok := s.Trie.Get(key.Bytes())
-	if !ok {
-		return types.Hash{}
-	}
-
-	p := stateStateParserPool.Get()
-	defer stateStateParserPool.Put(p)
-
-	v, err := p.Parse(val)
-	if err != nil {
-		return types.Hash{}
-	}
-
-	res := []byte{}
-	if res, err = v.GetBytes(res[:0]); err != nil {
-		return types.Hash{}
-	}
-
-	return types.BytesToHash(res)
-}
-*/
 
 // Copy makes a copy of the state object
 func (s *StateObject) Copy() *StateObject {

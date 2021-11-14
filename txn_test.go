@@ -65,7 +65,7 @@ func (m *mockSnapshot) Commit(objs []*Object) (Snapshot, []byte) {
 	panic("Not implemented in tests")
 }
 
-func newStateWithPreState(preState map[types.Address]*PreState) (*mockState, *mockSnapshot) {
+func newStateWithPreState(preState map[types.Address]*PreState) *mockSnapshot {
 	state := &mockState{
 		snapshots: map[types.Hash]Snapshot{},
 	}
@@ -91,7 +91,7 @@ func newStateWithPreState(preState map[types.Address]*PreState) (*mockState, *mo
 		snapshot.data[helper.EncodeToHex(hashit(addr.Bytes()))] = accountRlp
 	}
 
-	return state, snapshot
+	return snapshot
 }
 
 func newTestTxn(p map[types.Address]*PreState) *Txn {
