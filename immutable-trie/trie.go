@@ -125,20 +125,20 @@ var stateStateParserPool fastrlp.ParserPool
 func (t *Trie) GetStorage(root types.Hash, raw types.Hash) types.Hash {
 
 	// Load trie from memory if there is some state
-	var trie *Trie
+	var dummySnap *Snapshot
 	if root == types.EmptyRootHash {
-		trie = t.state.NewSnapshot().(*Trie)
+		dummySnap = t.state.NewSnapshot().(*Snapshot)
 	} else {
 		xx, err := t.state.NewSnapshotAt(root)
 		if err != nil {
 			panic(err)
 		}
-		trie = xx.(*Trie)
+		dummySnap = xx.(*Snapshot)
 	}
 
 	key := helper.Keccak256(raw.Bytes())
 
-	val, ok := trie.Get(key)
+	val, ok := dummySnap.trieRoot.Get(key)
 	if !ok {
 		return types.Hash{}
 	}
@@ -220,7 +220,7 @@ func (t *Trie) Commit(objs []*state.Object) (state.Snapshot, []byte) {
 					panic(err)
 				}
 
-				localTxn := localSnapshot.(*Trie).Txn()
+				localTxn := localSnapshot.(*Snapshot).trieRoot.Txn()
 				localTxn.batch = batch
 
 				for _, entry := range obj.Storage {
@@ -264,7 +264,7 @@ func (t *Trie) Commit(objs []*state.Object) (state.Snapshot, []byte) {
 	batch.Write()
 
 	t.state.AddState(types.BytesToHash(root), nTrie)
-	return nTrie, root
+	return &Snapshot{state: t.state, trieRoot: nTrie}, root
 }
 
 // Hash returns the root hash of the trie. It does not write to the

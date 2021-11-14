@@ -24,19 +24,24 @@ func NewState(storage Storage) *State {
 	return s
 }
 
-func (s *State) NewSnapshot() state.Snapshot {
-	t := NewTrie()
-	t.state = s
-	t.storage = s.storage
-	return t
-}
-
 func (s *State) SetCode(hash types.Hash, code []byte) {
 	s.storage.SetCode(hash, code)
 }
 
 func (s *State) GetCode(hash types.Hash) ([]byte, bool) {
 	return s.storage.GetCode(hash)
+}
+
+func (s *State) NewSnapshot() state.Snapshot {
+	t := NewTrie()
+	t.state = s
+	t.storage = s.storage
+
+	return &Snapshot{
+		state:    s,
+		trieRoot: t,
+	}
+	return t
 }
 
 func (s *State) NewSnapshotAt(root types.Hash) (state.Snapshot, error) {
@@ -49,6 +54,8 @@ func (s *State) NewSnapshotAt(root types.Hash) (state.Snapshot, error) {
 	if ok {
 		t := tt.(*Trie)
 		t.state = s
+
+		return &Snapshot{state: s, trieRoot: tt.(*Trie)}, nil
 		return tt.(*Trie), nil
 	}
 	n, ok, err := GetNode(root.Bytes(), s.storage)
@@ -63,6 +70,10 @@ func (s *State) NewSnapshotAt(root types.Hash) (state.Snapshot, error) {
 		state:   s,
 		storage: s.storage,
 	}
+	return &Snapshot{
+		state:    s,
+		trieRoot: t,
+	}, nil
 	return t, nil
 }
 
