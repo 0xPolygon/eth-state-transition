@@ -15,7 +15,6 @@ import (
 	itrie "github.com/0xPolygon/eth-state-transition/immutable-trie"
 	"github.com/0xPolygon/eth-state-transition/runtime"
 	"github.com/0xPolygon/eth-state-transition/types"
-	"github.com/0xPolygon/polygon-sdk/chain"
 )
 
 // TESTS is the default location of the tests folder
@@ -191,7 +190,7 @@ func (e *exec) UnmarshalJSON(input []byte) error {
 	return nil
 }
 
-func buildState(t *testing.T, allocs map[types.Address]*chain.GenesisAccount) (state.State, state.Snapshot, types.Hash) {
+func buildState(t *testing.T, allocs map[types.Address]*types.GenesisAccount) (state.State, state.Snapshot, types.Hash) {
 	s := itrie.NewState(itrie.NewMemoryStorage())
 	snap := s.NewSnapshot()
 

@@ -12,7 +12,6 @@ import (
 	"github.com/0xPolygon/eth-state-transition/helper"
 	"github.com/0xPolygon/eth-state-transition/runtime"
 	"github.com/0xPolygon/eth-state-transition/types"
-	"github.com/0xPolygon/polygon-sdk/chain"
 )
 
 var (
@@ -23,7 +22,7 @@ var (
 type stateCase struct {
 	Info        *info                                   `json:"_info"`
 	Env         *env                                    `json:"env"`
-	Pre         map[types.Address]*chain.GenesisAccount `json:"pre"`
+	Pre         map[types.Address]*types.GenesisAccount `json:"pre"`
 	Post        map[string]postState                    `json:"post"`
 	Transaction *stTransaction                          `json:"transaction"`
 }

@@ -14,7 +14,6 @@ import (
 	"github.com/0xPolygon/eth-state-transition/runtime"
 	"github.com/0xPolygon/eth-state-transition/runtime/evm"
 	"github.com/0xPolygon/eth-state-transition/types"
-	"github.com/0xPolygon/polygon-sdk/chain"
 )
 
 var mainnetChainConfig = runtime.Params{
@@ -37,8 +36,8 @@ type VMCase struct {
 	Logs string `json:"logs"`
 	Out  string `json:"out"`
 
-	Post map[types.Address]*chain.GenesisAccount `json:"post"`
-	Pre  map[types.Address]*chain.GenesisAccount `json:"pre"`
+	Post map[types.Address]*types.GenesisAccount `json:"post"`
+	Pre  map[types.Address]*types.GenesisAccount `json:"pre"`
 }
 
 func testVMCase(t *testing.T, name string, c *VMCase) {
