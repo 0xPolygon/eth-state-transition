@@ -38,6 +38,14 @@ type mockSnapshot struct {
 	data map[string][]byte
 }
 
+func (m *mockSnapshot) GetStorage(addr types.Address, slot types.Hash) ([]byte, error) {
+	panic("TODO")
+}
+
+func (m *mockSnapshot) GetAccount(addr types.Address) (*types.Account, error) {
+	panic("TODO")
+}
+
 func (m *mockSnapshot) Get(k []byte) ([]byte, bool) {
 	v, ok := m.data[helper.EncodeToHex(k)]
 	return v, ok
@@ -80,7 +88,7 @@ func newTestTxn(p map[types.Address]*PreState) *Txn {
 	return newTxn(newStateWithPreState(p))
 }
 
-func buildMockPreState(p *PreState) (*Account, *mockSnapshot) {
+func buildMockPreState(p *PreState) (*types.Account, *mockSnapshot) {
 	var snap *mockSnapshot
 	root := emptyStateHash
 
@@ -97,7 +105,7 @@ func buildMockPreState(p *PreState) (*Account, *mockSnapshot) {
 		}
 	}
 
-	account := &Account{
+	account := &types.Account{
 		Nonce:   p.Nonce,
 		Balance: big.NewInt(int64(p.Balance)),
 		Root:    root,

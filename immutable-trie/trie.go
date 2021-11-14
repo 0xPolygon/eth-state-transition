@@ -107,6 +107,24 @@ func NewTrie() *Trie {
 	return &Trie{}
 }
 
+func (t *Trie) GetStorage(addr types.Address, slot types.Hash) ([]byte, error) {
+	return nil, nil
+}
+
+func (t *Trie) GetAccount(addr types.Address) (*types.Account, error) {
+	data, ok := t.Get(helper.Keccak256(addr.Bytes()))
+	if !ok {
+		return nil, nil
+	}
+
+	var err error
+	var account types.Account
+	if err = account.UnmarshalRlp(data); err != nil {
+		return nil, err
+	}
+	return &account, nil
+}
+
 func (t *Trie) Get(k []byte) ([]byte, bool) {
 	txn := t.Txn()
 	res := txn.Lookup(k)
@@ -141,7 +159,7 @@ func (t *Trie) Commit(objs []*state.Object) (state.Snapshot, []byte) {
 			tt.Delete(hashit(obj.Address.Bytes()))
 		} else {
 
-			account := state.Account{
+			account := types.Account{
 				Balance:  obj.Balance,
 				Nonce:    obj.Nonce,
 				CodeHash: obj.CodeHash.Bytes(),

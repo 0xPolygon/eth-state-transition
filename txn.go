@@ -78,7 +78,7 @@ func (txn *Txn) RevertToSnapshot(id int) {
 }
 
 // GetAccount returns an account
-func (txn *Txn) GetAccount(addr types.Address) (*Account, bool) {
+func (txn *Txn) GetAccount(addr types.Address) (*types.Account, bool) {
 	object, exists := txn.getStateObject(addr)
 	if !exists {
 		return nil, false
@@ -97,22 +97,32 @@ func (txn *Txn) getStateObject(addr types.Address) (*StateObject, bool) {
 		return obj.Copy(), true
 	}
 
-	data, ok := txn.snapshot.Get(txn.hashit(addr.Bytes()))
-	if !ok {
+	account, err := txn.snapshot.GetAccount(addr)
+	if err != nil {
+		return nil, false
+	}
+	if account == nil {
 		return nil, false
 	}
 
-	var err error
-	var account Account
-	if err = account.UnmarshalRlp(data); err != nil {
-		return nil, false
-	}
+	/*
+		data, ok := txn.snapshot.Get(txn.hashit(addr.Bytes()))
+		if !ok {
+			return nil, false
+		}
+		var err error
+		var account Account
+		if err = account.UnmarshalRlp(data); err != nil {
+			return nil, false
+		}
+	*/
 
+	var trie accountTrie
 	// Load trie from memory if there is some state
 	if account.Root == emptyStateHash {
-		account.Trie = txn.state.NewSnapshot()
+		trie = txn.state.NewSnapshot()
 	} else {
-		account.Trie, err = txn.state.NewSnapshotAt(account.Root)
+		trie, err = txn.state.NewSnapshotAt(account.Root)
 		if err != nil {
 			return nil, false
 		}
@@ -120,6 +130,7 @@ func (txn *Txn) getStateObject(addr types.Address) (*StateObject, bool) {
 
 	obj := &StateObject{
 		Account: account.Copy(),
+		Trie:    trie,
 	}
 	return obj, true
 }
@@ -128,12 +139,12 @@ func (txn *Txn) upsertAccount(addr types.Address, create bool, f func(object *St
 	object, exists := txn.getStateObject(addr)
 	if !exists && create {
 		object = &StateObject{
-			Account: &Account{
+			Account: &types.Account{
 				Balance:  big.NewInt(0),
-				Trie:     txn.state.NewSnapshot(),
 				CodeHash: emptyCodeHash,
 				Root:     emptyStateHash,
 			},
+			Trie: txn.state.NewSnapshot(),
 		}
 	}
 
@@ -481,23 +492,23 @@ func (txn *Txn) Empty(addr types.Address) bool {
 
 func newStateObject(txn *Txn) *StateObject {
 	return &StateObject{
-		Account: &Account{
+		Account: &types.Account{
 			Balance:  big.NewInt(0),
-			Trie:     txn.state.NewSnapshot(),
 			CodeHash: emptyCodeHash,
 			Root:     emptyStateHash,
 		},
+		Trie: txn.state.NewSnapshot(),
 	}
 }
 
 func (txn *Txn) CreateAccount(addr types.Address) {
 	obj := &StateObject{
-		Account: &Account{
+		Account: &types.Account{
 			Balance:  big.NewInt(0),
-			Trie:     txn.state.NewSnapshot(),
 			CodeHash: emptyCodeHash,
 			Root:     emptyStateHash,
 		},
+		Trie: txn.state.NewSnapshot(),
 	}
 
 	prev, ok := txn.getStateObject(addr)

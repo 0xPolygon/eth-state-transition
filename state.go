@@ -2,7 +2,6 @@ package state
 
 import (
 	"bytes"
-	"fmt"
 	"math/big"
 
 	iradix "github.com/hashicorp/go-immutable-radix"
@@ -19,6 +18,7 @@ type State interface {
 }
 
 type Snapshot interface {
+	GetAccount(addr types.Address) (*types.Account, error)
 	Get(k []byte) ([]byte, bool)
 	Commit(objs []*Object) (Snapshot, []byte)
 }
@@ -28,6 +28,7 @@ type accountTrie interface {
 	Get(k []byte) ([]byte, bool)
 }
 
+/*
 // Account is the account reference in the ethereum state
 type Account struct {
 	Nonce    uint64
@@ -101,12 +102,14 @@ func (a *Account) Copy() *Account {
 
 	return aa
 }
+*/
 
 var emptyCodeHash = helper.Keccak256(nil)
 
 // StateObject is the internal representation of the account
 type StateObject struct {
-	Account   *Account
+	Account   *types.Account
+	Trie      accountTrie
 	Code      []byte
 	Suicide   bool
 	Deleted   bool
@@ -121,7 +124,7 @@ func (s *StateObject) Empty() bool {
 var stateStateParserPool fastrlp.ParserPool
 
 func (s *StateObject) GetCommitedState(key types.Hash) types.Hash {
-	val, ok := s.Account.Trie.Get(key.Bytes())
+	val, ok := s.Trie.Get(key.Bytes())
 	if !ok {
 		return types.Hash{}
 	}
@@ -157,7 +160,9 @@ func (s *StateObject) Copy() *StateObject {
 	if s.Txn != nil {
 		ss.Txn = s.Txn.CommitOnly().Txn()
 	}
-
+	if s.Trie != nil {
+		ss.Trie = s.Trie
+	}
 	return ss
 }
 
