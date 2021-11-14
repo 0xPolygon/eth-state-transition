@@ -6,7 +6,7 @@ import (
 
 	"github.com/0xPolygon/eth-state-transition/helper"
 	"github.com/0xPolygon/eth-state-transition/runtime"
-	"github.com/0xPolygon/polygon-sdk/types"
+	"github.com/0xPolygon/eth-state-transition/types"
 	"github.com/stretchr/testify/assert"
 )
 

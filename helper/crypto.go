@@ -5,7 +5,7 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 
-	"github.com/0xPolygon/polygon-sdk/types"
+	"github.com/0xPolygon/eth-state-transition/types"
 	"github.com/btcsuite/btcd/btcec"
 )
 

@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/0xPolygon/eth-state-transition/helper"
-	"github.com/0xPolygon/polygon-sdk/types"
+	"github.com/0xPolygon/eth-state-transition/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/umbracle/fastrlp"
 	"golang.org/x/crypto/sha3"

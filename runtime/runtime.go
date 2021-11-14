@@ -4,7 +4,7 @@ import (
 	"errors"
 	"math/big"
 
-	"github.com/0xPolygon/polygon-sdk/types"
+	"github.com/0xPolygon/eth-state-transition/types"
 )
 
 // TxContext is the context of the transaction

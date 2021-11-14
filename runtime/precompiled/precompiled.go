@@ -4,7 +4,7 @@ import (
 	"encoding/binary"
 
 	"github.com/0xPolygon/eth-state-transition/runtime"
-	"github.com/0xPolygon/polygon-sdk/types"
+	"github.com/0xPolygon/eth-state-transition/types"
 )
 
 var _ runtime.Runtime = &Precompiled{}

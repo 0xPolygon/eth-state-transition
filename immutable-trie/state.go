@@ -6,7 +6,7 @@ import (
 	lru "github.com/hashicorp/golang-lru"
 
 	state "github.com/0xPolygon/eth-state-transition"
-	"github.com/0xPolygon/polygon-sdk/types"
+	"github.com/0xPolygon/eth-state-transition/types"
 )
 
 type State struct {

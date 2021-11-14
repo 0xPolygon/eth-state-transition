@@ -14,8 +14,8 @@ import (
 	"github.com/0xPolygon/eth-state-transition/helper"
 	itrie "github.com/0xPolygon/eth-state-transition/immutable-trie"
 	"github.com/0xPolygon/eth-state-transition/runtime"
+	"github.com/0xPolygon/eth-state-transition/types"
 	"github.com/0xPolygon/polygon-sdk/chain"
-	"github.com/0xPolygon/polygon-sdk/types"
 )
 
 // TESTS is the default location of the tests folder
@@ -207,7 +207,7 @@ func buildState(t *testing.T, allocs map[types.Address]*chain.GenesisAccount) (s
 		}
 
 		for k, v := range alloc.Storage {
-			txn.SetState(addr, k, v)
+			txn.SetState(addr, types.BytesToHash(k[:]), types.BytesToHash(v[:]))
 		}
 	}
 

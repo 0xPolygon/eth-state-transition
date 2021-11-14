@@ -9,7 +9,7 @@ import (
 	"github.com/0xPolygon/eth-state-transition/runtime"
 	"github.com/0xPolygon/eth-state-transition/runtime/evm"
 	"github.com/0xPolygon/eth-state-transition/runtime/precompiled"
-	"github.com/0xPolygon/polygon-sdk/types"
+	"github.com/0xPolygon/eth-state-transition/types"
 )
 
 const (
@@ -210,7 +210,7 @@ func (t *Transition) Write(txn *types.Transaction) error {
 
 	// Set the receipt logs and create a bloom for filtering
 	receipt.Logs = logs
-	receipt.LogsBloom = types.CreateBloom([]*types.Receipt{receipt})
+	// receipt.LogsBloom = types.CreateBloom([]*types.Receipt{receipt})
 	t.receipts = append(t.receipts, receipt)
 
 	return nil

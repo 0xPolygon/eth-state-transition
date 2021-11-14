@@ -2,7 +2,7 @@ package itrie
 
 import (
 	itrie "github.com/0xPolygon/eth-state-transition/immutable-trie"
-	"github.com/0xPolygon/polygon-sdk/types"
+	"github.com/0xPolygon/eth-state-transition/types"
 	"github.com/syndtr/goleveldb/leveldb"
 )
 

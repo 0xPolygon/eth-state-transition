@@ -13,8 +13,8 @@ import (
 	"github.com/0xPolygon/eth-state-transition/helper"
 	"github.com/0xPolygon/eth-state-transition/runtime"
 	"github.com/0xPolygon/eth-state-transition/runtime/evm"
+	"github.com/0xPolygon/eth-state-transition/types"
 	"github.com/0xPolygon/polygon-sdk/chain"
-	"github.com/0xPolygon/polygon-sdk/types"
 )
 
 var mainnetChainConfig = runtime.Params{
@@ -95,7 +95,7 @@ func testVMCase(t *testing.T, name string, c *VMCase) {
 	// check state
 	for addr, alloc := range c.Post {
 		for key, val := range alloc.Storage {
-			if have := txn.GetState(addr, key); have != val {
+			if have := txn.GetState(addr, types.BytesToHash(key[:])); have != types.BytesToHash(val[:]) {
 				t.Fatalf("wrong storage value at %s:\n  got  %s\n  want %s\n at address %s", key, have, val, addr)
 			}
 		}

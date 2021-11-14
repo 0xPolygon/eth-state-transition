@@ -6,7 +6,7 @@ import (
 
 	state "github.com/0xPolygon/eth-state-transition"
 	"github.com/0xPolygon/eth-state-transition/helper"
-	"github.com/0xPolygon/polygon-sdk/types"
+	"github.com/0xPolygon/eth-state-transition/types"
 	"github.com/umbracle/fastrlp"
 	"golang.org/x/crypto/sha3"
 )
