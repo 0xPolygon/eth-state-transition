@@ -96,12 +96,28 @@ func (t *Transition) SetGetHash(helper GetHashByNumberHelper) {
 	t.getHash = helper(uint64(t.ctx.Number), t.ctx.Hash)
 }
 
+func (t *Transition) subGasPool(amount uint64) error {
+	if t.gasPool < amount {
+		return ErrBlockLimitReached
+	}
+	t.gasPool -= amount
+	return nil
+}
+
+func (t *Transition) addGasPool(amount uint64) {
+	t.gasPool += amount
+}
+
+func (t *Transition) Txn() *Txn {
+	return t.txn
+}
+
 // Write writes another transaction to the executor
 func (t *Transition) Write(txn *types.Transaction) (*types.Result, error) {
 	// Make a local copy and apply the transaction
 	msg := txn.Copy()
 
-	result, err := t.Apply(msg)
+	result, err := t.applyImpl(msg)
 	if err != nil {
 		return nil, err
 	}
@@ -130,7 +146,7 @@ func (t *Transition) Write(txn *types.Transaction) (*types.Result, error) {
 
 	} else {
 		// TODO: If byzntium is enabled you need a special step to commit the data yourself
-		t.txn.CleanDeleteObjects(t.forks.EIP155)
+		t.txn.CleanDeleteObjects(t.forks.EIP158)
 
 		/*
 			objs := t.txn.Commit(t.forks.EIP155)
@@ -153,24 +169,8 @@ func (t *Transition) Write(txn *types.Transaction) (*types.Result, error) {
 	return receipt, nil
 }
 
-func (t *Transition) subGasPool(amount uint64) error {
-	if t.gasPool < amount {
-		return ErrBlockLimitReached
-	}
-	t.gasPool -= amount
-	return nil
-}
-
-func (t *Transition) addGasPool(amount uint64) {
-	t.gasPool += amount
-}
-
-func (t *Transition) Txn() *Txn {
-	return t.txn
-}
-
 // Apply applies a new transaction
-func (t *Transition) Apply(msg *types.Transaction) (*runtime.ExecutionResult, error) {
+func (t *Transition) applyImpl(msg *types.Transaction) (*runtime.ExecutionResult, error) {
 	s := t.txn.Snapshot()
 	result, err := t.apply(msg)
 	if err != nil {
