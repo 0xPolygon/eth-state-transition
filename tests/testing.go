@@ -16,6 +16,7 @@ import (
 	"github.com/0xPolygon/eth-state-transition/runtime"
 	"github.com/0xPolygon/eth-state-transition/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/umbracle/fastrlp"
 )
 
 // TESTS is the default location of the tests folder
@@ -478,4 +479,33 @@ func listFiles(folder string) ([]string, error) {
 		return nil
 	})
 	return files, err
+}
+
+// MarshalLogsWith marshals the logs of the receipt to RLP with a specific fastrlp.Arena
+func MarshalLogsWith(logs []*types.Log) []byte {
+	a := &fastrlp.Arena{}
+
+	marshalLog := func(l *types.Log) *fastrlp.Value {
+		v := a.NewArray()
+		v.Set(a.NewBytes(l.Address.Bytes()))
+
+		topics := a.NewArray()
+		for _, t := range l.Topics {
+			topics.Set(a.NewBytes(t.Bytes()))
+		}
+		v.Set(topics)
+		v.Set(a.NewBytes(l.Data))
+		return v
+	}
+
+	if len(logs) == 0 {
+		// There are no receipts, write the RLP null array entry
+		return a.NewNullArray().MarshalTo(nil)
+	}
+	vals := a.NewArray()
+	for _, l := range logs {
+		vals.Set(marshalLog(l))
+	}
+	return vals.MarshalTo(nil)
+
 }

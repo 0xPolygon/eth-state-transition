@@ -48,7 +48,7 @@ type Transition struct {
 	getHash GetHashByNumber
 
 	// result
-	receipts []*types.Receipt
+	results  []*types.Result
 	totalGas uint64
 }
 
@@ -61,7 +61,7 @@ func NewTransition(forks runtime.ForksInTime, ctx runtime.TxContext, snap Snapsh
 		txn:      txn,
 		forks:    forks,
 		gasPool:  uint64(ctx.GasLimit),
-		receipts: []*types.Receipt{},
+		results:  []*types.Result{},
 		totalGas: 0,
 	}
 
@@ -84,8 +84,8 @@ func (t *Transition) TotalGas() uint64 {
 	return t.totalGas
 }
 
-func (t *Transition) Receipts() []*types.Receipt {
-	return t.receipts
+func (t *Transition) Results() []*types.Result {
+	return t.results
 }
 
 func (e *Transition) setRuntime(r runtime.Runtime) {
@@ -94,7 +94,7 @@ func (e *Transition) setRuntime(r runtime.Runtime) {
 
 type BlockResult struct {
 	Root     types.Hash
-	Receipts []*types.Receipt
+	Receipts []*types.Result
 	TotalGas uint64
 }
 
@@ -109,13 +109,13 @@ func (t *Transition) Snapshot() Snapshot {
 */
 
 // Write writes another transaction to the executor
-func (t *Transition) Write(txn *types.Transaction) error {
+func (t *Transition) Write(txn *types.Transaction) (*types.Result, error) {
 	// Make a local copy and apply the transaction
 	msg := txn.Copy()
 
-	result, e := t.Apply(msg)
-	if e != nil {
-		return e
+	result, err := t.Apply(msg)
+	if err != nil {
+		return nil, err
 	}
 	t.totalGas += result.GasUsed
 
@@ -123,10 +123,11 @@ func (t *Transition) Write(txn *types.Transaction) error {
 
 	// var root []byte
 
-	receipt := &types.Receipt{
-		CumulativeGasUsed: t.totalGas,
+	receipt := &types.Result{
+		// CumulativeGasUsed: t.totalGas,
 		// TxHash:            txn.Hash,
-		GasUsed: result.GasUsed,
+		GasUsed:     result.GasUsed,
+		ReturnValue: result.ReturnValue,
 	}
 
 	if t.forks.Byzantium {
@@ -160,9 +161,9 @@ func (t *Transition) Write(txn *types.Transaction) error {
 	// Set the receipt logs and create a bloom for filtering
 	receipt.Logs = logs
 	// receipt.LogsBloom = types.CreateBloom([]*types.Receipt{receipt})
-	t.receipts = append(t.receipts, receipt)
+	t.results = append(t.results, receipt)
 
-	return nil
+	return receipt, nil
 }
 
 func (t *Transition) subGasPool(amount uint64) error {

@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"math/big"
 	"strings"
-
-	"github.com/umbracle/fastrlp"
 )
 
 type Transaction struct {
@@ -99,18 +97,12 @@ func (a Address) String() string {
 	return "0x" + hex.EncodeToString(a[:])
 }
 
-type Receipt struct {
-	// consensus fields
-	Root              Hash
-	CumulativeGasUsed uint64
-	//LogsBloom         Bloom
-	Logs    []*Log
-	Success bool
-
-	// context fields
+type Result struct {
+	Logs            []*Log
+	Success         bool
 	GasUsed         uint64
 	ContractAddress Address
-	//TxHash          Hash
+	ReturnValue     []byte
 }
 
 type Log struct {
@@ -118,10 +110,6 @@ type Log struct {
 	Topics  []Hash
 	Data    []byte
 }
-
-const BloomByteLength = 256
-
-type Bloom [BloomByteLength]byte
 
 func min(i, j int) int {
 	if i < j {
@@ -146,32 +134,6 @@ var (
 
 var ZeroAddress = Address{}
 var ZeroHash = Hash{}
-
-// MarshalLogsWith marshals the logs of the receipt to RLP with a specific fastrlp.Arena
-func (r *Receipt) MarshalLogsWith(a *fastrlp.Arena) *fastrlp.Value {
-	if len(r.Logs) == 0 {
-		// There are no receipts, write the RLP null array entry
-		return a.NewNullArray()
-	}
-	logs := a.NewArray()
-	for _, l := range r.Logs {
-		logs.Set(l.MarshalRLPWith(a))
-	}
-	return logs
-}
-
-func (l *Log) MarshalRLPWith(a *fastrlp.Arena) *fastrlp.Value {
-	v := a.NewArray()
-	v.Set(a.NewBytes(l.Address.Bytes()))
-
-	topics := a.NewArray()
-	for _, t := range l.Topics {
-		topics.Set(a.NewBytes(t.Bytes()))
-	}
-	v.Set(topics)
-	v.Set(a.NewBytes(l.Data))
-	return v
-}
 
 // UnmarshalText parses a hash in hex syntax.
 func (h *Hash) UnmarshalText(input []byte) error {

@@ -3,11 +3,8 @@ package tests
 import (
 	"encoding/json"
 	"io/ioutil"
-	"math/big"
 	"strings"
 	"testing"
-
-	"github.com/umbracle/fastrlp"
 
 	state "github.com/0xPolygon/eth-state-transition"
 	"github.com/0xPolygon/eth-state-transition/helper"
@@ -103,14 +100,7 @@ func testVMCase(t *testing.T, name string, c *VMCase) {
 }
 
 func rlpHashLogs(logs []*types.Log) (res types.Hash) {
-	r := &types.Receipt{
-		Logs: logs,
-	}
-
-	ar := &fastrlp.Arena{}
-	v := r.MarshalLogsWith(ar)
-
-	dst := helper.Keccak256(v.MarshalTo(nil))
+	dst := helper.Keccak256(MarshalLogsWith(logs))
 	return types.BytesToHash(dst)
 }
 
@@ -158,8 +148,4 @@ func TestEVM(t *testing.T) {
 			})
 		}
 	}
-}
-
-func vmTestBlockHash(n uint64) types.Hash {
-	return types.BytesToHash(helper.Keccak256([]byte(big.NewInt(int64(n)).String())))
 }
