@@ -66,7 +66,8 @@ func RunSpecificTest(file string, t *testing.T, c stateCase, name, fork string, 
 		txn.Suicide(ripemd)
 	}
 
-	_, root := snap.Commit(txn.Commit(forks.EIP158))
+	txn.CleanDeleteObjects(forks.EIP158)
+	_, root := snap.Commit(txn.Commit())
 	if !bytes.Equal(root, p.Root.Bytes()) {
 		t.Fatalf("root mismatch (%s %s %s %d): expected %s but found %s", file, name, fork, index, p.Root.String(), helper.EncodeToHex(root))
 	}

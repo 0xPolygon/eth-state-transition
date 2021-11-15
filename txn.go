@@ -509,8 +509,8 @@ func (txn *Txn) CleanDeleteObjects(deleteEmptyObjects bool) {
 	txn.txn.Delete(refundIndex)
 }
 
-func (txn *Txn) Commit(deleteEmptyObjects bool) []*Object {
-	txn.CleanDeleteObjects(deleteEmptyObjects)
+func (txn *Txn) Commit() []*Object {
+	// txn.CleanDeleteObjects(deleteEmptyObjects)
 
 	x := txn.txn.Commit()
 

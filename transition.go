@@ -76,6 +76,18 @@ func NewTransition(forks runtime.ForksInTime, ctx runtime.TxContext, snap Snapsh
 	return transition
 }
 
+func (e *Transition) Commit() []*Object {
+	return e.txn.Commit()
+}
+
+func (t *Transition) TotalGas() uint64 {
+	return t.totalGas
+}
+
+func (t *Transition) Receipts() []*types.Receipt {
+	return t.receipts
+}
+
 func (e *Transition) setRuntime(r runtime.Runtime) {
 	e.runtimes = append(e.runtimes, r)
 }
@@ -95,14 +107,6 @@ func (t *Transition) Snapshot() Snapshot {
 	return t.txn.snapshot
 }
 */
-
-func (t *Transition) TotalGas() uint64 {
-	return t.totalGas
-}
-
-func (t *Transition) Receipts() []*types.Receipt {
-	return t.receipts
-}
 
 // Write writes another transaction to the executor
 func (t *Transition) Write(txn *types.Transaction) error {

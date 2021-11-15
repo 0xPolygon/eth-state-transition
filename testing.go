@@ -92,13 +92,13 @@ func testDeleteCommonStateRoot(t *testing.T, buildPreState buildPreState) {
 	txn.SetState(addr2, hash1, hash1)
 	txn.SetState(addr2, hash2, hash1)
 
-	snap2, _ := snap.Commit(txn.Commit(false))
+	snap2, _ := snap.Commit(txn.Commit())
 	txn2 := newTxn(snap2)
 
 	txn2.SetState(addr1, hash0, hash0)
 	txn2.SetState(addr1, hash1, hash0)
 
-	snap3, _ := snap2.Commit(txn2.Commit(false))
+	snap3, _ := snap2.Commit(txn2.Commit())
 
 	txn3 := newTxn(snap3)
 	assert.Equal(t, hash1, txn3.GetState(addr1, hash2))
@@ -117,7 +117,7 @@ func testWriteState(t *testing.T, buildPreState buildPreState) {
 	assert.Equal(t, hash1, txn.GetState(addr1, hash1))
 	assert.Equal(t, hash2, txn.GetState(addr1, hash2))
 
-	snap, _ = snap.Commit(txn.Commit(false))
+	snap, _ = snap.Commit(txn.Commit())
 
 	txn = newTxn(snap)
 	assert.Equal(t, hash1, txn.GetState(addr1, hash1))
@@ -131,7 +131,7 @@ func testWriteEmptyState(t *testing.T, buildPreState buildPreState) {
 
 	// Without EIP150 the data is added
 	txn.SetState(addr1, hash1, hash0)
-	snap, _ = snap.Commit(txn.Commit(false))
+	snap, _ = snap.Commit(txn.Commit())
 
 	txn = newTxn(snap)
 	assert.True(t, txn.Exist(addr1))
@@ -141,7 +141,8 @@ func testWriteEmptyState(t *testing.T, buildPreState buildPreState) {
 
 	// With EIP150 the empty data is removed
 	txn.SetState(addr1, hash1, hash0)
-	snap, _ = snap.Commit(txn.Commit(true))
+	txn.CleanDeleteObjects(true)
+	snap, _ = snap.Commit(txn.Commit())
 
 	txn = newTxn(snap)
 	assert.False(t, txn.Exist(addr1))
@@ -156,7 +157,8 @@ func testUpdateStateWithEmpty(t *testing.T, buildPreState buildPreState) {
 
 	// TODO, test with false (should not be deleted)
 	// TODO, test with balance on the account and nonce
-	snap, _ = snap.Commit(txn.Commit(true))
+	txn.CleanDeleteObjects(true)
+	snap, _ = snap.Commit(txn.Commit())
 
 	txn = newTxn(snap)
 	assert.False(t, txn.Exist(addr1))
@@ -168,7 +170,8 @@ func testSuicideAccountInPreState(t *testing.T, buildPreState buildPreState) {
 
 	txn := newTxn(snap)
 	txn.Suicide(addr1)
-	snap, _ = snap.Commit(txn.Commit(true))
+	txn.CleanDeleteObjects(true)
+	snap, _ = snap.Commit(txn.Commit())
 
 	txn = newTxn(snap)
 	assert.False(t, txn.Exist(addr1))
@@ -185,7 +188,8 @@ func testSuicideAccount(t *testing.T, buildPreState buildPreState) {
 	// Note, even if has commit suicide it still exists in the current txn
 	assert.True(t, txn.Exist(addr1))
 
-	snap, _ = snap.Commit(txn.Commit(true))
+	txn.CleanDeleteObjects(true)
+	snap, _ = snap.Commit(txn.Commit())
 
 	txn = newTxn(snap)
 	assert.False(t, txn.Exist(addr1))
@@ -204,7 +208,8 @@ func testSuicideAccountWithData(t *testing.T, buildPreState buildPreState) {
 	txn.SetState(addr1, hash1, hash1)
 
 	txn.Suicide(addr1)
-	snap, _ = snap.Commit(txn.Commit(true))
+	txn.CleanDeleteObjects(true)
+	snap, _ = snap.Commit(txn.Commit())
 
 	txn = newTxn(snap)
 
@@ -226,7 +231,9 @@ func testSuicideCoinbase(t *testing.T, buildPreState buildPreState) {
 	txn := newTxn(snap)
 	txn.Suicide(addr1)
 	txn.AddSealingReward(addr1, big.NewInt(10))
-	snap, _ = snap.Commit(txn.Commit(true))
+
+	txn.CleanDeleteObjects(true)
+	snap, _ = snap.Commit(txn.Commit())
 
 	txn = newTxn(snap)
 	assert.Equal(t, big.NewInt(10), txn.GetBalance(addr1))
@@ -244,7 +251,8 @@ func testSuicideWithIntermediateCommit(t *testing.T, buildPreState buildPreState
 	txn.CleanDeleteObjects(true)
 	assert.Equal(t, uint64(0), txn.GetNonce(addr1))
 
-	txn.Commit(true)
+	txn.CleanDeleteObjects(true)
+	txn.Commit()
 	assert.Equal(t, uint64(0), txn.GetNonce(addr1))
 }
 
@@ -258,7 +266,7 @@ func testRestartRefunds(t *testing.T, buildPreState buildPreState) {
 	txn.AddRefund(1000)
 	assert.Equal(t, uint64(1000), txn.GetRefund())
 
-	txn.Commit(false)
+	txn.Commit()
 
 	// refund should be empty after the commit
 	assert.Equal(t, uint64(0), txn.GetRefund())
@@ -276,7 +284,8 @@ func testChangePrestateAccountBalanceToZero(t *testing.T, buildPreState buildPre
 
 	txn := newTxn(snap)
 	txn.SetBalance(addr1, big.NewInt(0))
-	snap, _ = snap.Commit(txn.Commit(true))
+	txn.CleanDeleteObjects(true)
+	snap, _ = snap.Commit(txn.Commit())
 
 	txn = newTxn(snap)
 	assert.False(t, txn.Exist(addr1))
@@ -289,7 +298,8 @@ func testChangeAccountBalanceToZero(t *testing.T, buildPreState buildPreState) {
 	txn := newTxn(snap)
 	txn.SetBalance(addr1, big.NewInt(10))
 	txn.SetBalance(addr1, big.NewInt(0))
-	snap, _ = snap.Commit(txn.Commit(true))
+	txn.CleanDeleteObjects(true)
+	snap, _ = snap.Commit(txn.Commit())
 
 	txn = newTxn(snap)
 	assert.False(t, txn.Exist(addr1))

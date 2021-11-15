@@ -211,7 +211,7 @@ func buildState(t *testing.T, allocs map[types.Address]*GenesisAccount) (state.S
 		}
 	}
 
-	_, root := snap.Commit(txn.Commit(false))
+	_, root := snap.Commit(txn.Commit())
 
 	snap, err := s.NewSnapshotAt(types.BytesToHash(root))
 	assert.NoError(t, err)
