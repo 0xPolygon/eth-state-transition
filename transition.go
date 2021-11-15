@@ -47,8 +47,7 @@ type Transition struct {
 	// GetHash GetHashByNumberHelper
 	getHash GetHashByNumber
 
-	// result
-	results  []*types.Result
+	// counter on the total gas used so far
 	totalGas uint64
 }
 
@@ -61,7 +60,6 @@ func NewTransition(forks runtime.ForksInTime, ctx runtime.TxContext, snap Snapsh
 		txn:      txn,
 		forks:    forks,
 		gasPool:  uint64(ctx.GasLimit),
-		results:  []*types.Result{},
 		totalGas: 0,
 	}
 
@@ -84,10 +82,6 @@ func (t *Transition) TotalGas() uint64 {
 	return t.totalGas
 }
 
-func (t *Transition) Results() []*types.Result {
-	return t.results
-}
-
 func (e *Transition) setRuntime(r runtime.Runtime) {
 	e.runtimes = append(e.runtimes, r)
 }
@@ -101,12 +95,6 @@ type BlockResult struct {
 func (t *Transition) SetGetHash(helper GetHashByNumberHelper) {
 	t.getHash = helper(uint64(t.ctx.Number), t.ctx.Hash)
 }
-
-/*
-func (t *Transition) Snapshot() Snapshot {
-	return t.txn.snapshot
-}
-*/
 
 // Write writes another transaction to the executor
 func (t *Transition) Write(txn *types.Transaction) (*types.Result, error) {
@@ -141,6 +129,7 @@ func (t *Transition) Write(txn *types.Transaction) (*types.Result, error) {
 		}
 
 	} else {
+		// TODO: If byzntium is enabled you need a special step to commit the data yourself
 		t.txn.CleanDeleteObjects(t.forks.EIP155)
 
 		/*
@@ -160,8 +149,6 @@ func (t *Transition) Write(txn *types.Transaction) (*types.Result, error) {
 
 	// Set the receipt logs and create a bloom for filtering
 	receipt.Logs = logs
-	// receipt.LogsBloom = types.CreateBloom([]*types.Receipt{receipt})
-	t.results = append(t.results, receipt)
 
 	return receipt, nil
 }

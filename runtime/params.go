@@ -6,18 +6,8 @@ import (
 
 // Params are all the set of params for the chain
 type Params struct {
-	Forks          *Forks                 `json:"forks"`
-	ChainID        int                    `json:"chainID"`
-	Engine         map[string]interface{} `json:"engine"`
-	BlockGasTarget uint64                 `json:"blockGasTarget"`
-}
-
-func (p *Params) GetEngine() string {
-	// We know there is already one
-	for k := range p.Engine {
-		return k
-	}
-	return ""
+	Forks   *Forks `json:"forks"`
+	ChainID int    `json:"chainID"`
 }
 
 // Forks specifies when each fork is activated
