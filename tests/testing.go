@@ -165,24 +165,24 @@ func (e *exec) UnmarshalJSON(input []byte) error {
 	e.Caller = dec.Caller
 	e.Origin = dec.Origin
 
-	e.Code, err = types.ParseBytes(&dec.Code)
+	e.Code, err = helper.ParseBytes(&dec.Code)
 	if err != nil {
 		return err
 	}
-	e.Data, err = types.ParseBytes(&dec.Data)
+	e.Data, err = helper.ParseBytes(&dec.Data)
 	if err != nil {
 		return err
 	}
 
-	e.Value, err = types.ParseUint256orHex(&dec.Value)
+	e.Value, err = helper.ParseUint256orHex(&dec.Value)
 	if err != nil {
 		return err
 	}
-	e.GasLimit, err = types.ParseUint64orHex(&dec.Gas)
+	e.GasLimit, err = helper.ParseUint64orHex(&dec.Gas)
 	if err != nil {
 		return err
 	}
-	e.GasPrice, err = types.ParseUint256orHex(&dec.GasPrice)
+	e.GasPrice, err = helper.ParseUint256orHex(&dec.GasPrice)
 	if err != nil {
 		return err
 	}
@@ -190,7 +190,7 @@ func (e *exec) UnmarshalJSON(input []byte) error {
 	return nil
 }
 
-func buildState(t *testing.T, allocs map[types.Address]*types.GenesisAccount) (state.Snapshot, types.Hash) {
+func buildState(t *testing.T, allocs map[types.Address]*GenesisAccount) (state.Snapshot, types.Hash) {
 	s := itrie.NewState(itrie.NewMemoryStorage())
 	snap := s.NewSnapshot()
 
@@ -310,7 +310,7 @@ func (t *stTransaction) UnmarshalJSON(input []byte) error {
 	for _, i := range dec.Value {
 		value := new(big.Int)
 		if i != "0x" {
-			v, err := types.ParseUint256orHex(&i)
+			v, err := helper.ParseUint256orHex(&i)
 			if err != nil {
 				return err
 			}
@@ -337,7 +337,7 @@ func (t *stTransaction) UnmarshalJSON(input []byte) error {
 
 	t.From = types.Address{}
 	if len(dec.SecretKey) > 0 {
-		secretKey, err := types.ParseBytes(&dec.SecretKey)
+		secretKey, err := helper.ParseBytes(&dec.SecretKey)
 		if err != nil {
 			return err
 		}

@@ -1,4 +1,4 @@
-package types
+package helper
 
 import (
 	"encoding/hex"
