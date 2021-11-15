@@ -17,7 +17,7 @@ type Snapshot interface {
 	Commit(objs []*Object) (Snapshot, []byte)
 }
 
-var emptyCodeHash = helper.Keccak256(nil)
+var EmptyCodeHash = helper.Keccak256(nil)
 
 // StateObject is the internal representation of the account
 type stateObject struct {
@@ -30,7 +30,7 @@ type stateObject struct {
 }
 
 func (s *stateObject) Empty() bool {
-	return s.Account.Nonce == 0 && s.Account.Balance.Sign() == 0 && bytes.Equal(s.Account.CodeHash, emptyCodeHash)
+	return s.Account.Nonce == 0 && s.Account.Balance.Sign() == 0 && bytes.Equal(s.Account.CodeHash, EmptyCodeHash)
 }
 
 // Copy makes a copy of the state object

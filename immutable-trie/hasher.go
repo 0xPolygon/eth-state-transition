@@ -5,16 +5,12 @@ import (
 	"hash"
 	"sync"
 
-	"github.com/0xPolygon/eth-state-transition/types"
+	state "github.com/0xPolygon/eth-state-transition"
 	"github.com/umbracle/fastrlp"
 	"golang.org/x/crypto/sha3"
 )
 
 var arenaPool fastrlp.ArenaPool
-
-var (
-	emptyRoot = types.StringToHash("56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421").Bytes()
-)
 
 var hasherPool = sync.Pool{
 	New: func() interface{} {
@@ -76,7 +72,7 @@ func (h *hasher) Hash(data []byte) []byte {
 
 func (t *Txn) Hash() ([]byte, error) {
 	if t.root == nil {
-		return emptyRoot, nil
+		return state.EmptyStateHash[:], nil
 	}
 
 	h := hasherPool.Get().(*hasher)

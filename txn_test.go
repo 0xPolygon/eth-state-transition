@@ -100,7 +100,7 @@ func newTestTxn(p map[types.Address]*PreState) *Txn {
 
 func buildMockPreState(p *PreState) (*types.Account, *mockSnapshot) {
 	var snap *mockSnapshot
-	root := emptyStateHash
+	root := EmptyStateHash
 
 	ar := &fastrlp.Arena{}
 	if p.State != nil {

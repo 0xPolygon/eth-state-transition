@@ -10,7 +10,7 @@ import (
 	"github.com/0xPolygon/eth-state-transition/types"
 )
 
-var emptyStateHash = types.StringToHash("0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421")
+var EmptyStateHash = types.StringToHash("0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421")
 
 var (
 	// logIndex is the index of the logs in the trie
@@ -105,8 +105,8 @@ func (txn *Txn) upsertAccount(addr types.Address, create bool, f func(object *st
 		object = &stateObject{
 			Account: &types.Account{
 				Balance:  big.NewInt(0),
-				CodeHash: emptyCodeHash,
-				Root:     emptyStateHash,
+				CodeHash: EmptyCodeHash,
+				Root:     EmptyStateHash,
 			},
 		}
 	}
@@ -454,8 +454,8 @@ func newStateObject(txn *Txn) *stateObject {
 	return &stateObject{
 		Account: &types.Account{
 			Balance:  big.NewInt(0),
-			CodeHash: emptyCodeHash,
-			Root:     emptyStateHash,
+			CodeHash: EmptyCodeHash,
+			Root:     EmptyStateHash,
 		},
 	}
 }
@@ -464,8 +464,8 @@ func (txn *Txn) CreateAccount(addr types.Address) {
 	obj := &stateObject{
 		Account: &types.Account{
 			Balance:  big.NewInt(0),
-			CodeHash: emptyCodeHash,
-			Root:     emptyStateHash,
+			CodeHash: EmptyCodeHash,
+			Root:     EmptyStateHash,
 		},
 	}
 
