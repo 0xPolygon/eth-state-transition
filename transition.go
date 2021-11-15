@@ -36,13 +36,10 @@ type Executor struct {
 	snap     Snapshot
 
 	ctx runtime.TxContext
-
-	GetHash GetHashByNumberHelper
-	// PostHook func(txn *Transition)
 }
 
 // NewExecutor creates a new executor
-func NewExecutor(config *runtime.Params, ctx runtime.TxContext, snap Snapshot) *Executor {
+func NewTransition(config *runtime.Params, ctx runtime.TxContext, snap Snapshot) *Transition {
 	e := &Executor{
 		config:   config,
 		runtimes: []runtime.Runtime{},
@@ -53,7 +50,7 @@ func NewExecutor(config *runtime.Params, ctx runtime.TxContext, snap Snapshot) *
 	e.setRuntime(precompiled.NewPrecompiled())
 	e.setRuntime(evm.NewEVM())
 
-	return e
+	return e.BeginTxn()
 }
 
 func (e *Executor) setRuntime(r runtime.Runtime) {
@@ -101,12 +98,12 @@ func (e *Executor) State() State {
 func (e *Executor) StateAt(root types.Hash) (Snapshot, error) {
 	return e.state.NewSnapshotAt(root)
 }
-*/
 
 // GetForksInTime returns the active forks at the given block height
 func (e *Executor) GetForksInTime(blockNumber uint64) runtime.ForksInTime {
 	return e.config.Forks.At(blockNumber)
 }
+*/
 
 func (e *Executor) BeginTxn() *Transition {
 	config := e.config.Forks.At(uint64(e.ctx.Number))
@@ -118,14 +115,23 @@ func (e *Executor) BeginTxn() *Transition {
 		r:       e,
 		ctx:     e.ctx,
 		state:   newTxn,
-		getHash: e.GetHash(uint64(e.ctx.Number), e.ctx.Hash),
 		config:  config,
 		gasPool: uint64(e.ctx.GasLimit),
 
 		receipts: []*types.Receipt{},
 		totalGas: 0,
 	}
+
+	// by default for getHash use a simple one
+	txn.getHash = func(n uint64) types.Hash {
+		return types.BytesToHash(helper.Keccak256([]byte(big.NewInt(int64(n)).String())))
+	}
+
 	return txn
+}
+
+func (t *Transition) SetGetHash(helper GetHashByNumberHelper) {
+	t.getHash = helper(uint64(t.ctx.Number), t.ctx.Hash)
 }
 
 type Transition struct {
@@ -135,9 +141,11 @@ type Transition struct {
 	r       *Executor
 	config  runtime.ForksInTime
 	state   *Txn
-	getHash GetHashByNumber
 	ctx     runtime.TxContext
 	gasPool uint64
+
+	// GetHash GetHashByNumberHelper
+	getHash GetHashByNumber
 
 	// result
 	receipts []*types.Receipt

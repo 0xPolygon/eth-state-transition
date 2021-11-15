@@ -45,7 +45,7 @@ func RunSpecificTest(file string, t *testing.T, c stateCase, name, fork string, 
 	snap, _ := buildState(t, c.Pre)
 	forks := config.At(uint64(env.Number))
 
-	xxx := state.NewExecutor(&runtime.Params{Forks: config, ChainID: 1}, c.Env.ToHeader(t), snap)
+	transition := state.NewTransition(&runtime.Params{Forks: config, ChainID: 1}, c.Env.ToHeader(t), snap)
 
 	/*
 		xxx.PostHook = func(t *state.Transition) {
@@ -58,14 +58,15 @@ func RunSpecificTest(file string, t *testing.T, c stateCase, name, fork string, 
 		}
 	*/
 
-	xxx.GetHash = func(num uint64, hash types.Hash) func(i uint64) types.Hash {
-		return vmTestBlockHash
-	}
+	/*
+		executor.GetHash = func(num uint64, hash types.Hash) func(i uint64) types.Hash {
+			return vmTestBlockHash
+		}
+	*/
 
-	executor := xxx.BeginTxn()
-	executor.Apply(msg) //nolint:errcheck
+	transition.Apply(msg) //nolint:errcheck
 
-	txn := executor.Txn()
+	txn := transition.Txn()
 
 	// mining rewards
 	txn.AddSealingReward(env.Coinbase, big.NewInt(0))
@@ -78,7 +79,7 @@ func RunSpecificTest(file string, t *testing.T, c stateCase, name, fork string, 
 		txn.Suicide(ripemd)
 	}
 
-	_, root := executor.Snapshot().Commit(txn.Commit(forks.EIP158))
+	_, root := transition.Snapshot().Commit(txn.Commit(forks.EIP158))
 	if !bytes.Equal(root, p.Root.Bytes()) {
 		t.Fatalf("root mismatch (%s %s %s %d): expected %s but found %s", file, name, fork, index, p.Root.String(), helper.EncodeToHex(root))
 	}

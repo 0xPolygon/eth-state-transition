@@ -49,22 +49,24 @@ func testVMCase(t *testing.T, name string, c *VMCase) {
 
 	config := mainnetChainConfig.Forks.At(uint64(env.Number))
 
-	executor := state.NewExecutor(&mainnetChainConfig, c.Env.ToHeader(t), snap)
-	executor.GetHash = func(num uint64, hash types.Hash) func(i uint64) types.Hash {
-		return vmTestBlockHash
-	}
+	transition := state.NewTransition(&mainnetChainConfig, c.Env.ToHeader(t), snap)
 
-	e := executor.BeginTxn()
-	ctx := e.ContextPtr()
+	/*
+		executor.GetHash = func(num uint64, hash types.Hash) func(i uint64) types.Hash {
+			return vmTestBlockHash
+		}
+	*/
+
+	ctx := transition.ContextPtr()
 	ctx.GasPrice = types.BytesToHash(env.GasPrice.Bytes())
 	ctx.Origin = env.Origin
 
 	evmR := evm.NewEVM()
 
-	code := e.GetCode(c.Exec.Address)
+	code := transition.GetCode(c.Exec.Address)
 	contract := runtime.NewContractCall(1, c.Exec.Caller, c.Exec.Caller, c.Exec.Address, c.Exec.Value, c.Exec.GasLimit, code, c.Exec.Data)
 
-	result := evmR.Run(contract, e, &config)
+	result := evmR.Run(contract, transition, &config)
 
 	if c.Gas == "" {
 		if result.Succeeded() {
@@ -84,7 +86,7 @@ func testVMCase(t *testing.T, name string, c *VMCase) {
 		t.Fatalf("return mismatch: got %s, want %s", ret, c.Out)
 	}
 
-	txn := e.Txn()
+	txn := transition.Txn()
 
 	// check logs
 	if logs := rlpHashLogs(txn.Logs()); logs != types.StringToHash(c.Logs) {
