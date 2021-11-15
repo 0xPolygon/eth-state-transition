@@ -30,9 +30,6 @@ type GetHashByNumber = func(i uint64) types.Hash
 type GetHashByNumberHelper = func(num uint64, hash types.Hash) GetHashByNumber
 
 type Transition struct {
-	// the current block being processed
-	// block *types.Block
-
 	runtimes []runtime.Runtime
 
 	// forks are the enabled forks for this transition
@@ -60,11 +57,10 @@ func NewTransition(forks runtime.ForksInTime, ctx runtime.TxContext, snap Snapsh
 	txn := NewTxn(snap)
 
 	transition := &Transition{
-		ctx:     ctx,
-		txn:     txn,
-		forks:   forks,
-		gasPool: uint64(ctx.GasLimit),
-
+		ctx:      ctx,
+		txn:      txn,
+		forks:    forks,
+		gasPool:  uint64(ctx.GasLimit),
 		receipts: []*types.Receipt{},
 		totalGas: 0,
 	}
@@ -188,21 +184,8 @@ func (t *Transition) Apply(msg *types.Transaction) (*runtime.ExecutionResult, er
 	if err != nil {
 		t.txn.RevertToSnapshot(s)
 	}
-
-	//if t.r.PostHook != nil {
-	//		t.r.PostHook(t)
-	//	}
-
 	return result, err
 }
-
-/*
-// ContextPtr returns reference of context
-// This method is called only by test
-func (t *Transition) ContextPtr() *runtime.TxContext {
-	return &t.ctx
-}
-*/
 
 func (t *Transition) subGasLimitPrice(msg *types.Transaction) error {
 	// deduct the upfront max gas cost
@@ -215,7 +198,6 @@ func (t *Transition) subGasLimitPrice(msg *types.Transaction) error {
 		}
 		return err
 	}
-
 	return nil
 }
 
@@ -225,12 +207,8 @@ func (t *Transition) nonceCheck(msg *types.Transaction) error {
 	if nonce != msg.Nonce {
 		return ErrNonceIncorrect
 	}
-
 	return nil
 }
-
-// errors that can originate in the consensus rules checks of the apply method below
-// surfacing of these errors reject the transaction thus not including it in the block
 
 var (
 	ErrNonceIncorrect        = fmt.Errorf("incorrect nonce")
@@ -242,72 +220,57 @@ var (
 	ErrNotEnoughFunds        = fmt.Errorf("not enough funds for transfer with given value")
 )
 
-type TransitionApplicationError struct {
-	Err           error
-	IsRecoverable bool // Should the transaction be discarded, or put back in the queue.
-}
-
-func (e *TransitionApplicationError) Error() string {
-	return fmt.Sprintf("%v, recoverable [%t]", e.Err, e.IsRecoverable)
-}
-
-func NewTransitionApplicationError(err error, isRecoverable bool) *TransitionApplicationError {
-	return &TransitionApplicationError{
-		Err:           err,
-		IsRecoverable: isRecoverable,
-	}
-}
-
 func (t *Transition) apply(msg *types.Transaction) (*runtime.ExecutionResult, error) {
-	// First check this message satisfies all consensus rules before
-	// applying the message. The rules include these clauses
-	//
-	// 1. the nonce of the message caller is correct
-	// 2. caller has enough balance to cover transaction fee(gaslimit * gasprice)
-	// 3. the amount of gas required is available in the block
-	// 4. there is no overflow when calculating intrinsic gas
-	// 5. the purchased gas is enough to cover intrinsic usage
-	// 6. caller has enough balance to cover asset transfer for **topmost** call
-
 	txn := t.txn
 
-	// 1. the nonce of the message caller is correct
-	if err := t.nonceCheck(msg); err != nil {
-		return nil, NewTransitionApplicationError(err, true)
+	gasLeft := uint64(0)
+
+	// First check this message satisfies all consensus rules before
+	// applying the message.
+	preCheck := func() error {
+		// 1. the nonce of the message caller is correct
+		if err := t.nonceCheck(msg); err != nil {
+			return err
+		}
+
+		// 2. caller has enough balance to cover transaction fee(gaslimit * gasprice)
+		if err := t.subGasLimitPrice(msg); err != nil {
+			return err
+		}
+
+		// 3. the amount of gas required is available in the block
+		if err := t.subGasPool(msg.Gas); err != nil {
+			return err
+		}
+
+		// 4. there is no overflow when calculating intrinsic gas
+		intrinsicGasCost, err := TransactionGasCost(msg, t.forks.Homestead, t.forks.Istanbul)
+		if err != nil {
+			return err
+		}
+
+		// 5. the purchased gas is enough to cover intrinsic usage
+		gasLeft = msg.Gas - intrinsicGasCost
+		// Because we are working with unsigned integers for gas, the `>` operator is used instead of the more intuitive `<`
+		if gasLeft > msg.Gas {
+			return ErrNotEnoughIntrinsicGas
+		}
+
+		// 6. caller has enough balance to cover asset transfer for **topmost** call
+		if balance := txn.GetBalance(msg.From); balance.Cmp(msg.Value) < 0 {
+			return ErrNotEnoughFunds
+		}
+		return nil
 	}
 
-	// 2. caller has enough balance to cover transaction fee(gaslimit * gasprice)
-	if err := t.subGasLimitPrice(msg); err != nil {
-		return nil, NewTransitionApplicationError(err, true)
-	}
-
-	// 3. the amount of gas required is available in the block
-	if err := t.subGasPool(msg.Gas); err != nil {
-		return nil, NewTransitionApplicationError(err, true)
-	}
-
-	// 4. there is no overflow when calculating intrinsic gas
-	intrinsicGasCost, err := TransactionGasCost(msg, t.forks.Homestead, t.forks.Istanbul)
-	if err != nil {
-		return nil, NewTransitionApplicationError(err, true)
-	}
-
-	// 5. the purchased gas is enough to cover intrinsic usage
-	gasLeft := msg.Gas - intrinsicGasCost
-	// Because we are working with unsigned integers for gas, the `>` operator is used instead of the more intuitive `<`
-	if gasLeft > msg.Gas {
-		return nil, NewTransitionApplicationError(err, true)
-	}
-
-	// 6. caller has enough balance to cover asset transfer for **topmost** call
-	if balance := txn.GetBalance(msg.From); balance.Cmp(msg.Value) < 0 {
-		return nil, NewTransitionApplicationError(err, true)
+	if err := preCheck(); err != nil {
+		return nil, err
 	}
 
 	gasPrice := new(big.Int).Set(msg.GasPrice)
 	value := new(big.Int).Set(msg.Value)
 
-	// Set the specific transaction fields in the context
+	// Override the context and set the specific transaction fields
 	t.ctx.GasPrice = types.BytesToHash(gasPrice.Bytes())
 	t.ctx.Origin = msg.From
 
@@ -319,14 +282,25 @@ func (t *Transition) apply(msg *types.Transaction) (*runtime.ExecutionResult, er
 		result = t.Call2(msg.From, *msg.To, msg.Input, value, gasLeft)
 	}
 
+	// Update gas used depending on the refund.
 	refund := txn.GetRefund()
-	result.UpdateGasUsed(msg.Gas, refund)
+	{
+		result.GasUsed = msg.Gas - result.GasLeft
+		maxRefund := result.GasUsed / 2
+		// Refund can go up to half the gas used
+		if refund > maxRefund {
+			refund = maxRefund
+		}
+
+		result.GasLeft += refund
+		result.GasUsed -= refund
+	}
 
 	// refund the sender
 	remaining := new(big.Int).Mul(new(big.Int).SetUint64(result.GasLeft), gasPrice)
 	txn.AddBalance(msg.From, remaining)
 
-	// pay the coinbase
+	// pay the coinbase for the transaction
 	coinbaseFee := new(big.Int).Mul(new(big.Int).SetUint64(result.GasUsed), gasPrice)
 	txn.AddBalance(t.ctx.Coinbase, coinbaseFee)
 

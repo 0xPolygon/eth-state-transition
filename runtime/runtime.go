@@ -80,21 +80,16 @@ type ExecutionResult struct {
 	Err         error  // Any error encountered during the execution, listed below
 }
 
-func (r *ExecutionResult) Succeeded() bool { return r.Err == nil }
-func (r *ExecutionResult) Failed() bool    { return r.Err != nil }
-func (r *ExecutionResult) Reverted() bool  { return r.Err == ErrExecutionReverted }
+func (r *ExecutionResult) Succeeded() bool {
+	return r.Err == nil
+}
 
-func (r *ExecutionResult) UpdateGasUsed(gasLimit uint64, refund uint64) {
-	r.GasUsed = gasLimit - r.GasLeft
+func (r *ExecutionResult) Failed() bool {
+	return r.Err != nil
+}
 
-	// Refund can go up to half the gas used
-	maxRefund := r.GasUsed / 2
-	if refund > maxRefund {
-		refund = maxRefund
-	}
-
-	r.GasLeft += refund
-	r.GasUsed -= refund
+func (r *ExecutionResult) Reverted() bool {
+	return r.Err == ErrExecutionReverted
 }
 
 var (
