@@ -6,7 +6,6 @@ import (
 
 	"github.com/0xPolygon/eth-state-transition/helper"
 	"github.com/0xPolygon/eth-state-transition/types"
-	"github.com/umbracle/fastrlp"
 )
 
 // Node represents a node reference
@@ -105,17 +104,11 @@ func NewTrie() *Trie {
 	return &Trie{}
 }
 
-var stateStateParserPool fastrlp.ParserPool
-
 func (t *Trie) Get(k []byte) ([]byte, bool) {
 	txn := t.Txn()
 	res := txn.Lookup(k)
 	return res, res != nil
 }
-
-var accountArenaPool fastrlp.ArenaPool
-
-var stateArenaPool fastrlp.ArenaPool // TODO, Remove once we do update in fastrlp
 
 // Hash returns the root hash of the trie. It does not write to the
 // database and can be used even if the trie doesn't have one.
@@ -127,23 +120,6 @@ func (t *Trie) Hash() types.Hash {
 	hash, cached, _ := t.hashRoot()
 	t.root = cached
 	return types.BytesToHash(hash)
-}
-
-func (t *Trie) TryUpdate(key, value []byte) error {
-	k := keybytesToHex(key)
-	if len(value) != 0 {
-		tt := t.Txn()
-		n := tt.insert(t.root, k, value)
-		t.root = n
-	} else {
-		tt := t.Txn()
-		n, ok := tt.delete(t.root, k)
-		if !ok {
-			return fmt.Errorf("missing node")
-		}
-		t.root = n
-	}
-	return nil
 }
 
 func (t *Trie) hashRoot() ([]byte, Node, error) {
@@ -501,14 +477,12 @@ func show(obj interface{}, label int, d int) {
 	case *ShortNode:
 		if h, ok := n.Hash(); ok {
 			fmt.Printf("%s%d SHash: %s\n", depth(d), label, helper.EncodeToHex(h))
-			//return
 		}
 		fmt.Printf("%s%d Short: %s\n", depth(d), label, helper.EncodeToHex(n.key))
 		show(n.child, 0, d)
 	case *FullNode:
 		if h, ok := n.Hash(); ok {
 			fmt.Printf("%s%d FHash: %s\n", depth(d), label, helper.EncodeToHex(h))
-			//return
 		}
 		fmt.Printf("%s%d Full\n", depth(d), label)
 		for indx, i := range n.children {

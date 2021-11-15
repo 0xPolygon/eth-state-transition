@@ -268,10 +268,10 @@ func (t *Transition) apply(msg *types.Transaction) (*runtime.ExecutionResult, er
 
 	var result *runtime.ExecutionResult = nil
 	if msg.IsContractCreation() {
-		result = t.Create2(msg.From, msg.Input, value, gasLeft)
+		result = t.Create(msg.From, msg.Input, value, gasLeft)
 	} else {
 		txn.IncrNonce(msg.From)
-		result = t.Call2(msg.From, *msg.To, msg.Input, value, gasLeft)
+		result = t.Call(msg.From, *msg.To, msg.Input, value, gasLeft)
 	}
 
 	// Update gas used depending on the refund.
@@ -302,13 +302,13 @@ func (t *Transition) apply(msg *types.Transaction) (*runtime.ExecutionResult, er
 	return result, nil
 }
 
-func (t *Transition) Create2(caller types.Address, code []byte, value *big.Int, gas uint64) *runtime.ExecutionResult {
+func (t *Transition) Create(caller types.Address, code []byte, value *big.Int, gas uint64) *runtime.ExecutionResult {
 	address := helper.CreateAddress(caller, t.txn.GetNonce(caller))
 	contract := runtime.NewContractCreation(1, caller, caller, address, value, gas, code)
 	return t.applyCreate(contract, t)
 }
 
-func (t *Transition) Call2(caller types.Address, to types.Address, input []byte, value *big.Int, gas uint64) *runtime.ExecutionResult {
+func (t *Transition) Call(caller types.Address, to types.Address, input []byte, value *big.Int, gas uint64) *runtime.ExecutionResult {
 	c := runtime.NewContractCall(1, caller, caller, to, value, gas, t.txn.GetCode(to), input)
 	return t.applyCall(c, runtime.Call, t)
 }
