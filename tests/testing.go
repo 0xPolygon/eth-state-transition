@@ -193,7 +193,7 @@ func (e *exec) UnmarshalJSON(input []byte) error {
 }
 
 func buildState(t *testing.T, allocs map[types.Address]*GenesisAccount) (state.SnapshotWriter, types.Hash) {
-	s := itrie.NewState(itrie.NewMemoryStorage())
+	s := itrie.NewArchiveState(itrie.NewMemoryStorage())
 	snap := s.NewSnapshot()
 
 	txn := state.NewTxn(snap)

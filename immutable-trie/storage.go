@@ -1,14 +1,9 @@
 package itrie
 
 import (
-	"fmt"
-
 	"github.com/0xPolygon/eth-state-transition/helper"
 	"github.com/0xPolygon/eth-state-transition/types"
-	"github.com/umbracle/fastrlp"
 )
-
-var parserPool fastrlp.ParserPool
 
 type Batch interface {
 	Put(k, v []byte)
@@ -22,97 +17,7 @@ type Storage interface {
 	Batch() Batch
 	SetCode(hash types.Hash, code []byte)
 	GetCode(hash types.Hash) ([]byte, bool)
-
 	Close() error
-}
-
-// GetNode retrieves a node from storage
-func GetNode(root []byte, storage Storage) (Node, bool, error) {
-	data, ok := storage.Get(root)
-	if !ok {
-		return nil, false, nil
-	}
-
-	// NOTE. We dont need to make copies of the bytes because the nodes
-	// take the reference from data itself which is a safe copy.
-	p := parserPool.Get()
-	defer parserPool.Put(p)
-
-	v, err := p.Parse(data)
-	if err != nil {
-		return nil, false, err
-	}
-
-	if v.Type() != fastrlp.TypeArray {
-		return nil, false, fmt.Errorf("storage item should be an array")
-	}
-
-	n, err := decodeNode(v, storage)
-	return n, err == nil, err
-}
-
-func decodeNode(v *fastrlp.Value, s Storage) (Node, error) {
-	if v.Type() == fastrlp.TypeBytes {
-		vv := &ValueNode{
-			hash: true,
-		}
-		vv.buf = append(vv.buf[:0], v.Raw()...)
-		return vv, nil
-	}
-
-	var err error
-
-	ll := v.Elems()
-	if ll == 2 {
-		key := v.Get(0)
-		if key.Type() != fastrlp.TypeBytes {
-			return nil, fmt.Errorf("short key expected to be bytes")
-		}
-
-		// this can be either an array (extension node)
-		// or bytes (leaf node)
-		nc := &ShortNode{}
-		nc.key = compactToHex(key.Raw())
-		if hasTerm(nc.key) {
-			// value node
-			if v.Get(1).Type() != fastrlp.TypeBytes {
-				return nil, fmt.Errorf("short leaf value expected to be bytes")
-			}
-			vv := &ValueNode{}
-			vv.buf = append(vv.buf, v.Get(1).Raw()...)
-			nc.child = vv
-		} else {
-			nc.child, err = decodeNode(v.Get(1), s)
-			if err != nil {
-				return nil, err
-			}
-		}
-		return nc, nil
-	} else if ll == 17 {
-		// full node
-		nc := &FullNode{}
-		for i := 0; i < 16; i++ {
-			if v.Get(i).Type() == fastrlp.TypeBytes && len(v.Get(i).Raw()) == 0 {
-				// empty
-				continue
-			}
-			nc.children[i], err = decodeNode(v.Get(i), s)
-			if err != nil {
-				return nil, err
-			}
-		}
-
-		if v.Get(16).Type() != fastrlp.TypeBytes {
-			return nil, fmt.Errorf("full node value expected to be bytes")
-		}
-		if len(v.Get(16).Raw()) != 0 {
-			vv := &ValueNode{}
-			vv.buf = append(vv.buf[:0], v.Get(16).Raw()...)
-			nc.value = vv
-		}
-		return nc, nil
-	}
-	return nil, fmt.Errorf("node has incorrect number of leafs")
 }
 
 type memStorage struct {

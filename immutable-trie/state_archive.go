@@ -19,7 +19,7 @@ type State struct {
 	cache   *lru.Cache
 }
 
-func NewState(storage Storage) *State {
+func NewArchiveState(storage Storage) *State {
 	cache, _ := lru.New(128)
 
 	s := &State{
@@ -39,8 +39,7 @@ func (s *State) GetCode(hash types.Hash) ([]byte, bool) {
 
 func (s *State) NewSnapshot() state.SnapshotWriter {
 	t := NewTrie()
-	t.state = s
-	t.storage = s.storage
+	t.storage = s
 
 	return &Snapshot{
 		state:    s,
@@ -56,12 +55,11 @@ func (s *State) NewSnapshotAt(root types.Hash) (state.SnapshotWriter, error) {
 
 	tt, ok := s.cache.Get(root)
 	if ok {
-		t := tt.(*Trie)
-		t.state = s
-
 		return &Snapshot{state: s, trieRoot: tt.(*Trie)}, nil
 	}
-	n, ok, err := GetNode(root.Bytes(), s.storage)
+
+	// decode the root Node
+	n, ok, err := s.GetNode(root.Bytes())
 	if err != nil {
 		return nil, err
 	}
@@ -70,13 +68,24 @@ func (s *State) NewSnapshotAt(root types.Hash) (state.SnapshotWriter, error) {
 	}
 	t := &Trie{
 		root:    n,
-		state:   s,
-		storage: s.storage,
+		storage: s,
 	}
 	return &Snapshot{
 		state:    s,
 		trieRoot: t,
 	}, nil
+}
+
+func (s *State) GetNode(root []byte) (Node, bool, error) {
+	data, ok := s.storage.Get(root)
+	if !ok {
+		return nil, false, nil
+	}
+	node, err := DecodeNode(data)
+	if err != nil {
+		return nil, false, err
+	}
+	return node, true, nil
 }
 
 func (s *State) AddState(root types.Hash, t *Trie) {
@@ -220,8 +229,7 @@ func (s *Snapshot) Commit(objs []*state.Object) (state.SnapshotWriter, []byte) {
 	root, _ := tt.Hash()
 
 	nTrie := tt.Commit()
-	nTrie.state = s.state
-	nTrie.storage = s.state.storage
+	nTrie.storage = s.state
 
 	// Write all the entries to db
 	batch.Write()

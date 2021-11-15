@@ -53,9 +53,6 @@ func (s *stateObject) Copy() *stateObject {
 	if s.Txn != nil {
 		ss.Txn = s.Txn.CommitOnly().Txn()
 	}
-	//if s.Trie != nil {
-	//	ss.Trie = s.Trie
-	//}
 	return ss
 }
 

@@ -8,96 +8,14 @@ import (
 	"github.com/0xPolygon/eth-state-transition/types"
 )
 
-// Node represents a node reference
-type Node interface {
-	Hash() ([]byte, bool)
-	SetHash(b []byte) []byte
-}
-
-// ValueNode is a leaf on the merkle-trie
-type ValueNode struct {
-	// hash marks if this value node represents a stored node
-	hash bool
-	buf  []byte
-}
-
-// Hash implements the node interface
-func (v *ValueNode) Hash() ([]byte, bool) {
-	return v.buf, v.hash
-}
-
-// SetHash implements the node interface
-func (v *ValueNode) SetHash(b []byte) []byte {
-	panic("We cannot set hash on value node")
-}
-
-type common struct {
-	hash []byte
-}
-
-// Hash implements the node interface
-func (c *common) Hash() ([]byte, bool) {
-	return c.hash, len(c.hash) != 0
-}
-
-// SetHash implements the node interface
-func (c *common) SetHash(b []byte) []byte {
-	c.hash = extendByteSlice(c.hash, len(b))
-	copy(c.hash, b)
-	return c.hash
-}
-
-// ShortNode is an extension or short node
-type ShortNode struct {
-	common
-	key   []byte
-	child Node
-}
-
-// FullNode is a node with several children
-type FullNode struct {
-	common
-	epoch    uint32
-	value    Node
-	children [16]Node
-}
-
-func (f *FullNode) copy() *FullNode {
-	nc := &FullNode{}
-	nc.value = f.value
-	copy(nc.children[:], f.children[:])
-	return nc
-}
-
-func (f *FullNode) replaceEdge(idx byte, e Node) {
-	if idx == 16 {
-		f.value = e
-	} else {
-		f.children[idx] = e
-	}
-}
-
-func (f *FullNode) setEdge(idx byte, e Node) {
-	if idx == 16 {
-		f.value = e
-	} else {
-		f.children[idx] = e
-	}
-}
-
-func (f *FullNode) getEdge(idx byte) Node {
-	if idx == 16 {
-		return f.value
-	} else {
-		return f.children[idx]
-	}
+type TxnState interface {
+	GetNode(hash []byte) (Node, bool, error)
 }
 
 type Trie struct {
-	state   *State
 	root    Node
 	epoch   uint32
-	storage Storage
+	storage TxnState
 }
 
 func NewTrie() *Trie {
@@ -138,7 +56,7 @@ type Putter interface {
 type Txn struct {
 	root    Node
 	epoch   uint32
-	storage Storage
+	storage TxnState
 	batch   Putter
 }
 
@@ -158,7 +76,7 @@ func (t *Txn) lookup(node interface{}, key []byte) (Node, []byte) {
 
 	case *ValueNode:
 		if n.hash {
-			nc, ok, err := GetNode(n.buf, t.storage)
+			nc, ok, err := t.storage.GetNode(n.buf)
 			if err != nil {
 				panic(err)
 			}
@@ -238,7 +156,7 @@ func (t *Txn) insert(node Node, search, value []byte) Node {
 
 	case *ValueNode:
 		if n.hash {
-			nc, ok, err := GetNode(n.buf, t.storage)
+			nc, ok, err := t.storage.GetNode(n.buf)
 			if err != nil {
 				panic(err)
 			}
@@ -347,7 +265,7 @@ func (t *Txn) delete(node Node, search []byte) (Node, bool) {
 
 	case *ValueNode:
 		if n.hash {
-			nc, ok, err := GetNode(n.buf, t.storage)
+			nc, ok, err := t.storage.GetNode(n.buf)
 			if err != nil {
 				panic(err)
 			}
@@ -410,7 +328,7 @@ func (t *Txn) delete(node Node, search []byte) (Node, bool) {
 		if vv, ok := nc.(*ValueNode); ok && vv.hash {
 			// If the value is a hash, we have to resolve it first.
 			// This needs better testing
-			aux, ok, err := GetNode(vv.buf, t.storage)
+			aux, ok, err := t.storage.GetNode(vv.buf)
 			if err != nil {
 				panic(err)
 			}
