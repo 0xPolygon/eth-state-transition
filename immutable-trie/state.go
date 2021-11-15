@@ -32,7 +32,7 @@ func (s *State) GetCode(hash types.Hash) ([]byte, bool) {
 	return s.storage.GetCode(hash)
 }
 
-func (s *State) NewSnapshot() state.Snapshot {
+func (s *State) NewSnapshot() state.SnapshotWriter {
 	t := NewTrie()
 	t.state = s
 	t.storage = s.storage
@@ -41,10 +41,9 @@ func (s *State) NewSnapshot() state.Snapshot {
 		state:    s,
 		trieRoot: t,
 	}
-	//return t
 }
 
-func (s *State) NewSnapshotAt(root types.Hash) (state.Snapshot, error) {
+func (s *State) NewSnapshotAt(root types.Hash) (state.SnapshotWriter, error) {
 	if root == types.EmptyRootHash {
 		// empty state
 		return s.NewSnapshot(), nil
@@ -56,7 +55,6 @@ func (s *State) NewSnapshotAt(root types.Hash) (state.Snapshot, error) {
 		t.state = s
 
 		return &Snapshot{state: s, trieRoot: tt.(*Trie)}, nil
-		//return tt.(*Trie), nil
 	}
 	n, ok, err := GetNode(root.Bytes(), s.storage)
 	if err != nil {

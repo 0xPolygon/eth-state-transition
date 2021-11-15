@@ -75,7 +75,7 @@ func (s *Snapshot) GetAccount(addr types.Address) (*types.Account, error) {
 	// return s.trieRoot.GetAccount(addr)
 }
 
-func (s *Snapshot) Commit(objs []*state.Object) (state.Snapshot, []byte) {
+func (s *Snapshot) Commit(objs []*state.Object) (state.SnapshotWriter, []byte) {
 
 	// Create an insertion batch for all the entries
 	batch := s.state.storage.Batch()

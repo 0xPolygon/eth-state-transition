@@ -15,6 +15,7 @@ import (
 	itrie "github.com/0xPolygon/eth-state-transition/immutable-trie"
 	"github.com/0xPolygon/eth-state-transition/runtime"
 	"github.com/0xPolygon/eth-state-transition/types"
+	"github.com/stretchr/testify/assert"
 )
 
 // TESTS is the default location of the tests folder
@@ -190,7 +191,7 @@ func (e *exec) UnmarshalJSON(input []byte) error {
 	return nil
 }
 
-func buildState(t *testing.T, allocs map[types.Address]*GenesisAccount) (state.Snapshot, types.Hash) {
+func buildState(t *testing.T, allocs map[types.Address]*GenesisAccount) (state.SnapshotWriter, types.Hash) {
 	s := itrie.NewState(itrie.NewMemoryStorage())
 	snap := s.NewSnapshot()
 
@@ -210,7 +211,11 @@ func buildState(t *testing.T, allocs map[types.Address]*GenesisAccount) (state.S
 		}
 	}
 
-	snap, root := snap.Commit(txn.Commit(false))
+	_, root := snap.Commit(txn.Commit(false))
+
+	snap, err := s.NewSnapshotAt(types.BytesToHash(root))
+	assert.NoError(t, err)
+
 	return snap, types.BytesToHash(root)
 }
 

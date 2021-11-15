@@ -94,9 +94,11 @@ func (t *Transition) SetGetHash(helper GetHashByNumberHelper) {
 	t.getHash = helper(uint64(t.ctx.Number), t.ctx.Hash)
 }
 
+/*
 func (t *Transition) Snapshot() Snapshot {
 	return t.txn.snapshot
 }
+*/
 
 func (t *Transition) TotalGas() uint64 {
 	return t.totalGas
@@ -119,12 +121,12 @@ func (t *Transition) Write(txn *types.Transaction) error {
 
 	logs := t.txn.Logs()
 
-	var root []byte
+	// var root []byte
 
 	receipt := &types.Receipt{
 		CumulativeGasUsed: t.totalGas,
-		TxHash:            txn.Hash,
-		GasUsed:           result.GasUsed,
+		// TxHash:            txn.Hash,
+		GasUsed: result.GasUsed,
 	}
 
 	if t.forks.Byzantium {
@@ -132,18 +134,22 @@ func (t *Transition) Write(txn *types.Transaction) error {
 		t.txn.CleanDeleteObjects(true)
 
 		if result.Failed() {
-			receipt.SetStatus(types.ReceiptFailed)
+			receipt.Success = false
 		} else {
-			receipt.SetStatus(types.ReceiptSuccess)
+			receipt.Success = true
 		}
 
 	} else {
-		objs := t.txn.Commit(t.forks.EIP155)
-		ss, aux := t.txn.snapshot.Commit(objs)
+		t.txn.CleanDeleteObjects(t.forks.EIP155)
 
-		t.txn = NewTxn(ss)
-		root = aux
-		receipt.Root = types.BytesToHash(root)
+		/*
+			objs := t.txn.Commit(t.forks.EIP155)
+			ss, aux := t.txn.snapshot.Commit(objs)
+
+			t.txn = NewTxn(ss)
+			root = aux
+			receipt.Root = types.BytesToHash(root)
+		*/
 	}
 
 	// if the transaction created a contract, store the creation address in the receipt.
@@ -190,11 +196,13 @@ func (t *Transition) Apply(msg *types.Transaction) (*runtime.ExecutionResult, er
 	return result, err
 }
 
+/*
 // ContextPtr returns reference of context
 // This method is called only by test
 func (t *Transition) ContextPtr() *runtime.TxContext {
 	return &t.ctx
 }
+*/
 
 func (t *Transition) subGasLimitPrice(msg *types.Transaction) error {
 	// deduct the upfront max gas cost

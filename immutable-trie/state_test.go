@@ -10,7 +10,7 @@ func TestState(t *testing.T) {
 	state.TestState(t, buildPreState)
 }
 
-func buildPreState(pre state.PreStates) state.Snapshot {
+func buildPreState(pre state.PreStates) state.SnapshotWriter {
 	storage := NewMemoryStorage()
 	st := NewState(storage)
 	snap := st.NewSnapshot()

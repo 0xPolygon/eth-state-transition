@@ -10,11 +10,16 @@ import (
 	"github.com/0xPolygon/eth-state-transition/types"
 )
 
+type SnapshotWriter interface {
+	Snapshot
+
+	Commit(objs []*Object) (SnapshotWriter, []byte)
+}
+
 type Snapshot interface {
 	GetCode(hash types.Hash) ([]byte, bool)
 	GetStorage(root types.Hash, key types.Hash) types.Hash
 	GetAccount(addr types.Address) (*types.Account, error)
-	Commit(objs []*Object) (Snapshot, []byte)
 }
 
 var EmptyCodeHash = helper.Keccak256(nil)

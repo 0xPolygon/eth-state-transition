@@ -99,29 +99,18 @@ func (a Address) String() string {
 	return "0x" + hex.EncodeToString(a[:])
 }
 
-type ReceiptStatus uint64
-
-const (
-	ReceiptFailed ReceiptStatus = iota
-	ReceiptSuccess
-)
-
 type Receipt struct {
 	// consensus fields
 	Root              Hash
 	CumulativeGasUsed uint64
-	LogsBloom         Bloom
-	Logs              []*Log
-	Status            *ReceiptStatus
+	//LogsBloom         Bloom
+	Logs    []*Log
+	Success bool
 
 	// context fields
 	GasUsed         uint64
 	ContractAddress Address
-	TxHash          Hash
-}
-
-func (r *Receipt) SetStatus(s ReceiptStatus) {
-	r.Status = &s
+	//TxHash          Hash
 }
 
 type Log struct {
