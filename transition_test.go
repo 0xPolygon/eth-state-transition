@@ -14,7 +14,7 @@ func newTestTransition(preState map[types.Address]*PreState) *Transition {
 		preState = defaultPreState
 	}
 	return &Transition{
-		state: newTestTxn(preState),
+		txn: newTestTxn(preState),
 	}
 }
 

@@ -10,8 +10,8 @@ import (
 
 	state "github.com/0xPolygon/eth-state-transition"
 	"github.com/0xPolygon/eth-state-transition/helper"
-	"github.com/0xPolygon/eth-state-transition/runtime"
 	"github.com/0xPolygon/eth-state-transition/types"
+	"github.com/stretchr/testify/assert"
 )
 
 var (
@@ -45,26 +45,13 @@ func RunSpecificTest(file string, t *testing.T, c stateCase, name, fork string, 
 	snap, _ := buildState(t, c.Pre)
 	forks := config.At(uint64(env.Number))
 
-	transition := state.NewTransition(&runtime.Params{Forks: config, ChainID: 1}, c.Env.ToHeader(t), snap)
+	runtimeCtx := c.Env.ToHeader(t)
+	runtimeCtx.ChainID = 1
 
-	/*
-		xxx.PostHook = func(t *state.Transition) {
-			if name == "failed_tx_xcf416c53" {
-				// create the account
-				t.Txn().TouchAccount(ripemd)
-				// now remove it
-				t.Txn().Suicide(ripemd)
-			}
-		}
-	*/
+	transition := state.NewTransition(forks, runtimeCtx, snap)
 
-	/*
-		executor.GetHash = func(num uint64, hash types.Hash) func(i uint64) types.Hash {
-			return vmTestBlockHash
-		}
-	*/
-
-	transition.Apply(msg) //nolint:errcheck
+	_, err = transition.Apply(msg)
+	assert.NoError(t, err)
 
 	txn := transition.Txn()
 
