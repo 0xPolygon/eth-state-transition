@@ -99,7 +99,7 @@ func testVMCase(t *testing.T, name string, c *VMCase) {
 	}
 }
 
-func rlpHashLogs(logs []*types.Log) (res types.Hash) {
+func rlpHashLogs(logs []*state.Log) (res types.Hash) {
 	dst := helper.Keccak256(MarshalLogsWith(logs))
 	return types.BytesToHash(dst)
 }

@@ -482,10 +482,10 @@ func listFiles(folder string) ([]string, error) {
 }
 
 // MarshalLogsWith marshals the logs of the receipt to RLP with a specific fastrlp.Arena
-func MarshalLogsWith(logs []*types.Log) []byte {
+func MarshalLogsWith(logs []*state.Log) []byte {
 	a := &fastrlp.Arena{}
 
-	marshalLog := func(l *types.Log) *fastrlp.Value {
+	marshalLog := func(l *state.Log) *fastrlp.Value {
 		v := a.NewArray()
 		v.Set(a.NewBytes(l.Address.Bytes()))
 

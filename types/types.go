@@ -97,20 +97,6 @@ func (a Address) String() string {
 	return "0x" + hex.EncodeToString(a[:])
 }
 
-type Result struct {
-	Logs            []*Log
-	Success         bool
-	GasUsed         uint64
-	ContractAddress Address
-	ReturnValue     []byte
-}
-
-type Log struct {
-	Address Address
-	Topics  []Hash
-	Data    []byte
-}
-
 func min(i, j int) int {
 	if i < j {
 		return i

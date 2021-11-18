@@ -88,7 +88,7 @@ func (e *Transition) setRuntime(r runtime.Runtime) {
 
 type BlockResult struct {
 	Root     types.Hash
-	Receipts []*types.Result
+	Receipts []*Result
 	TotalGas uint64
 }
 
@@ -113,7 +113,7 @@ func (t *Transition) Txn() *Txn {
 }
 
 // Write writes another transaction to the executor
-func (t *Transition) Write(txn *types.Transaction) (*types.Result, error) {
+func (t *Transition) Write(txn *types.Transaction) (*Result, error) {
 	// Make a local copy and apply the transaction
 	msg := txn.Copy()
 
@@ -127,7 +127,7 @@ func (t *Transition) Write(txn *types.Transaction) (*types.Result, error) {
 
 	// var root []byte
 
-	receipt := &types.Result{
+	receipt := &Result{
 		// CumulativeGasUsed: t.totalGas,
 		// TxHash:            txn.Hash,
 		GasUsed:     result.GasUsed,

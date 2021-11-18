@@ -174,18 +174,18 @@ func (txn *Txn) GetBalance(addr types.Address) *big.Int {
 }
 
 func (txn *Txn) EmitLog(addr types.Address, topics []types.Hash, data []byte) {
-	log := &types.Log{
+	log := &Log{
 		Address: addr,
 		Topics:  topics,
 	}
 	log.Data = append(log.Data, data...)
 
-	var logs []*types.Log
+	var logs []*Log
 	val, exists := txn.txn.Get(logIndex)
 	if !exists {
-		logs = []*types.Log{}
+		logs = []*Log{}
 	} else {
-		logs = val.([]*types.Log)
+		logs = val.([]*Log)
 	}
 
 	logs = append(logs, log)
@@ -193,14 +193,14 @@ func (txn *Txn) EmitLog(addr types.Address, topics []types.Hash, data []byte) {
 }
 
 // AddLog adds a new log
-func (txn *Txn) AddLog(log *types.Log) {
-	var logs []*types.Log
+func (txn *Txn) AddLog(log *Log) {
+	var logs []*Log
 
 	data, exists := txn.txn.Get(logIndex)
 	if !exists {
-		logs = []*types.Log{}
+		logs = []*Log{}
 	} else {
-		logs = data.([]*types.Log)
+		logs = data.([]*Log)
 	}
 
 	logs = append(logs, log)
@@ -403,13 +403,13 @@ func (txn *Txn) SubRefund(gas uint64) {
 	txn.txn.Insert(refundIndex, refund)
 }
 
-func (txn *Txn) Logs() []*types.Log {
+func (txn *Txn) Logs() []*Log {
 	data, exists := txn.txn.Get(logIndex)
 	if !exists {
 		return nil
 	}
 	txn.txn.Delete(logIndex)
-	return data.([]*types.Log)
+	return data.([]*Log)
 }
 
 func (txn *Txn) GetRefund() uint64 {

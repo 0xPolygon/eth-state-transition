@@ -78,3 +78,17 @@ type StorageObject struct {
 	Key     []byte
 	Val     []byte
 }
+
+type Result struct {
+	Logs            []*Log
+	Success         bool
+	GasUsed         uint64
+	ContractAddress types.Address
+	ReturnValue     []byte
+}
+
+type Log struct {
+	Address types.Address
+	Topics  []types.Hash
+	Data    []byte
+}
