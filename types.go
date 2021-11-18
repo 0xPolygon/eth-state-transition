@@ -18,9 +18,6 @@ type Transaction struct {
 	To       *types.Address
 	Value    *big.Int
 	Input    []byte
-	V        []byte
-	R        []byte
-	S        []byte
 	Hash     types.Hash
 	From     types.Address
 }
@@ -38,11 +35,6 @@ func (t *Transaction) Copy() *Transaction {
 
 	tt.Value = new(big.Int)
 	tt.Value.Set(t.Value)
-
-	tt.R = make([]byte, len(t.R))
-	copy(tt.R[:], t.R[:])
-	tt.S = make([]byte, len(t.S))
-	copy(tt.S[:], t.S[:])
 
 	tt.Input = make([]byte, len(t.Input))
 	copy(tt.Input[:], t.Input[:])
