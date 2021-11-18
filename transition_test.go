@@ -60,7 +60,7 @@ func TestSubGasLimitPrice(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			transition := newTestTransition(tt.preState)
-			msg := &types.Transaction{
+			msg := &Transaction{
 				From:     tt.from,
 				Gas:      tt.gas,
 				GasPrice: big.NewInt(tt.gasPrice),

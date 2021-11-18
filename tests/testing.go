@@ -263,7 +263,7 @@ type stTransaction struct {
 	To       *types.Address `json:"to"`
 }
 
-func (t *stTransaction) At(i indexes) (*types.Transaction, error) {
+func (t *stTransaction) At(i indexes) (*state.Transaction, error) {
 	if i.Data > len(t.Data) {
 		return nil, fmt.Errorf("data index %d out of bounds (%d)", i.Data, len(t.Data))
 	}
@@ -274,7 +274,7 @@ func (t *stTransaction) At(i indexes) (*types.Transaction, error) {
 		return nil, fmt.Errorf("value index %d out of bounds (%d)", i.Value, len(t.Value))
 	}
 
-	msg := &types.Transaction{
+	msg := &state.Transaction{
 		To:       t.To,
 		Nonce:    t.Nonce,
 		Value:    new(big.Int).Set(t.Value[i.Value]),

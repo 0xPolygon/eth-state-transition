@@ -113,7 +113,7 @@ func (t *Transition) Txn() *Txn {
 }
 
 // Write writes another transaction to the executor
-func (t *Transition) Write(txn *types.Transaction) (*Result, error) {
+func (t *Transition) Write(txn *Transaction) (*Result, error) {
 	// Make a local copy and apply the transaction
 	msg := txn.Copy()
 
@@ -170,7 +170,7 @@ func (t *Transition) Write(txn *types.Transaction) (*Result, error) {
 }
 
 // Apply applies a new transaction
-func (t *Transition) applyImpl(msg *types.Transaction) (*runtime.ExecutionResult, error) {
+func (t *Transition) applyImpl(msg *Transaction) (*runtime.ExecutionResult, error) {
 	s := t.txn.Snapshot()
 	result, err := t.apply(msg)
 	if err != nil {
@@ -179,7 +179,7 @@ func (t *Transition) applyImpl(msg *types.Transaction) (*runtime.ExecutionResult
 	return result, err
 }
 
-func (t *Transition) subGasLimitPrice(msg *types.Transaction) error {
+func (t *Transition) subGasLimitPrice(msg *Transaction) error {
 	// deduct the upfront max gas cost
 	upfrontGasCost := new(big.Int).Set(msg.GasPrice)
 	upfrontGasCost.Mul(upfrontGasCost, new(big.Int).SetUint64(msg.Gas))
@@ -193,7 +193,7 @@ func (t *Transition) subGasLimitPrice(msg *types.Transaction) error {
 	return nil
 }
 
-func (t *Transition) nonceCheck(msg *types.Transaction) error {
+func (t *Transition) nonceCheck(msg *Transaction) error {
 	nonce := t.txn.GetNonce(msg.From)
 
 	if nonce != msg.Nonce {
@@ -212,7 +212,7 @@ var (
 	ErrNotEnoughFunds        = fmt.Errorf("not enough funds for transfer with given value")
 )
 
-func (t *Transition) apply(msg *types.Transaction) (*runtime.ExecutionResult, error) {
+func (t *Transition) apply(msg *Transaction) (*runtime.ExecutionResult, error) {
 	txn := t.txn
 
 	gasLeft := uint64(0)
@@ -522,7 +522,7 @@ func (t *Transition) Callx(c *runtime.Contract, h runtime.Host) *runtime.Executi
 	return t.applyCall(c, c.Type, h)
 }
 
-func TransactionGasCost(msg *types.Transaction, isHomestead, isIstanbul bool) (uint64, error) {
+func TransactionGasCost(msg *Transaction, isHomestead, isIstanbul bool) (uint64, error) {
 	cost := uint64(0)
 
 	// Contract creation is only paid on the homestead fork
