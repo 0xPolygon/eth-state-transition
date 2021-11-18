@@ -48,7 +48,7 @@ func (s *State) NewSnapshot() state.SnapshotWriter {
 }
 
 func (s *State) NewSnapshotAt(root types.Hash) (state.SnapshotWriter, error) {
-	if root == types.EmptyRootHash {
+	if root == state.EmptyRootHash {
 		// empty state
 		return s.NewSnapshot(), nil
 	}
@@ -113,7 +113,7 @@ func (s *Snapshot) GetStorage(root types.Hash, raw types.Hash) types.Hash {
 
 	// Load trie from memory if there is some state
 	var dummySnap *Snapshot
-	if root == types.EmptyRootHash {
+	if root == state.EmptyRootHash {
 		dummySnap = s.state.NewSnapshot().(*Snapshot)
 	} else {
 		xx, err := s.state.NewSnapshotAt(root)

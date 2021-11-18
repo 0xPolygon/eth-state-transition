@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 
+	state "github.com/0xPolygon/eth-state-transition"
 	"github.com/0xPolygon/eth-state-transition/helper"
 	"github.com/0xPolygon/eth-state-transition/types"
 )
@@ -32,7 +33,7 @@ func (t *Trie) Get(k []byte) ([]byte, bool) {
 // database and can be used even if the trie doesn't have one.
 func (t *Trie) Hash() types.Hash {
 	if t.root == nil {
-		return types.EmptyRootHash
+		return state.EmptyRootHash
 	}
 
 	hash, cached, _ := t.hashRoot()
