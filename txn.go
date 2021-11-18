@@ -66,7 +66,7 @@ func (txn *Txn) RevertToSnapshot(id int) {
 }
 
 // GetAccount returns an account
-func (txn *Txn) GetAccount(addr types.Address) (*types.Account, bool) {
+func (txn *Txn) GetAccount(addr types.Address) (*Account, bool) {
 	object, exists := txn.getStateObject(addr)
 	if !exists {
 		return nil, false
@@ -103,7 +103,7 @@ func (txn *Txn) upsertAccount(addr types.Address, create bool, f func(object *st
 	object, exists := txn.getStateObject(addr)
 	if !exists && create {
 		object = &stateObject{
-			Account: &types.Account{
+			Account: &Account{
 				Balance:  big.NewInt(0),
 				CodeHash: EmptyCodeHash,
 				Root:     EmptyStateHash,
@@ -452,7 +452,7 @@ func (txn *Txn) Empty(addr types.Address) bool {
 
 func newStateObject(txn *Txn) *stateObject {
 	return &stateObject{
-		Account: &types.Account{
+		Account: &Account{
 			Balance:  big.NewInt(0),
 			CodeHash: EmptyCodeHash,
 			Root:     EmptyStateHash,
@@ -462,7 +462,7 @@ func newStateObject(txn *Txn) *stateObject {
 
 func (txn *Txn) CreateAccount(addr types.Address) {
 	obj := &stateObject{
-		Account: &types.Account{
+		Account: &Account{
 			Balance:  big.NewInt(0),
 			CodeHash: EmptyCodeHash,
 			Root:     EmptyStateHash,

@@ -52,7 +52,7 @@ func (m *mockSnapshot) GetStorage(root types.Hash, key types.Hash) types.Hash {
 	panic("TODO")
 }
 
-func (m *mockSnapshot) GetAccount(addr types.Address) (*types.Account, error) {
+func (m *mockSnapshot) GetAccount(addr types.Address) (*Account, error) {
 	panic("TODO")
 }
 
@@ -98,7 +98,7 @@ func newTestTxn(p map[types.Address]*PreState) *Txn {
 	return newTxn(newStateWithPreState(p))
 }
 
-func buildMockPreState(p *PreState) (*types.Account, *mockSnapshot) {
+func buildMockPreState(p *PreState) (*Account, *mockSnapshot) {
 	var snap *mockSnapshot
 	root := EmptyStateHash
 
@@ -115,7 +115,7 @@ func buildMockPreState(p *PreState) (*types.Account, *mockSnapshot) {
 		}
 	}
 
-	account := &types.Account{
+	account := &Account{
 		Nonce:   p.Nonce,
 		Balance: big.NewInt(int64(p.Balance)),
 		Root:    root,

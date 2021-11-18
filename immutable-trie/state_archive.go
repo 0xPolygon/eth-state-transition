@@ -146,14 +146,14 @@ func (s *Snapshot) GetStorage(root types.Hash, raw types.Hash) types.Hash {
 	return types.BytesToHash(res)
 }
 
-func (s *Snapshot) GetAccount(addr types.Address) (*types.Account, error) {
+func (s *Snapshot) GetAccount(addr types.Address) (*state.Account, error) {
 	data, ok := s.trieRoot.Get(helper.Keccak256(addr.Bytes()))
 	if !ok {
 		return nil, nil
 	}
 
 	var err error
-	var account types.Account
+	var account state.Account
 	if err = account.UnmarshalRlp(data); err != nil {
 		return nil, err
 	}
@@ -179,7 +179,7 @@ func (s *Snapshot) Commit(objs []*state.Object) (state.SnapshotWriter, []byte) {
 			tt.Delete(hashit(obj.Address.Bytes()))
 		} else {
 
-			account := types.Account{
+			account := state.Account{
 				Balance:  obj.Balance,
 				Nonce:    obj.Nonce,
 				CodeHash: obj.CodeHash.Bytes(),

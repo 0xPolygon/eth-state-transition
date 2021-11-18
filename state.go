@@ -19,14 +19,14 @@ type SnapshotWriter interface {
 type Snapshot interface {
 	GetCode(hash types.Hash) ([]byte, bool)
 	GetStorage(root types.Hash, key types.Hash) types.Hash
-	GetAccount(addr types.Address) (*types.Account, error)
+	GetAccount(addr types.Address) (*Account, error)
 }
 
 var EmptyCodeHash = helper.Keccak256(nil)
 
 // StateObject is the internal representation of the account
 type stateObject struct {
-	Account   *types.Account
+	Account   *Account
 	Code      []byte
 	Suicide   bool
 	Deleted   bool
