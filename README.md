@@ -1,14 +1,43 @@
 
 # Eth-state-transition
 
-TODO:
-- Clean the executor/transition
-- What do we do with the types?
-- Snapshot using GetNode?
-- Move some types (account) to root state.
-- Separate trie (only inmemory?) from backends?
-    - Two implementtions of State: archive and full.
-    - Play with the itrie from there. But keep some generic functions if needed for outside development.
-- Commit returns Snapshot? This only done for testing I think, the backend should optimize for that.
-    - For example: bulk writting of several blocks and only check commit once (not a bad idea).
-- Circle dependency with runtime and EVM...
+Ethereum state transition function.
+
+## Usage
+
+```golang
+
+import (
+    itrie "github.com/0xPolygon/eth-state-transition/immutable-trie"
+    "github.com/0xPolygon/eth-state-transition/runtime"
+    state "github.com/0xPolygon/eth-state-transition"
+)
+
+func main() {
+    // get a reference for the state
+    state := itrie.NewArchiveState(itrie.NewMemoryStorage())
+    snap := s.NewSnapshot()
+
+    // create a transition object
+    forks := runtime.ForksInTime{}
+    config := runtime.TxContext{}
+    transition := state.NewTransition(forks, config, snap)
+
+    // process a transaction
+    result, err := transition.Write(&state.Transaction{})
+    if err != nil {
+        panic(err)
+    }
+
+    fmt.Printf("Logs: %v\n", result.Logs)
+    fmt.Printf("Gas used: %d\n", result.GasUsed)
+
+    // retrieve the state data changed
+    objs := transition.Commit()
+
+    // commit the data to the state
+    if _, err := snap.Commit(objs); err != nil {
+        panic(err)
+    }
+}
+```
