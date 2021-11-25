@@ -12,5 +12,7 @@ jobs:
         uses: actions/setup-go@v1
         with:
           go-version: '1.17'
+      - name: Download tests
+        run: make download-spec-tests
       - name: Go test
         run: go test -v ./tests/...
