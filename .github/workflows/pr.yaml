@@ -15,4 +15,4 @@ jobs:
       - name: Download tests
         run: make download-spec-tests
       - name: Go test
-        run: go test -v ./tests/...
+        run: go test -v ./tests/... -short
