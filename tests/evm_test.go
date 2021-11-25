@@ -3,30 +3,22 @@ package tests
 import (
 	"encoding/json"
 	"io/ioutil"
-	"math/big"
 	"strings"
 	"testing"
 
-	"github.com/hashicorp/go-hclog"
-	"github.com/umbracle/fastrlp"
-
-	"github.com/0xPolygon/polygon-sdk/chain"
-	"github.com/0xPolygon/polygon-sdk/helper/hex"
-	"github.com/0xPolygon/polygon-sdk/helper/keccak"
-	"github.com/0xPolygon/polygon-sdk/state"
-	"github.com/0xPolygon/polygon-sdk/state/runtime"
-	"github.com/0xPolygon/polygon-sdk/state/runtime/evm"
-	"github.com/0xPolygon/polygon-sdk/types"
-
-	"github.com/0xPolygon/polygon-sdk/crypto"
+	state "github.com/0xPolygon/eth-state-transition"
+	"github.com/0xPolygon/eth-state-transition/helper"
+	"github.com/0xPolygon/eth-state-transition/runtime"
+	"github.com/0xPolygon/eth-state-transition/runtime/evm"
+	"github.com/0xPolygon/eth-state-transition/types"
 )
 
-var mainnetChainConfig = chain.Params{
-	Forks: &chain.Forks{
-		Homestead: chain.NewFork(1150000),
-		EIP150:    chain.NewFork(2463000),
-		EIP158:    chain.NewFork(2675000),
-		Byzantium: chain.NewFork(4370000),
+var mainnetChainConfig = runtime.Params{
+	Forks: &runtime.Forks{
+		Homestead: runtime.NewFork(1150000),
+		EIP150:    runtime.NewFork(2463000),
+		EIP158:    runtime.NewFork(2675000),
+		Byzantium: runtime.NewFork(4370000),
 	},
 }
 
@@ -41,8 +33,8 @@ type VMCase struct {
 	Logs string `json:"logs"`
 	Out  string `json:"out"`
 
-	Post map[types.Address]*chain.GenesisAccount `json:"post"`
-	Pre  map[types.Address]*chain.GenesisAccount `json:"pre"`
+	Post map[types.Address]*GenesisAccount `json:"post"`
+	Pre  map[types.Address]*GenesisAccount `json:"pre"`
 }
 
 func testVMCase(t *testing.T, name string, c *VMCase) {
@@ -50,26 +42,22 @@ func testVMCase(t *testing.T, name string, c *VMCase) {
 	env.GasPrice = types.BytesToHash(c.Exec.GasPrice.Bytes())
 	env.Origin = c.Exec.Origin
 
-	s, _, root := buildState(t, c.Pre)
+	snap, _ := buildState(t, c.Pre)
 
 	config := mainnetChainConfig.Forks.At(uint64(env.Number))
 
-	executor := state.NewExecutor(&mainnetChainConfig, s, hclog.NewNullLogger())
-	executor.GetHash = func(*types.Header) func(i uint64) types.Hash {
-		return vmTestBlockHash
-	}
+	runtimeCtx := c.Env.ToHeader(t)
+	runtimeCtx.ChainID = int64(mainnetChainConfig.ChainID)
 
-	e, _ := executor.BeginTxn(root, c.Env.ToHeader(t), env.Coinbase)
-	ctx := e.ContextPtr()
-	ctx.GasPrice = types.BytesToHash(env.GasPrice.Bytes())
-	ctx.Origin = env.Origin
+	forks := mainnetChainConfig.Forks.At(uint64(runtimeCtx.Number))
+	transition := state.NewTransition(forks, runtimeCtx, snap)
 
 	evmR := evm.NewEVM()
 
-	code := e.GetCode(c.Exec.Address)
+	code := transition.GetCode(c.Exec.Address)
 	contract := runtime.NewContractCall(1, c.Exec.Caller, c.Exec.Caller, c.Exec.Address, c.Exec.Value, c.Exec.GasLimit, code, c.Exec.Data)
 
-	result := evmR.Run(contract, e, &config)
+	result := evmR.Run(contract, transition, &config)
 
 	if c.Gas == "" {
 		if result.Succeeded() {
@@ -85,11 +73,11 @@ func testVMCase(t *testing.T, name string, c *VMCase) {
 	if c.Out == "" {
 		c.Out = "0x"
 	}
-	if ret := hex.EncodeToHex(result.ReturnValue); ret != c.Out {
+	if ret := helper.EncodeToHex(result.ReturnValue); ret != c.Out {
 		t.Fatalf("return mismatch: got %s, want %s", ret, c.Out)
 	}
 
-	txn := e.Txn()
+	txn := transition.Txn()
 
 	// check logs
 	if logs := rlpHashLogs(txn.Logs()); logs != types.StringToHash(c.Logs) {
@@ -99,7 +87,7 @@ func testVMCase(t *testing.T, name string, c *VMCase) {
 	// check state
 	for addr, alloc := range c.Post {
 		for key, val := range alloc.Storage {
-			if have := txn.GetState(addr, key); have != val {
+			if have := txn.GetState(addr, types.BytesToHash(key[:])); have != types.BytesToHash(val[:]) {
 				t.Fatalf("wrong storage value at %s:\n  got  %s\n  want %s\n at address %s", key, have, val, addr)
 			}
 		}
@@ -111,16 +99,9 @@ func testVMCase(t *testing.T, name string, c *VMCase) {
 	}
 }
 
-func rlpHashLogs(logs []*types.Log) (res types.Hash) {
-	r := &types.Receipt{
-		Logs: logs,
-	}
-
-	ar := &fastrlp.Arena{}
-	v := r.MarshalLogsWith(ar)
-
-	keccak.Keccak256Rlp(res[:0], v)
-	return
+func rlpHashLogs(logs []*state.Log) (res types.Hash) {
+	dst := helper.Keccak256(MarshalLogsWith(logs))
+	return types.BytesToHash(dst)
 }
 
 func TestEVM(t *testing.T) {
@@ -167,8 +148,4 @@ func TestEVM(t *testing.T) {
 			})
 		}
 	}
-}
-
-func vmTestBlockHash(n uint64) types.Hash {
-	return types.BytesToHash(crypto.Keccak256([]byte(big.NewInt(int64(n)).String())))
 }
