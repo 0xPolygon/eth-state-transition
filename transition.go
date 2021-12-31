@@ -63,8 +63,8 @@ func NewTransition(forks runtime.ForksInTime, ctx runtime.TxContext, snap Snapsh
 		totalGas: 0,
 	}
 
-	transition.SetRuntime(precompiled.NewPrecompiled())
 	transition.SetRuntime(evm.NewEVM())
+	transition.SetRuntime(precompiled.NewPrecompiled())
 
 	// by default for getHash use a simple one
 	transition.getHash = func(n uint64) types.Hash {
