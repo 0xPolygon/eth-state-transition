@@ -63,8 +63,8 @@ func NewTransition(forks runtime.ForksInTime, ctx runtime.TxContext, snap Snapsh
 		totalGas: 0,
 	}
 
-	transition.setRuntime(precompiled.NewPrecompiled())
-	transition.setRuntime(evm.NewEVM())
+	transition.SetRuntime(precompiled.NewPrecompiled())
+	transition.SetRuntime(evm.NewEVM())
 
 	// by default for getHash use a simple one
 	transition.getHash = func(n uint64) types.Hash {
@@ -82,8 +82,8 @@ func (t *Transition) TotalGas() uint64 {
 	return t.totalGas
 }
 
-func (e *Transition) setRuntime(r runtime.Runtime) {
-	e.runtimes = append(e.runtimes, r)
+func (e *Transition) SetRuntime(r runtime.Runtime) {
+	e.runtimes = append([]runtime.Runtime{r}, e.runtimes...)
 }
 
 type BlockResult struct {
