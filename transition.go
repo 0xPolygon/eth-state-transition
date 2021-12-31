@@ -305,7 +305,10 @@ func (t *Transition) apply(msg *Transaction) (*runtime.ExecutionResult, error) {
 func (t *Transition) Create(caller types.Address, code []byte, value *big.Int, gas uint64) *runtime.ExecutionResult {
 	address := helper.CreateAddress(caller, t.txn.GetNonce(caller))
 	contract := runtime.NewContractCreation(1, caller, caller, address, value, gas, code)
-	return t.applyCreate(contract, t)
+
+	res := t.applyCreate(contract, t)
+	res.CreateAddress = address
+	return res
 }
 
 func (t *Transition) Call(caller types.Address, to types.Address, input []byte, value *big.Int, gas uint64) *runtime.ExecutionResult {
