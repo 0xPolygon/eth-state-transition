@@ -63,8 +63,8 @@ func NewTransition(forks runtime.ForksInTime, ctx runtime.TxContext, snap Snapsh
 		totalGas: 0,
 	}
 
-	transition.setRuntime(precompiled.NewPrecompiled())
-	transition.setRuntime(evm.NewEVM())
+	transition.SetRuntime(evm.NewEVM())
+	transition.SetRuntime(precompiled.NewPrecompiled())
 
 	// by default for getHash use a simple one
 	transition.getHash = func(n uint64) types.Hash {
@@ -82,8 +82,8 @@ func (t *Transition) TotalGas() uint64 {
 	return t.totalGas
 }
 
-func (e *Transition) setRuntime(r runtime.Runtime) {
-	e.runtimes = append(e.runtimes, r)
+func (e *Transition) SetRuntime(r runtime.Runtime) {
+	e.runtimes = append([]runtime.Runtime{r}, e.runtimes...)
 }
 
 type BlockResult struct {
@@ -305,7 +305,10 @@ func (t *Transition) apply(msg *Transaction) (*runtime.ExecutionResult, error) {
 func (t *Transition) Create(caller types.Address, code []byte, value *big.Int, gas uint64) *runtime.ExecutionResult {
 	address := helper.CreateAddress(caller, t.txn.GetNonce(caller))
 	contract := runtime.NewContractCreation(1, caller, caller, address, value, gas, code)
-	return t.applyCreate(contract, t)
+
+	res := t.applyCreate(contract, t)
+	res.CreateAddress = address
+	return res
 }
 
 func (t *Transition) Call(caller types.Address, to types.Address, input []byte, value *big.Int, gas uint64) *runtime.ExecutionResult {
