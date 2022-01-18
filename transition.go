@@ -110,11 +110,7 @@ func (t *Transition) Write(txn *Transaction) (*Result, error) {
 
 	logs := t.txn.Logs()
 
-	// var root []byte
-
 	receipt := &Result{
-		// CumulativeGasUsed: t.totalGas,
-		// TxHash:            txn.Hash,
 		GasUsed:     result.GasUsed,
 		ReturnValue: result.ReturnValue,
 	}
@@ -132,15 +128,6 @@ func (t *Transition) Write(txn *Transaction) (*Result, error) {
 	} else {
 		// TODO: If byzntium is enabled you need a special step to commit the data yourself
 		t.txn.CleanDeleteObjects(t.forks.Tangerine)
-
-		/*
-			objs := t.txn.Commit(t.forks.EIP155)
-			ss, aux := t.txn.snapshot.Commit(objs)
-
-			t.txn = NewTxn(ss)
-			root = aux
-			receipt.Root = types.BytesToHash(root)
-		*/
 	}
 
 	// if the transaction created a contract, store the creation address in the receipt.

@@ -32,7 +32,7 @@ type wrapper struct {
 	cc      map[types.Address]*GenesisAccount
 	code    map[types.Hash][]byte
 	raw     state.Snapshot
-	storage map[types.Address]map[types.Hash]types.Hash
+	storage map[types.Hash]map[types.Hash]types.Hash
 }
 
 func newWrapper(raw state.Snapshot, cc map[types.Address]*GenesisAccount) *wrapper {
@@ -40,10 +40,7 @@ func newWrapper(raw state.Snapshot, cc map[types.Address]*GenesisAccount) *wrapp
 		cc:      cc,
 		raw:     raw,
 		code:    map[types.Hash][]byte{},
-		storage: map[types.Address]map[types.Hash]types.Hash{},
-	}
-	for addr, val := range cc {
-		w.storage[addr] = val.Storage
+		storage: map[types.Hash]map[types.Hash]types.Hash{},
 	}
 	return w
 }
@@ -54,7 +51,15 @@ func (w *wrapper) GetCode(hash types.Hash) ([]byte, bool) {
 }
 
 func (w *wrapper) GetStorage(root types.Hash, key types.Hash) types.Hash {
-	return w.raw.GetStorage(root, key)
+	vals, ok := w.storage[root]
+	if !ok {
+		return types.Hash{}
+	}
+	k, ok := vals[key]
+	if !ok {
+		return types.Hash{}
+	}
+	return k
 }
 
 func (w *wrapper) GetAccount(addr types.Address) (*state.Account, error) {
@@ -68,6 +73,10 @@ func (w *wrapper) GetAccount(addr types.Address) (*state.Account, error) {
 
 	newAcct := acct.Copy()
 	w.code[types.BytesToHash(newAcct.CodeHash)] = w.cc[addr].Code
+
+	// fill the storage
+	w.storage[acct.Root] = w.cc[addr].Storage
+
 	return newAcct, nil
 }
 
