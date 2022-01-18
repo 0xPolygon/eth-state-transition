@@ -6,6 +6,7 @@ import (
 
 	"github.com/0xPolygon/eth-state-transition/runtime"
 	"github.com/0xPolygon/eth-state-transition/types"
+	"github.com/ethereum/evmc/v10/bindings/go/evmc"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -34,7 +35,7 @@ func (m *mockHost) GetStorage(addr types.Address, key types.Hash) types.Hash {
 	panic("Not implemented in tests")
 }
 
-func (m *mockHost) SetStorage(addr types.Address, key types.Hash, value types.Hash, config *runtime.ForksInTime) runtime.StorageStatus {
+func (m *mockHost) SetStorage(addr types.Address, key types.Hash, value types.Hash, config *runtime.ForksInTime) evmc.StorageStatus {
 	panic("Not implemented in tests")
 }
 

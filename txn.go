@@ -3,6 +3,7 @@ package state
 import (
 	"math/big"
 
+	"github.com/ethereum/evmc/v10/bindings/go/evmc"
 	iradix "github.com/hashicorp/go-immutable-radix"
 
 	"github.com/0xPolygon/eth-state-transition/helper"
@@ -211,10 +212,10 @@ func (txn *Txn) AddLog(log *Log) {
 
 var zeroHash types.Hash
 
-func (txn *Txn) SetStorage(addr types.Address, key types.Hash, value types.Hash, config *runtime.ForksInTime) (status runtime.StorageStatus) {
+func (txn *Txn) SetStorage(addr types.Address, key types.Hash, value types.Hash, config *runtime.ForksInTime) (status evmc.StorageStatus) {
 	oldValue := txn.GetState(addr, key)
 	if oldValue == value {
-		return runtime.StorageUnchanged
+		return evmc.StorageUnchanged
 	}
 
 	current := oldValue                          // current - storage dirtied by previous lines of this contract
@@ -225,25 +226,25 @@ func (txn *Txn) SetStorage(addr types.Address, key types.Hash, value types.Hash,
 	legacyGasMetering := !config.Istanbul && (config.Petersburg || !config.Constantinople)
 
 	if legacyGasMetering {
-		status = runtime.StorageModified
+		status = evmc.StorageModified
 		if oldValue == zeroHash {
-			return runtime.StorageAdded
+			return evmc.StorageAdded
 		} else if value == zeroHash {
 			txn.AddRefund(15000)
-			return runtime.StorageDeleted
+			return evmc.StorageDeleted
 		}
-		return runtime.StorageModified
+		return evmc.StorageModified
 	}
 
 	if original == current {
 		if original == zeroHash { // create slot (2.1.1)
-			return runtime.StorageAdded
+			return evmc.StorageAdded
 		}
 		if value == zeroHash { // delete slot (2.1.2b)
 			txn.AddRefund(15000)
-			return runtime.StorageDeleted
+			return evmc.StorageDeleted
 		}
-		return runtime.StorageModified
+		return evmc.StorageModified
 	}
 	if original != zeroHash { // Storage slot was populated before this transaction started
 		if current == zeroHash { // recreate slot (2.2.1.1)
@@ -268,7 +269,7 @@ func (txn *Txn) SetStorage(addr types.Address, key types.Hash, value types.Hash,
 			}
 		}
 	}
-	return runtime.StorageModifiedAgain
+	return evmc.StorageModifiedAgain
 }
 
 // SetState change the state of an address

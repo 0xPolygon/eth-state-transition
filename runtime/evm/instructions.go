@@ -9,6 +9,7 @@ import (
 	"github.com/0xPolygon/eth-state-transition/helper"
 	"github.com/0xPolygon/eth-state-transition/runtime"
 	"github.com/0xPolygon/eth-state-transition/types"
+	"github.com/ethereum/evmc/v10/bindings/go/evmc"
 )
 
 type instruction func(c *state)
@@ -483,7 +484,7 @@ func opSStore(c *state) {
 	cost := uint64(0)
 
 	switch status {
-	case runtime.StorageUnchanged:
+	case evmc.StorageUnchanged:
 		if c.config.Istanbul {
 			// eip-2200
 			cost = 800
@@ -493,10 +494,10 @@ func opSStore(c *state) {
 			cost = 200
 		}
 
-	case runtime.StorageModified:
+	case evmc.StorageModified:
 		cost = 5000
 
-	case runtime.StorageModifiedAgain:
+	case evmc.StorageModifiedAgain:
 		if c.config.Istanbul {
 			// eip-2200
 			cost = 800
@@ -506,10 +507,10 @@ func opSStore(c *state) {
 			cost = 200
 		}
 
-	case runtime.StorageAdded:
+	case evmc.StorageAdded:
 		cost = 20000
 
-	case runtime.StorageDeleted:
+	case evmc.StorageDeleted:
 		cost = 5000
 	}
 	if !c.consumeGas(cost) {

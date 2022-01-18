@@ -5,6 +5,7 @@ import (
 	"math/big"
 
 	"github.com/0xPolygon/eth-state-transition/types"
+	"github.com/ethereum/evmc/v10/bindings/go/evmc"
 )
 
 // TxContext is the context of the transaction
@@ -20,44 +21,11 @@ type TxContext struct {
 	Difficulty types.Hash
 }
 
-// StorageStatus is the status of the storage access
-type StorageStatus int
-
-const (
-	// StorageUnchanged if the data has not changed
-	StorageUnchanged StorageStatus = iota
-	// StorageModified if the value has been modified
-	StorageModified
-	// StorageModifiedAgain if the value has been modified before in the txn
-	StorageModifiedAgain
-	// StorageAdded if this is a new entry in the storage
-	StorageAdded
-	// StorageDeleted if the storage was deleted
-	StorageDeleted
-)
-
-func (s StorageStatus) String() string {
-	switch s {
-	case StorageUnchanged:
-		return "StorageUnchanged"
-	case StorageModified:
-		return "StorageModified"
-	case StorageModifiedAgain:
-		return "StorageModifiedAgain"
-	case StorageAdded:
-		return "StorageAdded"
-	case StorageDeleted:
-		return "StorageDeleted"
-	default:
-		panic("BUG: storage status not found")
-	}
-}
-
 // Host is the execution host
 type Host interface {
 	AccountExists(addr types.Address) bool
 	GetStorage(addr types.Address, key types.Hash) types.Hash
-	SetStorage(addr types.Address, key types.Hash, value types.Hash, config *ForksInTime) StorageStatus
+	SetStorage(addr types.Address, key types.Hash, value types.Hash, config *ForksInTime) evmc.StorageStatus
 	GetBalance(addr types.Address) *big.Int
 	GetCodeSize(addr types.Address) int
 	GetCodeHash(addr types.Address) types.Hash

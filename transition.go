@@ -10,6 +10,7 @@ import (
 	"github.com/0xPolygon/eth-state-transition/runtime/evm"
 	"github.com/0xPolygon/eth-state-transition/runtime/precompiled"
 	"github.com/0xPolygon/eth-state-transition/types"
+	"github.com/ethereum/evmc/v10/bindings/go/evmc"
 )
 
 const (
@@ -508,7 +509,7 @@ func (t *Transition) applyCreate(c *runtime.Contract, host runtime.Host) *runtim
 	return result
 }
 
-func (t *Transition) SetStorage(addr types.Address, key types.Hash, value types.Hash, config *runtime.ForksInTime) runtime.StorageStatus {
+func (t *Transition) SetStorage(addr types.Address, key types.Hash, value types.Hash, config *runtime.ForksInTime) evmc.StorageStatus {
 	return t.txn.SetStorage(addr, key, value, config)
 }
 
