@@ -28,6 +28,49 @@ type stateCase struct {
 
 var ripemd = types.StringToAddress("0000000000000000000000000000000000000003")
 
+type wrapper struct {
+	cc      map[types.Address]*GenesisAccount
+	code    map[types.Hash][]byte
+	raw     state.Snapshot
+	storage map[types.Address]map[types.Hash]types.Hash
+}
+
+func newWrapper(raw state.Snapshot, cc map[types.Address]*GenesisAccount) *wrapper {
+	w := &wrapper{
+		cc:      cc,
+		raw:     raw,
+		code:    map[types.Hash][]byte{},
+		storage: map[types.Address]map[types.Hash]types.Hash{},
+	}
+	for addr, val := range cc {
+		w.storage[addr] = val.Storage
+	}
+	return w
+}
+
+func (w *wrapper) GetCode(hash types.Hash) ([]byte, bool) {
+	code, ok := w.code[hash]
+	return code, ok
+}
+
+func (w *wrapper) GetStorage(root types.Hash, key types.Hash) types.Hash {
+	return w.raw.GetStorage(root, key)
+}
+
+func (w *wrapper) GetAccount(addr types.Address) (*state.Account, error) {
+	acct, err := w.raw.GetAccount(addr)
+	if err != nil {
+		return nil, err
+	}
+	if acct == nil {
+		return nil, nil
+	}
+
+	newAcct := acct.Copy()
+	w.code[types.BytesToHash(newAcct.CodeHash)] = w.cc[addr].Code
+	return newAcct, nil
+}
+
 func RunSpecificTest(file string, t *testing.T, c stateCase, name, fork string, index int, p postEntry) {
 	if fork == "EIP150" {
 		// already self contained in the EIP 158
@@ -51,7 +94,8 @@ func RunSpecificTest(file string, t *testing.T, c stateCase, name, fork string, 
 	runtimeCtx := c.Env.ToHeader(t)
 	runtimeCtx.ChainID = 1
 
-	transition := state.NewTransition(forks, runtimeCtx, snap)
+	wr := newWrapper(snap, c.Pre)
+	transition := state.NewTransition(forks, runtimeCtx, wr)
 
 	result, err := transition.Write(msg)
 	assert.NoError(t, err)
