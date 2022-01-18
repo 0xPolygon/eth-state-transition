@@ -1033,7 +1033,7 @@ func opCreate(op OpCode) instruction {
 		}
 
 		// Correct call
-		result := c.host.Callx(contract, c.host)
+		result := c.host.Callx(contract)
 
 		v := c.push1()
 		if op == CREATE && c.config.Homestead && result.Err == runtime.ErrCodeStoreOutOfGas {
@@ -1103,7 +1103,7 @@ func opCall(op OpCode) instruction {
 
 		contract.Type = callType
 
-		result := c.host.Callx(contract, c.host)
+		result := c.host.Callx(contract)
 
 		v := c.push1()
 		if result.Succeeded() {

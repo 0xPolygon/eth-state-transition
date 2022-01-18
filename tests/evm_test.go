@@ -1,5 +1,6 @@
 package tests
 
+/*
 import (
 	"encoding/json"
 	"io/ioutil"
@@ -144,3 +145,4 @@ func TestEVM(t *testing.T) {
 		}
 	}
 }
+*/

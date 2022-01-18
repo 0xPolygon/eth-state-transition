@@ -34,7 +34,7 @@ type Host interface {
 	GetTxContext() TxContext
 	GetBlockHash(number int64) types.Hash
 	EmitLog(addr types.Address, topics []types.Hash, data []byte)
-	Callx(*Contract, Host) *ExecutionResult
+	Callx(*Contract) *ExecutionResult
 	Empty(addr types.Address) bool
 }
 

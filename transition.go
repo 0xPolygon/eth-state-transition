@@ -309,14 +309,14 @@ func (t *Transition) Create(caller types.Address, code []byte, value *big.Int, g
 	address := helper.CreateAddress(caller, t.txn.GetNonce(caller))
 	contract := runtime.NewContractCreation(1, caller, caller, address, value, gas, code)
 
-	res := t.applyCreate(contract, t)
+	res := t.applyCreate(contract)
 	res.CreateAddress = address
 	return res
 }
 
 func (t *Transition) Call(caller types.Address, to types.Address, input []byte, value *big.Int, gas uint64) *runtime.ExecutionResult {
 	c := runtime.NewContractCall(1, caller, caller, to, value, gas, t.txn.GetCode(to), input)
-	return t.applyCall(c, evmc.Call, t)
+	return t.applyCall(c, evmc.Call)
 }
 
 var (
@@ -379,7 +379,7 @@ func (t *Transition) transfer(from, to types.Address, amount *big.Int) error {
 	return nil
 }
 
-func (t *Transition) applyCall(c *runtime.Contract, callType evmc.CallKind, host runtime.Host) *runtime.ExecutionResult {
+func (t *Transition) applyCall(c *runtime.Contract, callType evmc.CallKind) *runtime.ExecutionResult {
 	if c.Depth > int(1024)+1 {
 		return &runtime.ExecutionResult{
 			GasLeft: c.Gas,
@@ -400,7 +400,7 @@ func (t *Transition) applyCall(c *runtime.Contract, callType evmc.CallKind, host
 		}
 	}
 
-	result := t.run(c, host)
+	result := t.run(c, t)
 	if result.Failed() {
 		t.txn.RevertToSnapshot(snapshot)
 	}
@@ -422,7 +422,7 @@ func (t *Transition) hasCodeOrNonce(addr types.Address) bool {
 	return false
 }
 
-func (t *Transition) applyCreate(c *runtime.Contract, host runtime.Host) *runtime.ExecutionResult {
+func (t *Transition) applyCreate(c *runtime.Contract) *runtime.ExecutionResult {
 	gasLimit := c.Gas
 
 	var address types.Address
@@ -472,7 +472,7 @@ func (t *Transition) applyCreate(c *runtime.Contract, host runtime.Host) *runtim
 		}
 	}
 
-	result := t.run(c, host)
+	result := t.run(c, t)
 
 	if result.Failed() {
 		t.txn.RevertToSnapshot(snapshot)
@@ -565,11 +565,11 @@ func (t *Transition) Selfdestruct(addr types.Address, beneficiary types.Address)
 	t.txn.Suicide(addr)
 }
 
-func (t *Transition) Callx(c *runtime.Contract, h runtime.Host) *runtime.ExecutionResult {
+func (t *Transition) Callx(c *runtime.Contract) *runtime.ExecutionResult {
 	if c.Type == evmc.Create || c.Type == evmc.Create2 {
-		return t.applyCreate(c, h)
+		return t.applyCreate(c)
 	}
-	return t.applyCall(c, c.Type, h)
+	return t.applyCall(c, c.Type)
 }
 
 func TransactionGasCost(msg *Transaction, isHomestead, isIstanbul bool) (uint64, error) {
