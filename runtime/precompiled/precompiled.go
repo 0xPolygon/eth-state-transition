@@ -7,9 +7,32 @@ import (
 	"github.com/0xPolygon/eth-state-transition/types"
 )
 
+var p = &Precompiled{}
+
 var Contracts map[types.Address]contract
 
-var _ runtime.Runtime = &Precompiled{}
+func register(addrStr string, b contract) {
+	if len(Contracts) == 0 {
+		Contracts = map[types.Address]contract{}
+	}
+	Contracts[types.StringToAddress(addrStr)] = b
+}
+
+func init() {
+	register("1", &ecrecover{p})
+	register("2", &sha256h{})
+	register("3", &ripemd160h{p})
+	register("4", &identity{})
+
+	// Byzantium fork
+	register("5", &modExp{p})
+	register("6", &bn256Add{p})
+	register("7", &bn256Mul{p})
+	register("8", &bn256Pairing{p})
+
+	// Istanbul fork
+	register("9", &blake2f{p})
+}
 
 type contract interface {
 	gas(input []byte, config *runtime.ForksInTime) uint64
@@ -18,103 +41,28 @@ type contract interface {
 
 // Precompiled is the runtime for the precompiled contracts
 type Precompiled struct {
-	buf       []byte
-	contracts map[types.Address]contract
-}
-
-// NewPrecompiled creates a new runtime for the precompiled contracts
-func NewPrecompiled() *Precompiled {
-	p := &Precompiled{}
-	p.setupContracts()
-	return p
-}
-
-func (p *Precompiled) setupContracts() {
-	p.register("1", &ecrecover{p})
-	p.register("2", &sha256h{})
-	p.register("3", &ripemd160h{p})
-	p.register("4", &identity{})
-
-	// Byzantium fork
-	p.register("5", &modExp{p})
-	p.register("6", &bn256Add{p})
-	p.register("7", &bn256Mul{p})
-	p.register("8", &bn256Pairing{p})
-
-	// Istanbul fork
-	p.register("9", &blake2f{p})
-}
-
-func (p *Precompiled) register(addrStr string, b contract) {
-	if len(p.contracts) == 0 {
-		p.contracts = map[types.Address]contract{}
-	}
-	if len(Contracts) == 0 {
-		Contracts = map[types.Address]contract{}
-	}
-	p.contracts[types.StringToAddress(addrStr)] = b
-	Contracts[types.StringToAddress(addrStr)] = b
-}
-
-var (
-	five  = types.StringToAddress("5")
-	six   = types.StringToAddress("6")
-	seven = types.StringToAddress("7")
-	eight = types.StringToAddress("8")
-	nine  = types.StringToAddress("9")
-)
-
-// CanRun implements the runtime interface
-func (p *Precompiled) CanRun(c *runtime.Contract, _ runtime.Host, config *runtime.ForksInTime) bool {
-	if _, ok := p.contracts[c.CodeAddress]; !ok {
-		return false
-	}
-
-	// byzantium precompiles
-	switch c.CodeAddress {
-	case five:
-		fallthrough
-	case six:
-		fallthrough
-	case seven:
-		fallthrough
-	case eight:
-		return config.Byzantium
-	}
-
-	// istanbul precompiles
-	switch c.CodeAddress {
-	case nine:
-		return config.Istanbul
-	}
-
-	return true
-}
-
-// Name implements the runtime interface
-func (p *Precompiled) Name() string {
-	return "precompiled"
+	buf []byte
 }
 
 // Run runs an execution
-func (p *Precompiled) Run(c *runtime.Contract, _ runtime.Host, config *runtime.ForksInTime) *runtime.ExecutionResult {
-	contract := p.contracts[c.CodeAddress]
-	gasCost := contract.gas(c.Input, config)
+func Run(codeAddress types.Address, input []byte, gas uint64, config *runtime.ForksInTime) *runtime.ExecutionResult {
+	contract := Contracts[codeAddress]
+	gasCost := contract.gas(input, config)
 
 	// In the case of not enough gas for precompiled execution we return ErrOutOfGas
-	if c.Gas < gasCost {
+	if gas < gasCost {
 		return &runtime.ExecutionResult{
 			GasLeft: 0,
 			Err:     runtime.ErrOutOfGas,
 		}
 	}
 
-	c.Gas = c.Gas - gasCost
-	returnValue, err := contract.run(c.Input)
+	gas = gas - gasCost
+	returnValue, err := contract.run(input)
 
 	result := &runtime.ExecutionResult{
 		ReturnValue: returnValue,
-		GasLeft:     c.Gas,
+		GasLeft:     gas,
 		Err:         err,
 	}
 

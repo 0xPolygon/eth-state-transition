@@ -36,6 +36,10 @@ type Host interface {
 	EmitLog(addr types.Address, topics []types.Hash, data []byte)
 	Callx(*Contract) *ExecutionResult
 	Empty(addr types.Address) bool
+
+	Cally(kind evmc.CallKind,
+		recipient types.Address, sender types.Address, value types.Hash, input []byte, gas int64, depth int,
+		static bool, salt types.Hash, codeAddress types.Address) (output []byte, gasLeft int64, createAddr types.Address, err error)
 }
 
 // ExecutionResult includes all output after executing given evm
@@ -76,7 +80,6 @@ var (
 // Runtime can process contracts
 type Runtime interface {
 	Run(c *Contract, host Host, config *ForksInTime) *ExecutionResult
-	CanRun(c *Contract, host Host, config *ForksInTime) bool
 	Name() string
 }
 

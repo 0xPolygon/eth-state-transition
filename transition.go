@@ -354,9 +354,8 @@ func (t *Transition) isPrecompiled(codeAddr types.Address) bool {
 }
 
 func (t *Transition) run(contract *runtime.Contract, host runtime.Host) *runtime.ExecutionResult {
-	p := precompiled.NewPrecompiled()
 	if t.isPrecompiled(contract.CodeAddress) {
-		return p.Run(contract, host, &t.forks)
+		return precompiled.Run(contract.CodeAddress, contract.Input, contract.Gas, &t.forks)
 	}
 
 	ee := evm.NewEVM()
@@ -563,6 +562,13 @@ func (t *Transition) Selfdestruct(addr types.Address, beneficiary types.Address)
 	}
 	t.txn.AddBalance(beneficiary, t.txn.GetBalance(addr))
 	t.txn.Suicide(addr)
+}
+
+func (t *Transition) Cally(kind evmc.CallKind,
+	recipient types.Address, sender types.Address, value types.Hash, input []byte, gas int64, depth int,
+	static bool, salt types.Hash, codeAddress types.Address) (output []byte, gasLeft int64, createAddr types.Address, err error) {
+
+	return nil, 0, types.Address{}, nil
 }
 
 func (t *Transition) Callx(c *runtime.Contract) *runtime.ExecutionResult {
