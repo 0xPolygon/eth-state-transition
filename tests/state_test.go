@@ -29,6 +29,10 @@ type stateCase struct {
 var ripemd = types.StringToAddress("0000000000000000000000000000000000000003")
 
 func RunSpecificTest(file string, t *testing.T, c stateCase, name, fork string, index int, p postEntry) {
+	if fork == "EIP150" {
+		// already self contained in the EIP 158
+		return
+	}
 	config, ok := Forks[fork]
 	if !ok {
 		t.Fatalf("config %s not found", fork)

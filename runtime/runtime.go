@@ -77,12 +77,6 @@ var (
 	ErrCodeStoreOutOfGas        = errors.New("contract creation code storage out of gas")
 )
 
-// Runtime can process contracts
-type Runtime interface {
-	Run(c *Contract, host Host, config *ForksInTime) *ExecutionResult
-	Name() string
-}
-
 // Contract is the instance being called
 type Contract struct {
 	Code        []byte

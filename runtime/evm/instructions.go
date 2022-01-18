@@ -123,7 +123,7 @@ func opExp(c *state) {
 	y := c.top()
 
 	var gas uint64
-	if c.config.EIP158 {
+	if c.config.Tangerine {
 		gas = 50
 	} else {
 		gas = 10
@@ -451,7 +451,7 @@ func opSload(c *state) {
 	if c.config.Istanbul {
 		// eip-1884
 		gas = 800
-	} else if c.config.EIP150 {
+	} else if c.config.Tangerine {
 		gas = 200
 	} else {
 		gas = 50
@@ -557,7 +557,7 @@ func opBalance(c *state) {
 	if c.config.Istanbul {
 		// eip-1884
 		gas = 700
-	} else if c.config.EIP150 {
+	} else if c.config.Tangerine {
 		gas = 400
 	} else {
 		gas = 20
@@ -634,7 +634,7 @@ func opExtCodeSize(c *state) {
 	addr, _ := c.popAddr()
 
 	var gas uint64
-	if c.config.EIP150 {
+	if c.config.Tangerine {
 		gas = 700
 	} else {
 		gas = 20
@@ -734,7 +734,7 @@ func opExtCodeCopy(c *state) {
 	}
 
 	var gas uint64
-	if c.config.EIP150 {
+	if c.config.Tangerine {
 		gas = 700
 	} else {
 		gas = 20
@@ -872,9 +872,9 @@ func opSelfDestruct(c *state) {
 	var gas uint64
 
 	// EIP150 reprice fork
-	if c.config.EIP150 {
+	if c.config.Tangerine {
 		gas = 5000
-		if c.config.EIP158 {
+		if c.config.Tangerine {
 			// if empty and transfers value
 			if c.host.Empty(address) && c.host.GetBalance(c.msg.Address).Sign() != 0 {
 				gas += 25000
@@ -1152,13 +1152,13 @@ func (c *state) buildCallContract(op OpCode) (*runtime.Contract, uint64, uint64,
 	}
 
 	var gasCost uint64
-	if c.config.EIP150 {
+	if c.config.Tangerine {
 		gasCost = 700
 	} else {
 		gasCost = 40
 	}
 
-	eip158 := c.config.EIP158
+	eip158 := c.config.Tangerine
 	transfersValue := (op == CALL || op == CALLCODE) && value != nil && value.Sign() != 0
 
 	if op == CALL {
@@ -1177,7 +1177,7 @@ func (c *state) buildCallContract(op OpCode) (*runtime.Contract, uint64, uint64,
 	var gas uint64
 
 	ok = initialGas.IsUint64()
-	if c.config.EIP150 {
+	if c.config.Tangerine {
 		availableGas := c.gas - gasCost
 		availableGas = availableGas - availableGas/64
 
@@ -1278,7 +1278,7 @@ func (c *state) buildCreateContract(op OpCode) (*runtime.Contract, error) {
 	gas := c.gas
 
 	// CREATE2 uses by default EIP150
-	if c.config.EIP150 || op == CREATE2 {
+	if c.config.Tangerine || op == CREATE2 {
 		gas -= gas / 64
 	}
 

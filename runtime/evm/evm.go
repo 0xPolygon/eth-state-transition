@@ -4,8 +4,6 @@ import (
 	"github.com/0xPolygon/eth-state-transition/runtime"
 )
 
-var _ runtime.Runtime = &EVM{}
-
 // EVM is the ethereum virtual machine
 type EVM struct {
 }
@@ -13,16 +11,6 @@ type EVM struct {
 // NewEVM creates a new EVM
 func NewEVM() *EVM {
 	return &EVM{}
-}
-
-// CanRun implements the runtime interface
-func (e *EVM) CanRun(*runtime.Contract, runtime.Host, *runtime.ForksInTime) bool {
-	return true
-}
-
-// Name implements the runtime interface
-func (e *EVM) Name() string {
-	return "evm"
 }
 
 // Run implements the runtime interface

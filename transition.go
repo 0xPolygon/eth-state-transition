@@ -149,7 +149,7 @@ func (t *Transition) Write(txn *Transaction) (*Result, error) {
 
 	} else {
 		// TODO: If byzntium is enabled you need a special step to commit the data yourself
-		t.txn.CleanDeleteObjects(t.forks.EIP158)
+		t.txn.CleanDeleteObjects(t.forks.Tangerine)
 
 		/*
 			objs := t.txn.Commit(t.forks.EIP155)
@@ -457,7 +457,7 @@ func (t *Transition) applyCreate(c *runtime.Contract) *runtime.ExecutionResult {
 	// Take snapshot of the current state
 	snapshot := t.txn.Snapshot()
 
-	if t.forks.EIP158 {
+	if t.forks.Tangerine {
 		// Force the creation of the account
 		t.txn.CreateAccount(c.Address)
 		t.txn.IncrNonce(c.Address)
@@ -478,7 +478,7 @@ func (t *Transition) applyCreate(c *runtime.Contract) *runtime.ExecutionResult {
 		return result
 	}
 
-	if t.forks.EIP158 && len(result.ReturnValue) > spuriousDragonMaxCodeSize {
+	if t.forks.Tangerine && len(result.ReturnValue) > spuriousDragonMaxCodeSize {
 		// Contract size exceeds 'SpuriousDragon' size limit
 		t.txn.RevertToSnapshot(snapshot)
 		return &runtime.ExecutionResult{

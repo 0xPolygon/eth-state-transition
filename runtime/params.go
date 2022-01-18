@@ -12,14 +12,12 @@ type Params struct {
 
 // Forks specifies when each fork is activated
 type Forks struct {
-	Homestead      *Fork `json:"homestead,omitempty"`
-	Byzantium      *Fork `json:"byzantium,omitempty"`
-	Constantinople *Fork `json:"constantinople,omitempty"`
-	Petersburg     *Fork `json:"petersburg,omitempty"`
-	Istanbul       *Fork `json:"istanbul,omitempty"`
-	EIP150         *Fork `json:"EIP150,omitempty"`
-	EIP158         *Fork `json:"EIP158,omitempty"`
-	EIP155         *Fork `json:"EIP155,omitempty"`
+	Homestead      *Fork
+	Byzantium      *Fork
+	Constantinople *Fork
+	Petersburg     *Fork
+	Istanbul       *Fork
+	Tangerine      *Fork
 }
 
 func (f *Forks) active(ff *Fork, block uint64) bool {
@@ -45,16 +43,8 @@ func (f *Forks) IsPetersburg(block uint64) bool {
 	return f.active(f.Petersburg, block)
 }
 
-func (f *Forks) IsEIP150(block uint64) bool {
-	return f.active(f.EIP150, block)
-}
-
-func (f *Forks) IsEIP158(block uint64) bool {
-	return f.active(f.EIP158, block)
-}
-
-func (f *Forks) IsEIP155(block uint64) bool {
-	return f.active(f.EIP155, block)
+func (f *Forks) IsTangerine(block uint64) bool {
+	return f.active(f.Tangerine, block)
 }
 
 func (f *Forks) At(block uint64) ForksInTime {
@@ -64,9 +54,7 @@ func (f *Forks) At(block uint64) ForksInTime {
 		Constantinople: f.active(f.Constantinople, block),
 		Petersburg:     f.active(f.Petersburg, block),
 		Istanbul:       f.active(f.Istanbul, block),
-		EIP150:         f.active(f.EIP150, block),
-		EIP158:         f.active(f.EIP158, block),
-		EIP155:         f.active(f.EIP155, block),
+		Tangerine:      f.active(f.Tangerine, block),
 	}
 }
 
@@ -92,16 +80,12 @@ type ForksInTime struct {
 	Constantinople,
 	Petersburg,
 	Istanbul,
-	EIP150,
-	EIP158,
-	EIP155 bool
+	Tangerine bool
 }
 
 var AllForksEnabled = &Forks{
 	Homestead:      NewFork(0),
-	EIP150:         NewFork(0),
-	EIP155:         NewFork(0),
-	EIP158:         NewFork(0),
+	Tangerine:      NewFork(0),
 	Byzantium:      NewFork(0),
 	Constantinople: NewFork(0),
 	Petersburg:     NewFork(0),
