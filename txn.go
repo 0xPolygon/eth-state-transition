@@ -360,6 +360,9 @@ func (txn *Txn) GetCodeSize(addr types.Address) int {
 }
 
 func (txn *Txn) GetCodeHash(addr types.Address) types.Hash {
+	if txn.Empty(addr) {
+		return types.Hash{}
+	}
 	object, exists := txn.getStateObject(addr)
 	if !exists {
 		return types.Hash{}

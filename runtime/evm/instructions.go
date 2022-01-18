@@ -676,11 +676,7 @@ func opExtCodeHash(c *state) {
 	}
 
 	v := c.push1()
-	if c.host.Empty(address) {
-		v.Set(zero)
-	} else {
-		v.SetBytes(c.host.GetCodeHash(address).Bytes())
-	}
+	v.SetBytes(c.host.GetCodeHash(address).Bytes())
 }
 
 func opPC(c *state) {
