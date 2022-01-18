@@ -30,7 +30,7 @@ type GetHashByNumber = func(i uint64) types.Hash
 type GetHashByNumberHelper = func(num uint64, hash types.Hash) GetHashByNumber
 
 type Transition struct {
-	runtimes []runtime.Runtime
+	//runtimes []runtime.Runtime
 
 	// forks are the enabled forks for this transition
 	forks runtime.ForksInTime
@@ -63,8 +63,8 @@ func NewTransition(forks runtime.ForksInTime, ctx runtime.TxContext, snap Snapsh
 		totalGas: 0,
 	}
 
-	transition.SetRuntime(evm.NewEVM())
-	transition.SetRuntime(precompiled.NewPrecompiled())
+	//transition.SetRuntime(evm.NewEVM())
+	//transition.SetRuntime(precompiled.NewPrecompiled())
 
 	// by default for getHash use a simple one
 	transition.getHash = func(n uint64) types.Hash {
@@ -82,9 +82,11 @@ func (t *Transition) TotalGas() uint64 {
 	return t.totalGas
 }
 
+/*
 func (e *Transition) SetRuntime(r runtime.Runtime) {
 	e.runtimes = append([]runtime.Runtime{r}, e.runtimes...)
 }
+*/
 
 type BlockResult struct {
 	Root     types.Hash
@@ -316,16 +318,48 @@ func (t *Transition) Call(caller types.Address, to types.Address, input []byte, 
 	return t.applyCall(c, runtime.Call, t)
 }
 
-func (t *Transition) run(contract *runtime.Contract, host runtime.Host) *runtime.ExecutionResult {
-	for _, r := range t.runtimes {
-		if r.CanRun(contract, host, &t.forks) {
-			return r.Run(contract, host, &t.forks)
-		}
+var (
+	five  = types.StringToAddress("5")
+	six   = types.StringToAddress("6")
+	seven = types.StringToAddress("7")
+	eight = types.StringToAddress("8")
+	nine  = types.StringToAddress("9")
+)
+
+func (t *Transition) isPrecompiled(codeAddr types.Address) bool {
+	if _, ok := precompiled.Contracts[codeAddr]; !ok {
+		return false
 	}
 
-	return &runtime.ExecutionResult{
-		Err: fmt.Errorf("not found"),
+	// byzantium precompiles
+	switch codeAddr {
+	case five:
+		fallthrough
+	case six:
+		fallthrough
+	case seven:
+		fallthrough
+	case eight:
+		return t.forks.Byzantium
 	}
+
+	// istanbul precompiles
+	switch codeAddr {
+	case nine:
+		return t.forks.Istanbul
+	}
+
+	return true
+}
+
+func (t *Transition) run(contract *runtime.Contract, host runtime.Host) *runtime.ExecutionResult {
+	p := precompiled.NewPrecompiled()
+	if t.isPrecompiled(contract.CodeAddress) {
+		return p.Run(contract, host, &t.forks)
+	}
+
+	ee := evm.NewEVM()
+	return ee.Run(contract, host, &t.forks)
 }
 
 func (t *Transition) transfer(from, to types.Address, amount *big.Int) error {

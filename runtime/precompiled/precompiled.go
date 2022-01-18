@@ -7,6 +7,8 @@ import (
 	"github.com/0xPolygon/eth-state-transition/types"
 )
 
+var Contracts map[types.Address]contract
+
 var _ runtime.Runtime = &Precompiled{}
 
 type contract interface {
@@ -47,7 +49,11 @@ func (p *Precompiled) register(addrStr string, b contract) {
 	if len(p.contracts) == 0 {
 		p.contracts = map[types.Address]contract{}
 	}
+	if len(Contracts) == 0 {
+		Contracts = map[types.Address]contract{}
+	}
 	p.contracts[types.StringToAddress(addrStr)] = b
+	Contracts[types.StringToAddress(addrStr)] = b
 }
 
 var (
