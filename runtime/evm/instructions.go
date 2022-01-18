@@ -480,7 +480,7 @@ func opSStore(c *state) {
 
 	legacyGasMetering := !c.config.Istanbul && (c.config.Petersburg || !c.config.Constantinople)
 
-	status := c.host.SetStorage(c.msg.Address, key, val, c.config)
+	status := c.host.SetStorage(c.msg.Address, key, val)
 	cost := uint64(0)
 
 	switch status {

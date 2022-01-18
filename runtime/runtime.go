@@ -25,7 +25,7 @@ type TxContext struct {
 type Host interface {
 	AccountExists(addr types.Address) bool
 	GetStorage(addr types.Address, key types.Hash) types.Hash
-	SetStorage(addr types.Address, key types.Hash, value types.Hash, config *ForksInTime) evmc.StorageStatus
+	SetStorage(addr types.Address, key types.Hash, value types.Hash) evmc.StorageStatus
 	GetBalance(addr types.Address) *big.Int
 	GetCodeSize(addr types.Address) int
 	GetCodeHash(addr types.Address) types.Hash

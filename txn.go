@@ -26,6 +26,7 @@ type Txn struct {
 	snapshot  Snapshot
 	snapshots []*iradix.Tree
 	txn       *iradix.Txn
+	config    *runtime.ForksInTime
 }
 
 func NewTxn(snapshot Snapshot) *Txn {
@@ -212,7 +213,7 @@ func (txn *Txn) AddLog(log *Log) {
 
 var zeroHash types.Hash
 
-func (txn *Txn) SetStorage(addr types.Address, key types.Hash, value types.Hash, config *runtime.ForksInTime) (status evmc.StorageStatus) {
+func (txn *Txn) SetStorage(addr types.Address, key types.Hash, value types.Hash) (status evmc.StorageStatus) {
 	oldValue := txn.GetState(addr, key)
 	if oldValue == value {
 		return evmc.StorageUnchanged
@@ -223,7 +224,7 @@ func (txn *Txn) SetStorage(addr types.Address, key types.Hash, value types.Hash,
 
 	txn.SetState(addr, key, value)
 
-	legacyGasMetering := !config.Istanbul && (config.Petersburg || !config.Constantinople)
+	legacyGasMetering := !txn.config.Istanbul && (txn.config.Petersburg || !txn.config.Constantinople)
 
 	if legacyGasMetering {
 		status = evmc.StorageModified
@@ -256,13 +257,13 @@ func (txn *Txn) SetStorage(addr types.Address, key types.Hash, value types.Hash,
 	if original == value {
 		if original == zeroHash { // reset to original nonexistent slot (2.2.2.1)
 			// Storage was used as memory (allocation and deallocation occurred within the same contract)
-			if config.Istanbul {
+			if txn.config.Istanbul {
 				txn.AddRefund(19200)
 			} else {
 				txn.AddRefund(19800)
 			}
 		} else { // reset to original existing slot (2.2.2.2)
-			if config.Istanbul {
+			if txn.config.Istanbul {
 				txn.AddRefund(4200)
 			} else {
 				txn.AddRefund(4800)

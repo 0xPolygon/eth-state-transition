@@ -99,6 +99,8 @@ func (t *Transition) Txn() *Txn {
 
 // Write writes another transaction to the executor
 func (t *Transition) Write(txn *Transaction) (*Result, error) {
+	t.txn.config = &t.forks
+
 	// Make a local copy and apply the transaction
 	msg := txn.Copy()
 
@@ -452,8 +454,8 @@ func (t *Transition) applyCreate(c *runtime.Contract) *runtime.ExecutionResult {
 	return result
 }
 
-func (t *Transition) SetStorage(addr types.Address, key types.Hash, value types.Hash, config *runtime.ForksInTime) evmc.StorageStatus {
-	return t.txn.SetStorage(addr, key, value, config)
+func (t *Transition) SetStorage(addr types.Address, key types.Hash, value types.Hash) evmc.StorageStatus {
+	return t.txn.SetStorage(addr, key, value)
 }
 
 func (t *Transition) GetTxContext() runtime.TxContext {
