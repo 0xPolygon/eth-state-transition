@@ -424,6 +424,18 @@ func (t *Transition) hasCodeOrNonce(addr types.Address) bool {
 func (t *Transition) applyCreate(c *runtime.Contract, host runtime.Host) *runtime.ExecutionResult {
 	gasLimit := c.Gas
 
+	var address types.Address
+	if c.Type == runtime.Create {
+		address = helper.CreateAddress(c.Caller, t.GetNonce(c.Caller))
+	} else if c.Type == runtime.Create2 {
+		address = helper.CreateAddress2(c.Caller, c.Salt, c.Code)
+	} else {
+		panic("X1")
+	}
+
+	c.CodeAddress = address
+	c.Address = address
+
 	if c.Depth > int(1024)+1 {
 		return &runtime.ExecutionResult{
 			GasLeft: gasLimit,
@@ -553,7 +565,7 @@ func (t *Transition) Selfdestruct(addr types.Address, beneficiary types.Address)
 }
 
 func (t *Transition) Callx(c *runtime.Contract, h runtime.Host) *runtime.ExecutionResult {
-	if c.Type == runtime.Create {
+	if c.Type == runtime.Create || c.Type == runtime.Create2 {
 		return t.applyCreate(c, h)
 	}
 	return t.applyCall(c, c.Type, h)

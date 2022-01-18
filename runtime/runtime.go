@@ -68,7 +68,6 @@ type Host interface {
 	EmitLog(addr types.Address, topics []types.Hash, data []byte)
 	Callx(*Contract, Host) *ExecutionResult
 	Empty(addr types.Address) bool
-	GetNonce(addr types.Address) uint64
 }
 
 // ExecutionResult includes all output after executing given evm
@@ -137,10 +136,12 @@ type Contract struct {
 	Input       []byte
 	Gas         uint64
 	Static      bool
+	Salt        types.Hash
 }
 
-func NewContract(depth int, origin types.Address, from types.Address, to types.Address, value *big.Int, gas uint64, code []byte) *Contract {
+func NewContract(typ CallType, depth int, origin types.Address, from types.Address, to types.Address, value *big.Int, gas uint64, code []byte) *Contract {
 	f := &Contract{
+		Type:        typ,
 		Caller:      from,
 		Origin:      origin,
 		CodeAddress: to,
@@ -154,12 +155,12 @@ func NewContract(depth int, origin types.Address, from types.Address, to types.A
 }
 
 func NewContractCreation(depth int, origin types.Address, from types.Address, to types.Address, value *big.Int, gas uint64, code []byte) *Contract {
-	c := NewContract(depth, origin, from, to, value, gas, code)
+	c := NewContract(Create, depth, origin, from, to, value, gas, code)
 	return c
 }
 
 func NewContractCall(depth int, origin types.Address, from types.Address, to types.Address, value *big.Int, gas uint64, code []byte, input []byte) *Contract {
-	c := NewContract(depth, origin, from, to, value, gas, code)
+	c := NewContract(Call, depth, origin, from, to, value, gas, code)
 	c.Input = input
 	return c
 }

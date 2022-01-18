@@ -1029,7 +1029,11 @@ func opCreate(op OpCode) instruction {
 			return
 		}
 
-		contract.Type = runtime.Create
+		if op == CREATE {
+			contract.Type = runtime.Create
+		} else {
+			contract.Type = runtime.Create2
+		}
 
 		// Correct call
 		result := c.host.Callx(contract, c.host)
@@ -1287,13 +1291,10 @@ func (c *state) buildCreateContract(op OpCode) (*runtime.Contract, error) {
 	}
 
 	// Calculate address
-	var address types.Address
-	if op == CREATE {
-		address = helper.CreateAddress(c.msg.Address, c.host.GetNonce(c.msg.Address))
-	} else {
-		address = helper.CreateAddress2(c.msg.Address, bigToHash(salt), input)
+	contract := runtime.NewContractCreation(c.msg.Depth+1, c.msg.Origin, c.msg.Address, types.Address{}, value, gas, input)
+	if op == CREATE2 {
+		contract.Salt = bigToHash(salt)
 	}
-	contract := runtime.NewContractCreation(c.msg.Depth+1, c.msg.Origin, c.msg.Address, address, value, gas, input)
 	return contract, nil
 }
 

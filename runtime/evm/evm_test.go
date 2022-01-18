@@ -11,6 +11,7 @@ import (
 
 func newMockContract(value *big.Int, gas uint64, code []byte) *runtime.Contract {
 	return runtime.NewContract(
+		runtime.Call,
 		1,
 		types.ZeroAddress,
 		types.ZeroAddress,
