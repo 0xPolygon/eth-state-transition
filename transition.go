@@ -358,8 +358,7 @@ func (t *Transition) run(contract *runtime.Contract, host runtime.Host) *runtime
 		return precompiled.Run(contract.CodeAddress, contract.Input, contract.Gas, &t.forks)
 	}
 
-	ee := evm.NewEVM()
-	return ee.Run(contract, host, &t.forks)
+	return evm.Run(contract, host, &t.forks)
 }
 
 func (t *Transition) transfer(from, to types.Address, amount *big.Int) error {

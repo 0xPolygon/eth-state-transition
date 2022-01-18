@@ -60,9 +60,6 @@ type state struct {
 	stack []*big.Int
 	sp    int
 
-	// remove later
-	evm *EVM
-
 	err  error
 	stop bool
 

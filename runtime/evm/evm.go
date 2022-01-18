@@ -4,24 +4,14 @@ import (
 	"github.com/0xPolygon/eth-state-transition/runtime"
 )
 
-// EVM is the ethereum virtual machine
-type EVM struct {
-}
-
-// NewEVM creates a new EVM
-func NewEVM() *EVM {
-	return &EVM{}
-}
-
 // Run implements the runtime interface
-func (e *EVM) Run(c *runtime.Contract, host runtime.Host, config *runtime.ForksInTime) *runtime.ExecutionResult {
+func Run(c *runtime.Contract, host runtime.Host, config *runtime.ForksInTime) *runtime.ExecutionResult {
 
 	contract := acquireState()
 	contract.resetReturnData()
 
 	contract.msg = c
 	contract.code = c.Code
-	contract.evm = e
 	contract.gas = c.Gas
 	contract.host = host
 	contract.config = config
