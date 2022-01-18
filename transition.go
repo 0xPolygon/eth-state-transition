@@ -31,8 +31,6 @@ type GetHashByNumber = func(i uint64) types.Hash
 type GetHashByNumberHelper = func(num uint64, hash types.Hash) GetHashByNumber
 
 type Transition struct {
-	//runtimes []runtime.Runtime
-
 	// forks are the enabled forks for this transition
 	forks runtime.ForksInTime
 
@@ -41,9 +39,6 @@ type Transition struct {
 
 	// ctx is the block context
 	ctx runtime.TxContext
-
-	// gasPool is the current gas in the pool
-	gasPool uint64
 
 	// GetHash GetHashByNumberHelper
 	getHash GetHashByNumber
@@ -60,7 +55,6 @@ func NewTransition(forks runtime.ForksInTime, ctx runtime.TxContext, snap Snapsh
 		ctx:      ctx,
 		txn:      txn,
 		forks:    forks,
-		gasPool:  uint64(ctx.GasLimit),
 		totalGas: 0,
 	}
 
@@ -97,18 +91,6 @@ type BlockResult struct {
 
 func (t *Transition) SetGetHash(helper GetHashByNumberHelper) {
 	t.getHash = helper(uint64(t.ctx.Number), t.ctx.Hash)
-}
-
-func (t *Transition) subGasPool(amount uint64) error {
-	if t.gasPool < amount {
-		return ErrBlockLimitReached
-	}
-	t.gasPool -= amount
-	return nil
-}
-
-func (t *Transition) addGasPool(amount uint64) {
-	t.gasPool += amount
 }
 
 func (t *Transition) Txn() *Txn {
@@ -182,29 +164,6 @@ func (t *Transition) applyImpl(msg *Transaction) (*runtime.ExecutionResult, erro
 	return result, err
 }
 
-func (t *Transition) subGasLimitPrice(msg *Transaction) error {
-	// deduct the upfront max gas cost
-	upfrontGasCost := new(big.Int).Set(msg.GasPrice)
-	upfrontGasCost.Mul(upfrontGasCost, new(big.Int).SetUint64(msg.Gas))
-
-	if err := t.txn.SubBalance(msg.From, upfrontGasCost); err != nil {
-		if err == runtime.ErrNotEnoughFunds {
-			return ErrNotEnoughFundsForGas
-		}
-		return err
-	}
-	return nil
-}
-
-func (t *Transition) nonceCheck(msg *Transaction) error {
-	nonce := t.txn.GetNonce(msg.From)
-
-	if nonce != msg.Nonce {
-		return ErrNonceIncorrect
-	}
-	return nil
-}
-
 var (
 	ErrNonceIncorrect        = fmt.Errorf("incorrect nonce")
 	ErrNotEnoughFundsForGas  = fmt.Errorf("not enough funds to cover gas costs")
@@ -224,17 +183,19 @@ func (t *Transition) apply(msg *Transaction) (*runtime.ExecutionResult, error) {
 	// applying the message.
 	preCheck := func() error {
 		// 1. the nonce of the message caller is correct
-		if err := t.nonceCheck(msg); err != nil {
-			return err
+		nonce := t.txn.GetNonce(msg.From)
+		if nonce != msg.Nonce {
+			return ErrNonceIncorrect
 		}
 
-		// 2. caller has enough balance to cover transaction fee(gaslimit * gasprice)
-		if err := t.subGasLimitPrice(msg); err != nil {
-			return err
-		}
+		// 2. deduct the upfront max gas cost to cover transaction fee(gaslimit * gasprice)
+		upfrontGasCost := new(big.Int).Set(msg.GasPrice)
+		upfrontGasCost.Mul(upfrontGasCost, new(big.Int).SetUint64(msg.Gas))
 
-		// 3. the amount of gas required is available in the block
-		if err := t.subGasPool(msg.Gas); err != nil {
+		if err := t.txn.SubBalance(msg.From, upfrontGasCost); err != nil {
+			if err == runtime.ErrNotEnoughFunds {
+				return ErrNotEnoughFundsForGas
+			}
 			return err
 		}
 
@@ -298,9 +259,6 @@ func (t *Transition) apply(msg *Transaction) (*runtime.ExecutionResult, error) {
 	// pay the coinbase for the transaction
 	coinbaseFee := new(big.Int).Mul(new(big.Int).SetUint64(result.GasUsed), gasPrice)
 	txn.AddBalance(t.ctx.Coinbase, coinbaseFee)
-
-	// return gas to the pool
-	t.addGasPool(result.GasLeft)
 
 	return result, nil
 }
