@@ -73,17 +73,6 @@ var (
 	ErrCodeStoreOutOfGas        = errors.New("contract creation code storage out of gas")
 )
 
-type CallType int
-
-const (
-	Call CallType = iota
-	CallCode
-	DelegateCall
-	StaticCall
-	Create
-	Create2
-)
-
 // Runtime can process contracts
 type Runtime interface {
 	Run(c *Contract, host Host, config *ForksInTime) *ExecutionResult
@@ -94,7 +83,7 @@ type Runtime interface {
 // Contract is the instance being called
 type Contract struct {
 	Code        []byte
-	Type        CallType
+	Type        evmc.CallKind
 	CodeAddress types.Address
 	Address     types.Address
 	Origin      types.Address
@@ -107,7 +96,7 @@ type Contract struct {
 	Salt        types.Hash
 }
 
-func NewContract(typ CallType, depth int, origin types.Address, from types.Address, to types.Address, value *big.Int, gas uint64, code []byte) *Contract {
+func NewContract(typ evmc.CallKind, depth int, origin types.Address, from types.Address, to types.Address, value *big.Int, gas uint64, code []byte) *Contract {
 	f := &Contract{
 		Type:        typ,
 		Caller:      from,
@@ -123,12 +112,12 @@ func NewContract(typ CallType, depth int, origin types.Address, from types.Addre
 }
 
 func NewContractCreation(depth int, origin types.Address, from types.Address, to types.Address, value *big.Int, gas uint64, code []byte) *Contract {
-	c := NewContract(Create, depth, origin, from, to, value, gas, code)
+	c := NewContract(evmc.Create, depth, origin, from, to, value, gas, code)
 	return c
 }
 
 func NewContractCall(depth int, origin types.Address, from types.Address, to types.Address, value *big.Int, gas uint64, code []byte, input []byte) *Contract {
-	c := NewContract(Call, depth, origin, from, to, value, gas, code)
+	c := NewContract(evmc.Call, depth, origin, from, to, value, gas, code)
 	c.Input = input
 	return c
 }

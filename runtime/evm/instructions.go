@@ -1027,9 +1027,9 @@ func opCreate(op OpCode) instruction {
 		}
 
 		if op == CREATE {
-			contract.Type = runtime.Create
+			contract.Type = evmc.Create
 		} else {
-			contract.Type = runtime.Create2
+			contract.Type = evmc.Create2
 		}
 
 		// Correct call
@@ -1072,19 +1072,18 @@ func opCall(op OpCode) instruction {
 			return
 		}
 
-		var callType runtime.CallType
+		var callType evmc.CallKind
 		switch op {
 		case CALL:
-			callType = runtime.Call
+			callType = evmc.Call
 
 		case CALLCODE:
-			callType = runtime.CallCode
+			callType = evmc.CallCode
 
 		case DELEGATECALL:
-			callType = runtime.DelegateCall
+			callType = evmc.DelegateCall
 
 		case STATICCALL:
-			callType = runtime.StaticCall
 
 		default:
 			panic("not expected")

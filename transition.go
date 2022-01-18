@@ -316,7 +316,7 @@ func (t *Transition) Create(caller types.Address, code []byte, value *big.Int, g
 
 func (t *Transition) Call(caller types.Address, to types.Address, input []byte, value *big.Int, gas uint64) *runtime.ExecutionResult {
 	c := runtime.NewContractCall(1, caller, caller, to, value, gas, t.txn.GetCode(to), input)
-	return t.applyCall(c, runtime.Call, t)
+	return t.applyCall(c, evmc.Call, t)
 }
 
 var (
@@ -379,7 +379,7 @@ func (t *Transition) transfer(from, to types.Address, amount *big.Int) error {
 	return nil
 }
 
-func (t *Transition) applyCall(c *runtime.Contract, callType runtime.CallType, host runtime.Host) *runtime.ExecutionResult {
+func (t *Transition) applyCall(c *runtime.Contract, callType evmc.CallKind, host runtime.Host) *runtime.ExecutionResult {
 	if c.Depth > int(1024)+1 {
 		return &runtime.ExecutionResult{
 			GasLeft: c.Gas,
@@ -390,7 +390,7 @@ func (t *Transition) applyCall(c *runtime.Contract, callType runtime.CallType, h
 	snapshot := t.txn.Snapshot()
 	t.txn.TouchAccount(c.Address)
 
-	if callType == runtime.Call {
+	if callType == evmc.Call {
 		// Transfers only allowed on calls
 		if err := t.transfer(c.Caller, c.Address, c.Value); err != nil {
 			return &runtime.ExecutionResult{
@@ -426,9 +426,9 @@ func (t *Transition) applyCreate(c *runtime.Contract, host runtime.Host) *runtim
 	gasLimit := c.Gas
 
 	var address types.Address
-	if c.Type == runtime.Create {
+	if c.Type == evmc.Create {
 		address = helper.CreateAddress(c.Caller, t.GetNonce(c.Caller))
-	} else if c.Type == runtime.Create2 {
+	} else if c.Type == evmc.Create2 {
 		address = helper.CreateAddress2(c.Caller, c.Salt, c.Code)
 	} else {
 		panic("X1")
@@ -566,7 +566,7 @@ func (t *Transition) Selfdestruct(addr types.Address, beneficiary types.Address)
 }
 
 func (t *Transition) Callx(c *runtime.Contract, h runtime.Host) *runtime.ExecutionResult {
-	if c.Type == runtime.Create || c.Type == runtime.Create2 {
+	if c.Type == evmc.Create || c.Type == evmc.Create2 {
 		return t.applyCreate(c, h)
 	}
 	return t.applyCall(c, c.Type, h)
