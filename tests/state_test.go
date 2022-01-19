@@ -73,10 +73,15 @@ func (w *wrapper) GetAccount(addr types.Address) (*state.Account, error) {
 	}
 
 	newAcct := acct.Copy()
-	w.code[types.BytesToHash(newAcct.CodeHash)] = w.cc[addr].Code
+
+	if !bytes.Equal(newAcct.CodeHash, EmptyCodeHash) {
+		w.code[types.BytesToHash(newAcct.CodeHash)] = w.cc[addr].Code
+	}
 
 	// fill the storage
-	w.storage[acct.Root] = w.cc[addr].Storage
+	if !bytes.Equal(acct.Root.Bytes(), EmptyStateHash.Bytes()) {
+		w.storage[acct.Root] = w.cc[addr].Storage
+	}
 
 	return newAcct, nil
 }
