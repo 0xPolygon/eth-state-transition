@@ -50,8 +50,16 @@ type state struct {
 	tmp  []byte
 
 	host runtime.Host
-	msg  *runtime.Contract // change with msg
-	rev  evmc.Revision
+
+	Address types.Address
+	Caller  types.Address
+	Depth   int
+	Value   *big.Int
+	Input   []byte
+	Static  bool
+
+	// msg  *runtime.Contract // change with msg
+	rev evmc.Revision
 
 	// memory
 	memory      []byte
@@ -241,7 +249,7 @@ func (c *state) Run() ([]byte, error) {
 }
 
 func (c *state) inStaticCall() bool {
-	return c.msg.Static
+	return c.Static
 }
 
 func bigToHash(b *big.Int) types.Hash {

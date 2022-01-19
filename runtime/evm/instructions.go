@@ -460,7 +460,7 @@ func opSload(c *state) {
 		return
 	}
 
-	val := c.host.GetStorage(evmc.Address(c.msg.Address), evmc.Hash(bigToHash(loc)))
+	val := c.host.GetStorage(evmc.Address(c.Address), evmc.Hash(bigToHash(loc)))
 	loc.SetBytes(val.Bytes())
 }
 
@@ -480,7 +480,7 @@ func opSStore(c *state) {
 
 	legacyGasMetering := !c.isRevision(evmc.Istanbul) && (c.isRevision(evmc.Petersburg) || !c.isRevision(evmc.Constantinople))
 
-	status := c.host.SetStorage(c.msg.Address, key, val)
+	status := c.host.SetStorage(c.Address, key, val)
 	cost := uint64(0)
 
 	switch status {
@@ -545,7 +545,7 @@ func opPop(c *state) {
 // context operations
 
 func opAddress(c *state) {
-	c.push1().SetBytes(c.msg.Address.Bytes())
+	c.push1().SetBytes(c.Address.Bytes())
 }
 
 func opBalance(c *state) {
@@ -574,7 +574,7 @@ func opSelfBalance(c *state) {
 		return
 	}
 
-	c.push1().Set(c.host.GetBalance(evmc.Address(c.msg.Address)))
+	c.push1().Set(c.host.GetBalance(evmc.Address(c.Address)))
 }
 
 func opChainID(c *state) {
@@ -593,12 +593,12 @@ func opOrigin(c *state) {
 }
 
 func opCaller(c *state) {
-	c.push1().SetBytes(c.msg.Caller.Bytes())
+	c.push1().SetBytes(c.Caller.Bytes())
 }
 
 func opCallValue(c *state) {
 	v := c.push1()
-	if value := c.msg.Value; value != nil {
+	if value := c.Value; value != nil {
 		v.Set(value)
 	} else {
 		v.Set(zero)
@@ -617,13 +617,13 @@ func opCallDataLoad(c *state) {
 
 	bufPtr := bufPool.Get().(*[]byte)
 	buf := *bufPtr
-	c.setBytes(buf[:32], c.msg.Input, 32, offset)
+	c.setBytes(buf[:32], c.Input, 32, offset)
 	offset.SetBytes(buf[:32])
 	bufPool.Put(bufPtr)
 }
 
 func opCallDataSize(c *state) {
-	c.push1().SetUint64(uint64(len(c.msg.Input)))
+	c.push1().SetUint64(uint64(len(c.Input)))
 }
 
 func opCodeSize(c *state) {
@@ -767,7 +767,7 @@ func opCallDataCopy(c *state) {
 	}
 
 	if size != 0 {
-		c.setBytes(c.memory[memOffset.Uint64():], c.msg.Input, size, dataOffset)
+		c.setBytes(c.memory[memOffset.Uint64():], c.Input, size, dataOffset)
 	}
 }
 
@@ -882,7 +882,7 @@ func opSelfDestruct(c *state) {
 		gas = 5000
 		if c.isRevision(evmc.TangerineWhistle) {
 			// if empty and transfers value
-			if c.host.Empty(evmc.Address(address)) && c.host.GetBalance(evmc.Address(c.msg.Address)).Sign() != 0 {
+			if c.host.Empty(evmc.Address(address)) && c.host.GetBalance(evmc.Address(c.Address)).Sign() != 0 {
 				gas += 25000
 			}
 		} else if !c.host.AccountExists(evmc.Address(address)) {
@@ -894,7 +894,7 @@ func opSelfDestruct(c *state) {
 		return
 	}
 
-	c.host.Selfdestruct(evmc.Address(c.msg.Address), evmc.Address(address))
+	c.host.Selfdestruct(evmc.Address(c.Address), evmc.Address(address))
 	c.halt()
 }
 
@@ -988,7 +988,7 @@ func opLog(size int) instruction {
 			return
 		}
 
-		c.host.EmitLog(evmc.Address(c.msg.Address), topics, c.tmp)
+		c.host.EmitLog(evmc.Address(c.Address), topics, c.tmp)
 
 		if !c.consumeGas(uint64(size) * 375) {
 			return
@@ -1032,7 +1032,7 @@ func opCreate(op OpCode) instruction {
 			return
 		}
 
-		if c.msg.Depth >= int(1024) {
+		if c.Depth >= int(1024) {
 			c.push1().Set(zero)
 			c.gas += contract.Gas
 			return
@@ -1113,7 +1113,7 @@ func opCall(op OpCode) instruction {
 			return
 		}
 
-		if c.msg.Depth >= int(1024) {
+		if c.Depth >= int(1024) {
 			c.push1().Set(zero)
 			c.gas += contract.Gas
 			return
@@ -1224,21 +1224,21 @@ func (c *state) buildCallContract(op OpCode) (*runtime.Contract, uint64, uint64,
 
 	parent := c
 
-	contract := runtime.NewContractCall(c.msg.Depth+1, parent.msg.Address, addr, value, gas, c.host.GetCode(evmc.Address(addr)), args)
+	contract := runtime.NewContractCall(c.Depth+1, parent.Address, addr, value, gas, c.host.GetCode(evmc.Address(addr)), args)
 
-	if op == STATICCALL || parent.msg.Static {
+	if op == STATICCALL || parent.Static {
 		contract.Static = true
 	}
 	if op == CALLCODE || op == DELEGATECALL {
-		contract.Address = parent.msg.Address
+		contract.Address = parent.Address
 		if op == DELEGATECALL {
-			contract.Value = parent.msg.Value
-			contract.Caller = parent.msg.Caller
+			contract.Value = parent.Value
+			contract.Caller = parent.Caller
 		}
 	}
 
 	if transfersValue {
-		if c.host.GetBalance(evmc.Address(c.msg.Address)).Cmp(value) < 0 {
+		if c.host.GetBalance(evmc.Address(c.Address)).Cmp(value) < 0 {
 			return contract, 0, 0, fmt.Errorf("bad")
 		}
 	}
@@ -1279,7 +1279,7 @@ func (c *state) buildCreateContract(op OpCode) (*runtime.Contract, error) {
 	}
 
 	if hasTransfer {
-		if c.host.GetBalance(evmc.Address(c.msg.Address)).Cmp(value) < 0 {
+		if c.host.GetBalance(evmc.Address(c.Address)).Cmp(value) < 0 {
 			return nil, fmt.Errorf("bad")
 		}
 	}
@@ -1305,7 +1305,7 @@ func (c *state) buildCreateContract(op OpCode) (*runtime.Contract, error) {
 	}
 
 	// Calculate address
-	contract := runtime.NewContractCreation(c.msg.Depth+1, c.msg.Address, types.Address{}, value, gas, input)
+	contract := runtime.NewContractCreation(c.Depth+1, c.Address, types.Address{}, value, gas, input)
 	if op == CREATE2 {
 		contract.Salt = bigToHash(salt)
 	}

@@ -8,25 +8,32 @@ import (
 // Run implements the runtime interface
 func Run(c *runtime.Contract, host runtime.Host, rev evmc.Revision) *runtime.ExecutionResult {
 
-	contract := acquireState()
-	contract.resetReturnData()
+	s := acquireState()
+	s.resetReturnData()
 
-	contract.msg = c
-	contract.code = c.Code
-	contract.gas = c.Gas
-	contract.host = host
-	contract.rev = rev
-	contract.bitmap.setCode(c.Code)
+	//contract.msg = c
+	s.Address = c.Address
+	s.Caller = c.Caller
+	s.Depth = c.Depth
+	s.Value = c.Value
+	s.Input = c.Input
+	s.Static = c.Static
 
-	ret, err := contract.Run()
+	s.code = c.Code
+	s.gas = c.Gas
+	s.host = host
+	s.rev = rev
+	s.bitmap.setCode(c.Code)
+
+	ret, err := s.Run()
 
 	// We are probably doing this append magic to make sure that the slice doesn't have more capacity than it needs
 	var returnValue []byte
 	returnValue = append(returnValue[:0], ret...)
 
-	gasLeft := contract.gas
+	gasLeft := s.gas
 
-	releaseState(contract)
+	releaseState(s)
 
 	if err != nil && err != errRevert {
 		gasLeft = 0
