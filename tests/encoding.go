@@ -1,4 +1,4 @@
-package helper
+package tests
 
 import (
 	"encoding/hex"

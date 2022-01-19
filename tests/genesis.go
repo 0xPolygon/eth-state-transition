@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/0xPolygon/eth-state-transition/helper"
 	"github.com/0xPolygon/eth-state-transition/types"
 )
 
@@ -38,7 +37,7 @@ func (g *GenesisAccount) UnmarshalJSON(data []byte) error {
 
 	var err error
 	if dec.Code != nil {
-		g.Code, err = helper.ParseBytes(dec.Code)
+		g.Code, err = ParseBytes(dec.Code)
 		if err != nil {
 			return parseError("code", err)
 		}
@@ -48,17 +47,17 @@ func (g *GenesisAccount) UnmarshalJSON(data []byte) error {
 		g.Storage = dec.Storage
 	}
 
-	g.Balance, err = helper.ParseUint256orHex(dec.Balance)
+	g.Balance, err = ParseUint256orHex(dec.Balance)
 	if err != nil {
 		return parseError("balance", err)
 	}
-	g.Nonce, err = helper.ParseUint64orHex(dec.Nonce)
+	g.Nonce, err = ParseUint64orHex(dec.Nonce)
 	if err != nil {
 		return parseError("nonce", err)
 	}
 
 	if dec.PrivateKey != nil {
-		g.PrivateKey, err = helper.ParseBytes(dec.PrivateKey)
+		g.PrivateKey, err = ParseBytes(dec.PrivateKey)
 		if err != nil {
 			return parseError("privatekey", err)
 		}
