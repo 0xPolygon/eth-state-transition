@@ -134,7 +134,7 @@ func (t *Transition) Write(txn *Transaction) (*Result, error) {
 
 	// if the transaction created a contract, store the creation address in the receipt.
 	if msg.To == nil {
-		receipt.ContractAddress = helper.CreateAddress(msg.From, txn.Nonce)
+		receipt.ContractAddress = CreateAddress(msg.From, txn.Nonce)
 	}
 
 	// Set the receipt logs and create a bloom for filtering
@@ -253,7 +253,7 @@ func (t *Transition) apply(msg *Transaction) (*runtime.ExecutionResult, error) {
 }
 
 func (t *Transition) Create(caller types.Address, code []byte, value *big.Int, gas uint64) *runtime.ExecutionResult {
-	address := helper.CreateAddress(caller, t.txn.GetNonce(caller))
+	address := CreateAddress(caller, t.txn.GetNonce(caller))
 	contract := runtime.NewContractCreation(1, caller, caller, address, value, gas, code)
 
 	res := t.applyCreate(contract)
@@ -365,9 +365,9 @@ func (t *Transition) applyCreate(c *runtime.Contract) *runtime.ExecutionResult {
 
 	var address types.Address
 	if c.Type == evmc.Create {
-		address = helper.CreateAddress(c.Caller, t.GetNonce(c.Caller))
+		address = CreateAddress(c.Caller, t.GetNonce(c.Caller))
 	} else if c.Type == evmc.Create2 {
-		address = helper.CreateAddress2(c.Caller, c.Salt, c.Code)
+		address = CreateAddress2(c.Caller, c.Salt, c.Code)
 	} else {
 		panic("X1")
 	}
