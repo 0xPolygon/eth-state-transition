@@ -15,6 +15,7 @@ import (
 	itrie "github.com/0xPolygon/eth-state-transition/immutable-trie"
 	"github.com/0xPolygon/eth-state-transition/runtime"
 	"github.com/0xPolygon/eth-state-transition/types"
+	"github.com/ethereum/evmc/v10/bindings/go/evmc"
 	"github.com/stretchr/testify/assert"
 	"github.com/umbracle/fastrlp"
 )
@@ -364,63 +365,56 @@ func (t *stTransaction) UnmarshalJSON(input []byte) error {
 
 // forks
 
-var Forks = map[string]*runtime.Forks{
-	"Frontier": {},
-	"Homestead": {
-		Homestead: runtime.NewFork(0),
+type blockB func(i int) evmc.Revision
+
+var Forks2 = map[string]blockB{
+	"Frontier": func(i int) evmc.Revision {
+		return evmc.Frontier
 	},
-	"EIP150": {
-		Homestead: runtime.NewFork(0),
-		Tangerine: runtime.NewFork(0),
+	"Homestead": func(i int) evmc.Revision {
+		return evmc.Homestead
 	},
-	"EIP158": {
-		Homestead: runtime.NewFork(0),
-		Tangerine: runtime.NewFork(0),
+	"EIP150": func(i int) evmc.Revision {
+		return evmc.TangerineWhistle
 	},
-	"Byzantium": {
-		Homestead: runtime.NewFork(0),
-		Tangerine: runtime.NewFork(0),
-		Byzantium: runtime.NewFork(0),
+	"EIP158": func(i int) evmc.Revision {
+		return evmc.TangerineWhistle
 	},
-	"Constantinople": {
-		Homestead:      runtime.NewFork(0),
-		Tangerine:      runtime.NewFork(0),
-		Byzantium:      runtime.NewFork(0),
-		Constantinople: runtime.NewFork(0),
+	"Byzantium": func(i int) evmc.Revision {
+		return evmc.Byzantium
 	},
-	"Istanbul": {
-		Homestead:      runtime.NewFork(0),
-		Tangerine:      runtime.NewFork(0),
-		Byzantium:      runtime.NewFork(0),
-		Constantinople: runtime.NewFork(0),
-		Petersburg:     runtime.NewFork(0),
-		Istanbul:       runtime.NewFork(0),
+	"Constantinople": func(i int) evmc.Revision {
+		return evmc.Constantinople
 	},
-	"FrontierToHomesteadAt5": {
-		Homestead: runtime.NewFork(5),
+	"ConstantinopleFix": func(i int) evmc.Revision {
+		return evmc.Petersburg
 	},
-	"HomesteadToEIP150At5": {
-		Homestead: runtime.NewFork(0),
-		Tangerine: runtime.NewFork(5),
+	"Istanbul": func(i int) evmc.Revision {
+		return evmc.Istanbul
 	},
-	"HomesteadToDaoAt5": {
-		Homestead: runtime.NewFork(0),
+	"FrontierToHomesteadAt5": func(i int) evmc.Revision {
+		if i < 5 {
+			return evmc.Frontier
+		}
+		return evmc.Homestead
 	},
-	"EIP158ToByzantiumAt5": {
-		Homestead: runtime.NewFork(0),
-		Tangerine: runtime.NewFork(0),
-		Byzantium: runtime.NewFork(5),
+	"HomesteadToEIP150At5": func(i int) evmc.Revision {
+		if i < 5 {
+			return evmc.Homestead
+		}
+		return evmc.TangerineWhistle
 	},
-	"ByzantiumToConstantinopleAt5": {
-		Byzantium:      runtime.NewFork(0),
-		Constantinople: runtime.NewFork(5),
+	"EIP158ToByzantiumAt5": func(i int) evmc.Revision {
+		if i < 5 {
+			return evmc.TangerineWhistle
+		}
+		return evmc.Byzantium
 	},
-	"ConstantinopleFix": {
-		Homestead:      runtime.NewFork(0),
-		Tangerine:      runtime.NewFork(0),
-		Byzantium:      runtime.NewFork(0),
-		Constantinople: runtime.NewFork(0),
-		Petersburg:     runtime.NewFork(0),
+	"ByzantiumToConstantinopleAt5": func(i int) evmc.Revision {
+		if i < 5 {
+			return evmc.Byzantium
+		}
+		return evmc.Constantinople
 	},
 }
 

@@ -91,14 +91,17 @@ func RunSpecificTest(file string, t *testing.T, c stateCase, name, fork string, 
 		// already self contained in the EIP 158
 		return
 	}
-	config, ok := Forks[fork]
+
+	env := c.Env.ToEnv(t)
+
+	// find the fork
+	goahead, ok := Forks2[fork]
 	if !ok {
 		t.Fatalf("config %s not found", fork)
 	}
+	rev := goahead(int(env.Number))
 
 	// fmt.Println("----------------")
-
-	env := c.Env.ToEnv(t)
 
 	msg, err := c.Transaction.At(p.Indexes)
 	if err != nil {
@@ -106,13 +109,12 @@ func RunSpecificTest(file string, t *testing.T, c stateCase, name, fork string, 
 	}
 
 	snap, _ := buildState(t, c.Pre)
-	forks := config.At(uint64(env.Number))
 
 	runtimeCtx := c.Env.ToHeader(t)
 	runtimeCtx.ChainID = 1
 
 	wr := newWrapper(snap, c.Pre)
-	transition := state.NewTransition(forks.Revision(), runtimeCtx, wr)
+	transition := state.NewTransition(rev, runtimeCtx, wr)
 
 	result, err := transition.Write(msg)
 	assert.NoError(t, err)
