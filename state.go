@@ -5,8 +5,8 @@ import (
 	"math/big"
 
 	iradix "github.com/hashicorp/go-immutable-radix"
+	"github.com/umbracle/go-web3"
 
-	"github.com/0xPolygon/eth-state-transition/helper"
 	"github.com/0xPolygon/eth-state-transition/types"
 )
 
@@ -22,7 +22,7 @@ type Snapshot interface {
 	GetAccount(addr types.Address) (*Account, error)
 }
 
-var EmptyCodeHash = helper.Keccak256(nil)
+var EmptyCodeHash = web3.Keccak256(nil)
 
 // StateObject is the internal representation of the account
 type stateObject struct {

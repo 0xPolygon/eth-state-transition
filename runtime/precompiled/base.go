@@ -7,6 +7,7 @@ import (
 
 	"github.com/0xPolygon/eth-state-transition/helper"
 	"github.com/ethereum/evmc/v10/bindings/go/evmc"
+	"github.com/umbracle/go-web3"
 )
 
 type ecrecover struct {
@@ -36,7 +37,7 @@ func (e *ecrecover) run(input []byte) ([]byte, error) {
 		return nil, nil
 	}
 
-	dst := helper.Keccak256To(nil, pubKey[1:])
+	dst := web3.Keccak256(pubKey[1:])
 	dst = e.p.leftPad(dst[12:], 32)
 
 	return dst, nil

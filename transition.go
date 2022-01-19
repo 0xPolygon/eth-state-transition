@@ -5,12 +5,12 @@ import (
 	"math"
 	"math/big"
 
-	"github.com/0xPolygon/eth-state-transition/helper"
 	"github.com/0xPolygon/eth-state-transition/runtime"
 	"github.com/0xPolygon/eth-state-transition/runtime/evm"
 	"github.com/0xPolygon/eth-state-transition/runtime/precompiled"
 	"github.com/0xPolygon/eth-state-transition/types"
 	"github.com/ethereum/evmc/v10/bindings/go/evmc"
+	"github.com/umbracle/go-web3"
 )
 
 const (
@@ -23,7 +23,7 @@ const (
 	TxGasContractCreation uint64 = 53000
 )
 
-var emptyCodeHashTwo = types.BytesToHash(helper.Keccak256(nil))
+var emptyCodeHashTwo = types.BytesToHash(web3.Keccak256(nil))
 
 // GetHashByNumber returns the hash function of a block number
 type GetHashByNumber = func(i uint64) types.Hash
@@ -64,7 +64,7 @@ func NewTransition(rev evmc.Revision, ctx runtime.TxContext, snap Snapshot) *Tra
 
 	// by default for getHash use a simple one
 	transition.getHash = func(n uint64) types.Hash {
-		return types.BytesToHash(helper.Keccak256([]byte(big.NewInt(int64(n)).String())))
+		return types.BytesToHash(web3.Keccak256([]byte(big.NewInt(int64(n)).String())))
 	}
 
 	return transition

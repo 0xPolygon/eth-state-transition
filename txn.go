@@ -5,8 +5,8 @@ import (
 
 	"github.com/ethereum/evmc/v10/bindings/go/evmc"
 	iradix "github.com/hashicorp/go-immutable-radix"
+	"github.com/umbracle/go-web3"
 
-	"github.com/0xPolygon/eth-state-transition/helper"
 	"github.com/0xPolygon/eth-state-transition/runtime"
 	"github.com/0xPolygon/eth-state-transition/types"
 )
@@ -329,7 +329,7 @@ func (txn *Txn) GetNonce(addr types.Address) uint64 {
 // SetCode sets the code for an address
 func (txn *Txn) SetCode(addr types.Address, code []byte) {
 	txn.upsertAccount(addr, true, func(object *stateObject) {
-		object.Account.CodeHash = helper.Keccak256(code)
+		object.Account.CodeHash = web3.Keccak256(code)
 		object.DirtyCode = true
 		object.Code = code
 	})

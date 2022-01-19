@@ -7,6 +7,7 @@ import (
 
 	"github.com/0xPolygon/eth-state-transition/types"
 	"github.com/btcsuite/btcd/btcec"
+	"github.com/umbracle/go-web3"
 )
 
 // S256 is the secp256k1 elliptic curve
@@ -83,6 +84,6 @@ func ParsePrivateKey(buf []byte) (*ecdsa.PrivateKey, error) {
 
 // PubKeyToAddress returns the Ethereum address of a public key
 func PubKeyToAddress(pub *ecdsa.PublicKey) types.Address {
-	buf := Keccak256(MarshalPublicKey(pub)[1:])[12:]
+	buf := web3.Keccak256(MarshalPublicKey(pub)[1:])[12:]
 	return types.BytesToAddress(buf)
 }

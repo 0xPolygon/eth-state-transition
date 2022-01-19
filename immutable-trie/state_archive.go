@@ -8,9 +8,9 @@ import (
 	"bytes"
 
 	state "github.com/0xPolygon/eth-state-transition"
-	"github.com/0xPolygon/eth-state-transition/helper"
 	"github.com/0xPolygon/eth-state-transition/types"
 	"github.com/umbracle/fastrlp"
+	"github.com/umbracle/go-web3"
 	"golang.org/x/crypto/sha3"
 )
 
@@ -123,7 +123,7 @@ func (s *Snapshot) GetStorage(root types.Hash, raw types.Hash) types.Hash {
 		dummySnap = xx.(*Snapshot)
 	}
 
-	key := helper.Keccak256(raw.Bytes())
+	key := web3.Keccak256(raw.Bytes())
 
 	val, ok := dummySnap.trieRoot.Get(key)
 	if !ok {
@@ -147,7 +147,7 @@ func (s *Snapshot) GetStorage(root types.Hash, raw types.Hash) types.Hash {
 }
 
 func (s *Snapshot) GetAccount(addr types.Address) (*state.Account, error) {
-	data, ok := s.trieRoot.Get(helper.Keccak256(addr.Bytes()))
+	data, ok := s.trieRoot.Get(web3.Keccak256(addr.Bytes()))
 	if !ok {
 		return nil, nil
 	}

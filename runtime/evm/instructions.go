@@ -6,10 +6,10 @@ import (
 	"math/bits"
 	"sync"
 
-	"github.com/0xPolygon/eth-state-transition/helper"
 	"github.com/0xPolygon/eth-state-transition/runtime"
 	"github.com/0xPolygon/eth-state-transition/types"
 	"github.com/ethereum/evmc/v10/bindings/go/evmc"
+	"github.com/umbracle/go-web3"
 )
 
 type instruction func(c *state)
@@ -534,10 +534,8 @@ func opSha3(c *state) {
 		return
 	}
 
-	c.tmp = helper.Keccak256To(c.tmp[:0], c.tmp)
-
 	v := c.push1()
-	v.SetBytes(c.tmp)
+	v.SetBytes(web3.Keccak256(c.tmp))
 }
 
 func opPop(c *state) {

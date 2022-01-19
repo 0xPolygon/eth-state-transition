@@ -12,6 +12,7 @@ import (
 	itrie "github.com/0xPolygon/eth-state-transition/immutable-trie"
 	"github.com/0xPolygon/eth-state-transition/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/umbracle/go-web3"
 )
 
 var (
@@ -138,7 +139,7 @@ func RunSpecificTest(file string, t *testing.T, c stateCase, name, fork string, 
 
 var EmptyStateHash = types.StringToHash("0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421")
 
-var EmptyCodeHash = helper.Keccak256(nil)
+var EmptyCodeHash = web3.Keccak256(nil)
 
 var zeroHash = types.Hash{}
 
@@ -159,7 +160,7 @@ func computeRoot(pre map[types.Address]*GenesisAccount, post []*state.Object) ([
 		if len(data.Code) != 0 {
 			single.DirtyCode = true
 			single.Code = data.Code
-			single.CodeHash = types.BytesToHash(helper.Keccak256(data.Code))
+			single.CodeHash = types.BytesToHash(web3.Keccak256(data.Code))
 		}
 
 		for k, v := range data.Storage {
@@ -248,6 +249,6 @@ func TestState(t *testing.T) {
 }
 
 func rlpHashLogs(logs []*state.Log) (res types.Hash) {
-	dst := helper.Keccak256(MarshalLogsWith(logs))
+	dst := web3.Keccak256(MarshalLogsWith(logs))
 	return types.BytesToHash(dst)
 }
