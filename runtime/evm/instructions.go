@@ -1176,11 +1176,11 @@ func (c *state) buildCallContract(op OpCode) (*runtime.Contract, uint64, uint64,
 		gasCost = 40
 	}
 
-	eip158 := c.isRevision(evmc.TangerineWhistle)
+	isTangerine := c.isRevision(evmc.TangerineWhistle)
 	transfersValue := (op == CALL || op == CALLCODE) && value != nil && value.Sign() != 0
 
 	if op == CALL {
-		if eip158 {
+		if isTangerine {
 			if transfersValue && c.host.Empty(evmc.Address(addr)) {
 				gasCost += 25000
 			}
@@ -1259,22 +1259,12 @@ func (c *state) buildCreateContract(op OpCode) (*runtime.Contract, error) {
 	// check if the value can be transfered
 	hasTransfer := value != nil && value.Sign() != 0
 
-	// Calculate and consume gas cost
-
-	// var overflow bool
-	var gasCost uint64
-
 	// Both CREATE and CREATE2 use memory
 	var input []byte
 	var ok bool
 
 	input, ok = c.get2(input[:0], offset, length) // Does the memory check
 	if !ok {
-		return nil, nil
-	}
-
-	// Consume memory resize gas (TODO, change with get2)
-	if !c.consumeGas(gasCost) {
 		return nil, nil
 	}
 
