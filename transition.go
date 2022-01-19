@@ -32,7 +32,7 @@ type GetHashByNumberHelper = func(num uint64, hash types.Hash) GetHashByNumber
 
 type Transition struct {
 	// forks are the enabled forks for this transition
-	forks runtime.ForksInTime
+	rev evmc.Revision
 
 	// txn is the transaction of changes
 	txn *Txn
@@ -48,13 +48,14 @@ type Transition struct {
 }
 
 // NewExecutor creates a new executor
-func NewTransition(forks runtime.ForksInTime, ctx runtime.TxContext, snap Snapshot) *Transition {
+func NewTransition(rev evmc.Revision, ctx runtime.TxContext, snap Snapshot) *Transition {
 	txn := NewTxn(snap)
+	txn.rev = rev
 
 	transition := &Transition{
 		ctx:      ctx,
 		txn:      txn,
-		forks:    forks,
+		rev:      rev,
 		totalGas: 0,
 	}
 
@@ -99,7 +100,6 @@ func (t *Transition) Txn() *Txn {
 
 // Write writes another transaction to the executor
 func (t *Transition) Write(txn *Transaction) (*Result, error) {
-	t.txn.config = &t.forks
 
 	// Make a local copy and apply the transaction
 	msg := txn.Copy()
@@ -117,7 +117,7 @@ func (t *Transition) Write(txn *Transaction) (*Result, error) {
 		ReturnValue: result.ReturnValue,
 	}
 
-	if t.forks.Byzantium {
+	if t.isRevision(evmc.Byzantium) {
 		// The suicided accounts are set as deleted for the next iteration
 		t.txn.CleanDeleteObjects(true)
 
@@ -129,7 +129,7 @@ func (t *Transition) Write(txn *Transaction) (*Result, error) {
 
 	} else {
 		// TODO: If byzntium is enabled you need a special step to commit the data yourself
-		t.txn.CleanDeleteObjects(t.forks.Tangerine)
+		t.txn.CleanDeleteObjects(t.isRevision(evmc.TangerineWhistle))
 	}
 
 	// if the transaction created a contract, store the creation address in the receipt.
@@ -163,6 +163,10 @@ var (
 	ErrNotEnoughFunds        = fmt.Errorf("not enough funds for transfer with given value")
 )
 
+func (t *Transition) isRevision(rev evmc.Revision) bool {
+	return rev <= t.rev
+}
+
 func (t *Transition) apply(msg *Transaction) (*runtime.ExecutionResult, error) {
 	txn := t.txn
 
@@ -189,7 +193,7 @@ func (t *Transition) apply(msg *Transaction) (*runtime.ExecutionResult, error) {
 		}
 
 		// 4. there is no overflow when calculating intrinsic gas
-		intrinsicGasCost, err := TransactionGasCost(msg, t.forks.Homestead, t.forks.Istanbul)
+		intrinsicGasCost, err := TransactionGasCost(msg, t.isRevision(evmc.Homestead), t.isRevision(evmc.Istanbul))
 		if err != nil {
 			return err
 		}
@@ -288,13 +292,13 @@ func (t *Transition) isPrecompiled(codeAddr types.Address) bool {
 	case seven:
 		fallthrough
 	case eight:
-		return t.forks.Byzantium
+		return t.isRevision(evmc.Byzantium)
 	}
 
 	// istanbul precompiles
 	switch codeAddr {
 	case nine:
-		return t.forks.Istanbul
+		return t.isRevision(evmc.Istanbul)
 	}
 
 	return true
@@ -302,10 +306,10 @@ func (t *Transition) isPrecompiled(codeAddr types.Address) bool {
 
 func (t *Transition) run(contract *runtime.Contract, host runtime.Host) *runtime.ExecutionResult {
 	if t.isPrecompiled(contract.CodeAddress) {
-		return precompiled.Run(contract.CodeAddress, contract.Input, contract.Gas, t.forks.Revision())
+		return precompiled.Run(contract.CodeAddress, contract.Input, contract.Gas, t.rev)
 	}
 
-	return evm.Run(contract, host, t.forks.Revision())
+	return evm.Run(contract, host, t.rev)
 }
 
 func (t *Transition) transfer(from, to types.Address, amount *big.Int) error {
@@ -389,7 +393,7 @@ func (t *Transition) applyCreate(c *runtime.Contract) *runtime.ExecutionResult {
 	// Take snapshot of the current state
 	snapshot := t.txn.Snapshot()
 
-	if t.forks.Tangerine {
+	if t.isRevision(evmc.TangerineWhistle) {
 		// Force the creation of the account
 		t.txn.CreateAccount(c.Address)
 		t.txn.IncrNonce(c.Address)
@@ -410,7 +414,7 @@ func (t *Transition) applyCreate(c *runtime.Contract) *runtime.ExecutionResult {
 		return result
 	}
 
-	if t.forks.Tangerine && len(result.ReturnValue) > spuriousDragonMaxCodeSize {
+	if t.isRevision(evmc.TangerineWhistle) && len(result.ReturnValue) > spuriousDragonMaxCodeSize {
 		// Contract size exceeds 'SpuriousDragon' size limit
 		t.txn.RevertToSnapshot(snapshot)
 		return &runtime.ExecutionResult{
@@ -426,7 +430,7 @@ func (t *Transition) applyCreate(c *runtime.Contract) *runtime.ExecutionResult {
 		result.ReturnValue = nil
 
 		// Out of gas creating the contract
-		if t.forks.Homestead {
+		if t.isRevision(evmc.Homestead) {
 			t.txn.RevertToSnapshot(snapshot)
 			result.GasLeft = 0
 		}

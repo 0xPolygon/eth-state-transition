@@ -112,7 +112,7 @@ func RunSpecificTest(file string, t *testing.T, c stateCase, name, fork string, 
 	runtimeCtx.ChainID = 1
 
 	wr := newWrapper(snap, c.Pre)
-	transition := state.NewTransition(forks, runtimeCtx, wr)
+	transition := state.NewTransition(forks.Revision(), runtimeCtx, wr)
 
 	result, err := transition.Write(msg)
 	assert.NoError(t, err)
