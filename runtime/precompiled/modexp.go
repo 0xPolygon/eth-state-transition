@@ -5,7 +5,7 @@ import (
 
 	"math"
 
-	"github.com/0xPolygon/eth-state-transition/runtime"
+	"github.com/ethereum/evmc/v10/bindings/go/evmc"
 )
 
 type modExp struct {
@@ -76,7 +76,7 @@ func multComplexity(x *big.Int) *big.Int {
 	return x
 }
 
-func (m *modExp) gas(input []byte, config *runtime.ForksInTime) uint64 {
+func (m *modExp) gas(input []byte, rev evmc.Revision) uint64 {
 	// fmt.Println("-- calc gas --")
 
 	var val, tail []byte

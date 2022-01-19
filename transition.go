@@ -302,7 +302,7 @@ func (t *Transition) isPrecompiled(codeAddr types.Address) bool {
 
 func (t *Transition) run(contract *runtime.Contract, host runtime.Host) *runtime.ExecutionResult {
 	if t.isPrecompiled(contract.CodeAddress) {
-		return precompiled.Run(contract.CodeAddress, contract.Input, contract.Gas, &t.forks)
+		return precompiled.Run(contract.CodeAddress, contract.Input, contract.Gas, t.forks.Revision())
 	}
 
 	return evm.Run(contract, host, &t.forks)

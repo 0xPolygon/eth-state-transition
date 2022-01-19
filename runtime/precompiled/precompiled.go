@@ -5,6 +5,7 @@ import (
 
 	"github.com/0xPolygon/eth-state-transition/runtime"
 	"github.com/0xPolygon/eth-state-transition/types"
+	"github.com/ethereum/evmc/v10/bindings/go/evmc"
 )
 
 var p = &Precompiled{}
@@ -35,7 +36,7 @@ func init() {
 }
 
 type contract interface {
-	gas(input []byte, config *runtime.ForksInTime) uint64
+	gas(input []byte, rev evmc.Revision) uint64
 	run(input []byte) ([]byte, error)
 }
 
@@ -45,9 +46,9 @@ type Precompiled struct {
 }
 
 // Run runs an execution
-func Run(codeAddress types.Address, input []byte, gas uint64, config *runtime.ForksInTime) *runtime.ExecutionResult {
+func Run(codeAddress types.Address, input []byte, gas uint64, rev evmc.Revision) *runtime.ExecutionResult {
 	contract := Contracts[codeAddress]
-	gasCost := contract.gas(input, config)
+	gasCost := contract.gas(input, rev)
 
 	// In the case of not enough gas for precompiled execution we return ErrOutOfGas
 	if gas < gasCost {

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/0xPolygon/eth-state-transition/runtime"
+	"github.com/ethereum/evmc/v10/bindings/go/evmc"
 	bn256 "github.com/umbracle/go-eth-bn256"
 )
 
@@ -12,8 +12,8 @@ type bn256Add struct {
 	p *Precompiled
 }
 
-func (b *bn256Add) gas(input []byte, config *runtime.ForksInTime) uint64 {
-	if config.Istanbul {
+func (b *bn256Add) gas(input []byte, rev evmc.Revision) uint64 {
+	if rev >= evmc.Istanbul {
 		return 150
 	}
 	return 500
@@ -44,8 +44,8 @@ type bn256Mul struct {
 	p *Precompiled
 }
 
-func (b *bn256Mul) gas(input []byte, config *runtime.ForksInTime) uint64 {
-	if config.Istanbul {
+func (b *bn256Mul) gas(input []byte, rev evmc.Revision) uint64 {
+	if rev >= evmc.Istanbul {
 		return 6000
 	}
 	return 40000
@@ -81,9 +81,9 @@ type bn256Pairing struct {
 	p *Precompiled
 }
 
-func (b *bn256Pairing) gas(input []byte, config *runtime.ForksInTime) uint64 {
+func (b *bn256Pairing) gas(input []byte, rev evmc.Revision) uint64 {
 	baseGas, pointGas := uint64(100000), uint64(80000)
-	if config.Istanbul {
+	if rev >= evmc.Istanbul {
 		baseGas, pointGas = 45000, 34000
 	}
 	return baseGas + pointGas*uint64(len(input)/192)

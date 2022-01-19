@@ -2,6 +2,8 @@ package runtime
 
 import (
 	"math/big"
+
+	"github.com/ethereum/evmc/v10/bindings/go/evmc"
 )
 
 // Params are all the set of params for the chain
@@ -25,26 +27,6 @@ func (f *Forks) active(ff *Fork, block uint64) bool {
 		return false
 	}
 	return ff.Active(block)
-}
-
-func (f *Forks) IsHomestead(block uint64) bool {
-	return f.active(f.Homestead, block)
-}
-
-func (f *Forks) IsByzantium(block uint64) bool {
-	return f.active(f.Byzantium, block)
-}
-
-func (f *Forks) IsConstantinople(block uint64) bool {
-	return f.active(f.Constantinople, block)
-}
-
-func (f *Forks) IsPetersburg(block uint64) bool {
-	return f.active(f.Petersburg, block)
-}
-
-func (f *Forks) IsTangerine(block uint64) bool {
-	return f.active(f.Tangerine, block)
 }
 
 func (f *Forks) At(block uint64) ForksInTime {
@@ -81,6 +63,28 @@ type ForksInTime struct {
 	Petersburg,
 	Istanbul,
 	Tangerine bool
+}
+
+func (f ForksInTime) Revision() evmc.Revision {
+	if f.Istanbul {
+		return evmc.Istanbul
+	}
+	if f.Petersburg {
+		return evmc.Petersburg
+	}
+	if f.Constantinople {
+		return evmc.Constantinople
+	}
+	if f.Byzantium {
+		return evmc.Byzantium
+	}
+	if f.Tangerine {
+		return evmc.TangerineWhistle
+	}
+	if f.Homestead {
+		return evmc.Homestead
+	}
+	return evmc.Frontier
 }
 
 var AllForksEnabled = &Forks{

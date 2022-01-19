@@ -6,14 +6,14 @@ import (
 	"golang.org/x/crypto/ripemd160" //nolint:staticcheck
 
 	"github.com/0xPolygon/eth-state-transition/helper"
-	"github.com/0xPolygon/eth-state-transition/runtime"
+	"github.com/ethereum/evmc/v10/bindings/go/evmc"
 )
 
 type ecrecover struct {
 	p *Precompiled
 }
 
-func (e *ecrecover) gas(input []byte, config *runtime.ForksInTime) uint64 {
+func (e *ecrecover) gas(input []byte, rev evmc.Revision) uint64 {
 	return 3000
 }
 
@@ -45,7 +45,7 @@ func (e *ecrecover) run(input []byte) ([]byte, error) {
 type identity struct {
 }
 
-func (i *identity) gas(input []byte, config *runtime.ForksInTime) uint64 {
+func (i *identity) gas(input []byte, rev evmc.Revision) uint64 {
 	return baseGasCalc(input, 15, 3)
 }
 
@@ -56,7 +56,7 @@ func (i *identity) run(in []byte) ([]byte, error) {
 type sha256h struct {
 }
 
-func (s *sha256h) gas(input []byte, config *runtime.ForksInTime) uint64 {
+func (s *sha256h) gas(input []byte, rev evmc.Revision) uint64 {
 	return baseGasCalc(input, 60, 12)
 }
 
@@ -69,7 +69,7 @@ type ripemd160h struct {
 	p *Precompiled
 }
 
-func (r *ripemd160h) gas(input []byte, config *runtime.ForksInTime) uint64 {
+func (r *ripemd160h) gas(input []byte, rev evmc.Revision) uint64 {
 	return baseGasCalc(input, 600, 120)
 }
 

@@ -194,21 +194,6 @@ func (txn *Txn) EmitLog(addr types.Address, topics []types.Hash, data []byte) {
 	txn.txn.Insert(logIndex, logs)
 }
 
-// AddLog adds a new log
-func (txn *Txn) AddLog(log *Log) {
-	var logs []*Log
-
-	data, exists := txn.txn.Get(logIndex)
-	if !exists {
-		logs = []*Log{}
-	} else {
-		logs = data.([]*Log)
-	}
-
-	logs = append(logs, log)
-	txn.txn.Insert(logIndex, logs)
-}
-
 // State
 
 var zeroHash types.Hash
