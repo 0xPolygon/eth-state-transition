@@ -325,13 +325,6 @@ func (t *Transition) transfer(from, to types.Address, amount *big.Int) error {
 }
 
 func (t *Transition) applyCall(c *runtime.Contract, callType evmc.CallKind) *runtime.ExecutionResult {
-	if c.Depth > int(1024)+1 {
-		return &runtime.ExecutionResult{
-			GasLeft: c.Gas,
-			Err:     runtime.ErrDepth,
-		}
-	}
-
 	snapshot := t.txn.Snapshot()
 	t.txn.TouchAccount(c.Address)
 
@@ -381,13 +374,6 @@ func (t *Transition) applyCreate(c *runtime.Contract) *runtime.ExecutionResult {
 
 	c.CodeAddress = address
 	c.Address = address
-
-	if c.Depth > int(1024)+1 {
-		return &runtime.ExecutionResult{
-			GasLeft: gasLimit,
-			Err:     runtime.ErrDepth,
-		}
-	}
 
 	// Increment the nonce of the caller
 	t.txn.IncrNonce(c.Caller)

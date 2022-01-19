@@ -1026,6 +1026,12 @@ func opCreate(op OpCode) instruction {
 			return
 		}
 
+		if c.msg.Depth > int(1024) {
+			c.push1().Set(zero)
+			c.gas += contract.Gas
+			return
+		}
+
 		if op == CREATE {
 			contract.Type = evmc.Create
 		} else {
@@ -1098,6 +1104,12 @@ func opCall(op OpCode) instruction {
 			return
 		}
 		if contract == nil {
+			return
+		}
+
+		if c.msg.Depth > int(1024) {
+			c.push1().Set(zero)
+			c.gas += contract.Gas
 			return
 		}
 
