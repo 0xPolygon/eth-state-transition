@@ -10,6 +10,7 @@ import (
 	"github.com/0xPolygon/eth-state-transition/helper"
 	"github.com/0xPolygon/eth-state-transition/runtime"
 	"github.com/0xPolygon/eth-state-transition/types"
+	"github.com/ethereum/evmc/v10/bindings/go/evmc"
 )
 
 var statePool = sync.Pool{
@@ -48,9 +49,9 @@ type state struct {
 	code []byte
 	tmp  []byte
 
-	host   runtime.Host
-	msg    *runtime.Contract // change with msg
-	config *runtime.ForksInTime
+	host runtime.Host
+	msg  *runtime.Contract // change with msg
+	rev  evmc.Revision
 
 	// memory
 	memory      []byte
@@ -70,6 +71,10 @@ type state struct {
 
 	returnData []byte
 	ret        []byte
+}
+
+func (c *state) isRevision(rev evmc.Revision) bool {
+	return rev <= c.rev
 }
 
 func (c *state) reset() {

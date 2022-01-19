@@ -123,7 +123,7 @@ func opExp(c *state) {
 	y := c.top()
 
 	var gas uint64
-	if c.config.Tangerine {
+	if c.isRevision(evmc.TangerineWhistle) {
 		gas = 50
 	} else {
 		gas = 10
@@ -321,7 +321,7 @@ func equalOrOverflowsUint256(b *big.Int) bool {
 }
 
 func opShl(c *state) {
-	if !c.config.Constantinople {
+	if !c.isRevision(evmc.Constantinople) {
 		c.exit(errOpCodeNotFound)
 		return
 	}
@@ -338,7 +338,7 @@ func opShl(c *state) {
 }
 
 func opShr(c *state) {
-	if !c.config.Constantinople {
+	if !c.isRevision(evmc.Constantinople) {
 		c.exit(errOpCodeNotFound)
 		return
 	}
@@ -355,7 +355,7 @@ func opShr(c *state) {
 }
 
 func opSar(c *state) {
-	if !c.config.Constantinople {
+	if !c.isRevision(evmc.Constantinople) {
 		c.exit(errOpCodeNotFound)
 		return
 	}
@@ -448,10 +448,10 @@ func opSload(c *state) {
 	loc := c.top()
 
 	var gas uint64
-	if c.config.Istanbul {
+	if c.isRevision(evmc.Istanbul) {
 		// eip-1884
 		gas = 800
-	} else if c.config.Tangerine {
+	} else if c.isRevision(evmc.TangerineWhistle) {
 		gas = 200
 	} else {
 		gas = 50
@@ -470,7 +470,7 @@ func opSStore(c *state) {
 		return
 	}
 
-	if c.config.Istanbul && c.gas <= 2300 {
+	if c.isRevision(evmc.Istanbul) && c.gas <= 2300 {
 		c.exit(errOutOfGas)
 		return
 	}
@@ -478,14 +478,14 @@ func opSStore(c *state) {
 	key := c.popHash()
 	val := c.popHash()
 
-	legacyGasMetering := !c.config.Istanbul && (c.config.Petersburg || !c.config.Constantinople)
+	legacyGasMetering := !c.isRevision(evmc.Istanbul) && (c.isRevision(evmc.Petersburg) || !c.isRevision(evmc.Constantinople))
 
 	status := c.host.SetStorage(c.msg.Address, key, val)
 	cost := uint64(0)
 
 	switch status {
 	case evmc.StorageUnchanged:
-		if c.config.Istanbul {
+		if c.isRevision(evmc.Istanbul) {
 			// eip-2200
 			cost = 800
 		} else if legacyGasMetering {
@@ -498,7 +498,7 @@ func opSStore(c *state) {
 		cost = 5000
 
 	case evmc.StorageModifiedAgain:
-		if c.config.Istanbul {
+		if c.isRevision(evmc.Istanbul) {
 			// eip-2200
 			cost = 800
 		} else if legacyGasMetering {
@@ -554,10 +554,10 @@ func opBalance(c *state) {
 	addr, _ := c.popAddr()
 
 	var gas uint64
-	if c.config.Istanbul {
+	if c.isRevision(evmc.Istanbul) {
 		// eip-1884
 		gas = 700
-	} else if c.config.Tangerine {
+	} else if c.isRevision(evmc.TangerineWhistle) {
 		gas = 400
 	} else {
 		gas = 20
@@ -571,7 +571,7 @@ func opBalance(c *state) {
 }
 
 func opSelfBalance(c *state) {
-	if !c.config.Istanbul {
+	if !c.isRevision(evmc.Istanbul) {
 		c.exit(errOpCodeNotFound)
 		return
 	}
@@ -580,7 +580,7 @@ func opSelfBalance(c *state) {
 }
 
 func opChainID(c *state) {
-	if !c.config.Istanbul {
+	if !c.isRevision(evmc.Istanbul) {
 		c.exit(errOpCodeNotFound)
 		return
 	}
@@ -634,7 +634,7 @@ func opExtCodeSize(c *state) {
 	addr, _ := c.popAddr()
 
 	var gas uint64
-	if c.config.Tangerine {
+	if c.isRevision(evmc.TangerineWhistle) {
 		gas = 700
 	} else {
 		gas = 20
@@ -651,7 +651,7 @@ func opGasPrice(c *state) {
 }
 
 func opReturnDataSize(c *state) {
-	if !c.config.Byzantium {
+	if !c.isRevision(evmc.Byzantium) {
 		c.exit(errOpCodeNotFound)
 	} else {
 		c.push1().SetUint64(uint64(len(c.returnData)))
@@ -659,7 +659,7 @@ func opReturnDataSize(c *state) {
 }
 
 func opExtCodeHash(c *state) {
-	if !c.config.Constantinople {
+	if !c.isRevision(evmc.Constantinople) {
 		c.exit(errOpCodeNotFound)
 		return
 	}
@@ -667,7 +667,7 @@ func opExtCodeHash(c *state) {
 	address, _ := c.popAddr()
 
 	var gas uint64
-	if c.config.Istanbul {
+	if c.isRevision(evmc.Istanbul) {
 		gas = 700
 	} else {
 		gas = 400
@@ -734,7 +734,7 @@ func opExtCodeCopy(c *state) {
 	}
 
 	var gas uint64
-	if c.config.Tangerine {
+	if c.isRevision(evmc.TangerineWhistle) {
 		gas = 700
 	} else {
 		gas = 20
@@ -769,7 +769,7 @@ func opCallDataCopy(c *state) {
 }
 
 func opReturnDataCopy(c *state) {
-	if !c.config.Byzantium {
+	if !c.isRevision(evmc.Byzantium) {
 		c.exit(errOpCodeNotFound)
 		return
 	}
@@ -872,9 +872,9 @@ func opSelfDestruct(c *state) {
 	var gas uint64
 
 	// EIP150 reprice fork
-	if c.config.Tangerine {
+	if c.isRevision(evmc.TangerineWhistle) {
 		gas = 5000
-		if c.config.Tangerine {
+		if c.isRevision(evmc.TangerineWhistle) {
 			// if empty and transfers value
 			if c.host.Empty(address) && c.host.GetBalance(c.msg.Address).Sign() != 0 {
 				gas += 25000
@@ -1005,7 +1005,7 @@ func opCreate(op OpCode) instruction {
 		}
 
 		if op == CREATE2 {
-			if !c.config.Constantinople {
+			if !c.isRevision(evmc.Constantinople) {
 				c.exit(errOpCodeNotFound)
 				return
 			}
@@ -1042,7 +1042,7 @@ func opCreate(op OpCode) instruction {
 		result := c.host.Callx(contract)
 
 		v := c.push1()
-		if op == CREATE && c.config.Homestead && result.Err == runtime.ErrCodeStoreOutOfGas {
+		if op == CREATE && c.isRevision(evmc.Homestead) && result.Err == runtime.ErrCodeStoreOutOfGas {
 			v.Set(zero)
 		} else if result.Failed() && result.Err != runtime.ErrCodeStoreOutOfGas {
 			v.Set(zero)
@@ -1069,11 +1069,11 @@ func opCall(op OpCode) instruction {
 			}
 		}
 
-		if op == DELEGATECALL && !c.config.Homestead {
+		if op == DELEGATECALL && !c.isRevision(evmc.Homestead) {
 			c.exit(errOpCodeNotFound)
 			return
 		}
-		if op == STATICCALL && !c.config.Byzantium {
+		if op == STATICCALL && !c.isRevision(evmc.Byzantium) {
 			c.exit(errOpCodeNotFound)
 			return
 		}
@@ -1164,13 +1164,13 @@ func (c *state) buildCallContract(op OpCode) (*runtime.Contract, uint64, uint64,
 	}
 
 	var gasCost uint64
-	if c.config.Tangerine {
+	if c.isRevision(evmc.TangerineWhistle) {
 		gasCost = 700
 	} else {
 		gasCost = 40
 	}
 
-	eip158 := c.config.Tangerine
+	eip158 := c.isRevision(evmc.TangerineWhistle)
 	transfersValue := (op == CALL || op == CALLCODE) && value != nil && value.Sign() != 0
 
 	if op == CALL {
@@ -1189,7 +1189,7 @@ func (c *state) buildCallContract(op OpCode) (*runtime.Contract, uint64, uint64,
 	var gas uint64
 
 	ok = initialGas.IsUint64()
-	if c.config.Tangerine {
+	if c.isRevision(evmc.TangerineWhistle) {
 		availableGas := c.gas - gasCost
 		availableGas = availableGas - availableGas/64
 
@@ -1290,7 +1290,7 @@ func (c *state) buildCreateContract(op OpCode) (*runtime.Contract, error) {
 	gas := c.gas
 
 	// CREATE2 uses by default EIP150
-	if c.config.Tangerine || op == CREATE2 {
+	if c.isRevision(evmc.TangerineWhistle) || op == CREATE2 {
 		gas -= gas / 64
 	}
 
@@ -1308,7 +1308,7 @@ func (c *state) buildCreateContract(op OpCode) (*runtime.Contract, error) {
 
 func opHalt(op OpCode) instruction {
 	return func(c *state) {
-		if op == REVERT && !c.config.Byzantium {
+		if op == REVERT && !c.isRevision(evmc.Byzantium) {
 			c.exit(errOpCodeNotFound)
 			return
 		}
