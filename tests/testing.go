@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -11,7 +12,6 @@ import (
 	"testing"
 
 	state "github.com/0xPolygon/eth-state-transition"
-	"github.com/0xPolygon/eth-state-transition/helper"
 	itrie "github.com/0xPolygon/eth-state-transition/immutable-trie"
 	"github.com/0xPolygon/eth-state-transition/runtime"
 	"github.com/0xPolygon/eth-state-transition/types"
@@ -277,13 +277,18 @@ func (t *stTransaction) At(i indexes) (*state.Transaction, error) {
 		return nil, fmt.Errorf("value index %d out of bounds (%d)", i.Value, len(t.Value))
 	}
 
+	input, err := hex.DecodeString(t.Data[i.Data][2:]) // starts with 0x
+	if err != nil {
+		panic(err)
+	}
+
 	msg := &state.Transaction{
 		To:       t.To,
 		Nonce:    t.Nonce,
 		Value:    new(big.Int).Set(t.Value[i.Value]),
 		Gas:      t.GasLimit[i.Gas],
 		GasPrice: new(big.Int).Set(t.GasPrice),
-		Input:    helper.MustDecodeHex(t.Data[i.Data]),
+		Input:    input,
 	}
 
 	msg.From = t.From

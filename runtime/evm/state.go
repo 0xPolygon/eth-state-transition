@@ -1,13 +1,13 @@
 package evm
 
 import (
+	"encoding/hex"
 	"errors"
 	"math/big"
 	"strings"
 
 	"sync"
 
-	"github.com/0xPolygon/eth-state-transition/helper"
 	"github.com/0xPolygon/eth-state-transition/runtime"
 	"github.com/0xPolygon/eth-state-transition/types"
 	"github.com/ethereum/evmc/v10/bindings/go/evmc"
@@ -322,7 +322,7 @@ func (c *state) Show() string {
 			j = len(c.memory)
 		}
 
-		str = append(str, helper.EncodeToHex(c.memory[i:j]))
+		str = append(str, hex.EncodeToString(c.memory[i:j]))
 	}
 	return strings.Join(str, "\n")
 }

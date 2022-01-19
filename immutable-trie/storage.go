@@ -1,7 +1,8 @@
 package itrie
 
 import (
-	"github.com/0xPolygon/eth-state-transition/helper"
+	"encoding/hex"
+
 	"github.com/0xPolygon/eth-state-transition/types"
 )
 
@@ -37,11 +38,11 @@ func NewMemoryStorage() Storage {
 func (m *memStorage) Put(p []byte, v []byte) {
 	buf := make([]byte, len(v))
 	copy(buf[:], v[:])
-	m.db[helper.EncodeToHex(p)] = buf
+	m.db[hex.EncodeToString(p)] = buf
 }
 
 func (m *memStorage) Get(p []byte) ([]byte, bool) {
-	v, ok := m.db[helper.EncodeToHex(p)]
+	v, ok := m.db[hex.EncodeToString(p)]
 	if !ok {
 		return []byte{}, false
 	}
@@ -68,7 +69,7 @@ func (m *memStorage) Close() error {
 func (m *memBatch) Put(p, v []byte) {
 	buf := make([]byte, len(v))
 	copy(buf[:], v[:])
-	(*m.db)[helper.EncodeToHex(p)] = buf
+	(*m.db)[hex.EncodeToString(p)] = buf
 }
 
 func (m *memBatch) Write() {

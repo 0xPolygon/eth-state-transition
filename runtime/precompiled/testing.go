@@ -1,12 +1,11 @@
 package precompiled
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"io/ioutil"
 	"path/filepath"
 	"testing"
-
-	"github.com/0xPolygon/eth-state-transition/helper"
 )
 
 type TestCase struct {
@@ -34,11 +33,14 @@ func ReadTestCase(t *testing.T, path string, f func(t *testing.T, c *TestCase)) 
 	}
 
 	for _, i := range cases {
+		input, _ := hex.DecodeString(i.Input)
+		expected, _ := hex.DecodeString(i.Expected)
+
 		c := &TestCase{
 			Name:     i.Name,
 			Gas:      i.Gas,
-			Input:    helper.MustDecodeHex("0x" + i.Input),
-			Expected: helper.MustDecodeHex("0x" + i.Expected),
+			Input:    input,
+			Expected: expected,
 		}
 		t.Run(i.Name, func(t *testing.T) {
 			f(t, c)

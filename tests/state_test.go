@@ -2,13 +2,13 @@ package tests
 
 import (
 	"bytes"
+	"encoding/hex"
 	"encoding/json"
 	"io/ioutil"
 	"strings"
 	"testing"
 
 	state "github.com/0xPolygon/eth-state-transition"
-	"github.com/0xPolygon/eth-state-transition/helper"
 	itrie "github.com/0xPolygon/eth-state-transition/immutable-trie"
 	"github.com/0xPolygon/eth-state-transition/types"
 	"github.com/stretchr/testify/assert"
@@ -129,7 +129,7 @@ func RunSpecificTest(file string, t *testing.T, c stateCase, name, fork string, 
 		panic("BAD")
 	}
 	if !bytes.Equal(root, p.Root.Bytes()) {
-		t.Fatalf("root mismatch (%s %s %s %d): expected %s but found %s", file, name, fork, index, p.Root.String(), helper.EncodeToHex(root))
+		t.Fatalf("root mismatch (%s %s %s %d): expected %s but found %s", file, name, fork, index, p.Root.String(), hex.EncodeToString(root))
 	}
 
 	if logs := rlpHashLogs(result.Logs); logs != p.Logs {

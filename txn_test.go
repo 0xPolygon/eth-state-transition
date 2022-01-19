@@ -2,12 +2,12 @@ package state
 
 import (
 	"bytes"
+	"encoding/hex"
 	"fmt"
 	"math/big"
 	"math/rand"
 	"testing"
 
-	"github.com/0xPolygon/eth-state-transition/helper"
 	"github.com/0xPolygon/eth-state-transition/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/umbracle/fastrlp"
@@ -57,7 +57,7 @@ func (m *mockSnapshot) GetAccount(addr types.Address) (*Account, error) {
 }
 
 func (m *mockSnapshot) Get(k []byte) ([]byte, bool) {
-	v, ok := m.data[helper.EncodeToHex(k)]
+	v, ok := m.data[hex.EncodeToString(k)]
 	return v, ok
 }
 
@@ -88,7 +88,7 @@ func newStateWithPreState(preState map[types.Address]*PreState) *mockSnapshot {
 				panic(err)
 			}
 		*/
-		snapshot.data[helper.EncodeToHex(hashit(addr.Bytes()))] = accountRlp
+		snapshot.data[hex.EncodeToString(hashit(addr.Bytes()))] = accountRlp
 	}
 
 	return snapshot
