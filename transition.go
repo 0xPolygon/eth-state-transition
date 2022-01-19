@@ -448,8 +448,21 @@ func (t *Transition) SetStorage(addr types.Address, key types.Hash, value types.
 	return t.txn.SetStorage(addr, key, value)
 }
 
-func (t *Transition) GetTxContext() runtime.TxContext {
-	return t.ctx
+func (t *Transition) GetTxContext() evmc.TxContext {
+	chainID := new(big.Int).SetInt64(t.ctx.ChainID)
+	cc := types.BytesToHash(chainID.Bytes())
+
+	ctx := evmc.TxContext{
+		GasPrice:   evmc.Hash(t.ctx.GasPrice),
+		Origin:     evmc.Address(t.ctx.Origin),
+		Coinbase:   evmc.Address(t.ctx.Coinbase),
+		Number:     t.ctx.Number,
+		Timestamp:  t.ctx.Timestamp,
+		GasLimit:   t.ctx.GasLimit,
+		Difficulty: evmc.Hash(t.ctx.Difficulty),
+		ChainID:    evmc.Hash(cc),
+	}
+	return ctx
 }
 
 func (t *Transition) GetBlockHash(number int64) (res types.Hash) {

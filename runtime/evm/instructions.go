@@ -585,11 +585,13 @@ func opChainID(c *state) {
 		return
 	}
 
-	c.push1().SetUint64(uint64(c.host.GetTxContext().ChainID))
+	chainID := c.host.GetTxContext().ChainID
+	c.push1().SetBytes(chainID[:])
 }
 
 func opOrigin(c *state) {
-	c.push1().SetBytes(c.host.GetTxContext().Origin.Bytes())
+	origin := c.host.GetTxContext().Origin
+	c.push1().SetBytes(origin[:])
 }
 
 func opCaller(c *state) {
@@ -647,7 +649,8 @@ func opExtCodeSize(c *state) {
 }
 
 func opGasPrice(c *state) {
-	c.push1().SetBytes(c.host.GetTxContext().GasPrice.Bytes())
+	gasPrice := c.host.GetTxContext().GasPrice
+	c.push1().SetBytes(gasPrice[:])
 }
 
 func opReturnDataSize(c *state) {
@@ -841,7 +844,8 @@ func opBlockHash(c *state) {
 }
 
 func opCoinbase(c *state) {
-	c.push1().SetBytes(c.host.GetTxContext().Coinbase.Bytes())
+	coinbase := c.host.GetTxContext().Coinbase
+	c.push1().SetBytes(coinbase[:])
 }
 
 func opTimestamp(c *state) {
@@ -853,7 +857,8 @@ func opNumber(c *state) {
 }
 
 func opDifficulty(c *state) {
-	c.push1().SetBytes(c.host.GetTxContext().Difficulty.Bytes())
+	diff := c.host.GetTxContext().Difficulty
+	c.push1().SetBytes(diff[:])
 }
 
 func opGasLimit(c *state) {

@@ -8,19 +8,6 @@ import (
 	"github.com/ethereum/evmc/v10/bindings/go/evmc"
 )
 
-// TxContext is the context of the transaction
-type TxContext struct {
-	Hash       types.Hash
-	GasPrice   types.Hash
-	Origin     types.Address
-	Coinbase   types.Address
-	Number     int64
-	Timestamp  int64
-	GasLimit   int64
-	ChainID    int64
-	Difficulty types.Hash
-}
-
 // Host is the execution host
 type Host interface {
 	AccountExists(addr types.Address) bool
@@ -31,7 +18,7 @@ type Host interface {
 	GetCodeHash(addr types.Address) types.Hash
 	GetCode(addr types.Address) []byte
 	Selfdestruct(addr types.Address, beneficiary types.Address)
-	GetTxContext() TxContext
+	GetTxContext() evmc.TxContext
 	GetBlockHash(number int64) types.Hash
 	EmitLog(addr types.Address, topics []types.Hash, data []byte)
 	Callx(*Contract) *ExecutionResult
