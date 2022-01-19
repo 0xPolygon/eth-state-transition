@@ -18,6 +18,7 @@ import (
 	"github.com/ethereum/evmc/v10/bindings/go/evmc"
 	"github.com/stretchr/testify/assert"
 	"github.com/umbracle/fastrlp"
+	"github.com/umbracle/go-web3/wallet"
 )
 
 // TESTS is the default location of the tests folder
@@ -349,11 +350,11 @@ func (t *stTransaction) UnmarshalJSON(input []byte) error {
 		if err != nil {
 			return err
 		}
-		key, err := helper.ParsePrivateKey(secretKey)
+		key, err := wallet.ParsePrivateKey(secretKey)
 		if err != nil {
 			return fmt.Errorf("invalid private key: %v", err)
 		}
-		t.From = helper.PubKeyToAddress(&key.PublicKey)
+		t.From = types.Address(wallet.NewKey(key).Address())
 	}
 
 	if dec.To != "" {

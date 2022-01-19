@@ -1,13 +1,16 @@
 package precompiled
 
 import (
+	"bytes"
 	"crypto/sha256"
+	"encoding/hex"
+	"fmt"
+	"strings"
 
 	"golang.org/x/crypto/ripemd160" //nolint:staticcheck
 
-	"github.com/0xPolygon/eth-state-transition/helper"
 	"github.com/ethereum/evmc/v10/bindings/go/evmc"
-	"github.com/umbracle/go-web3"
+	"github.com/umbracle/go-web3/wallet"
 )
 
 type ecrecover struct {
@@ -28,18 +31,15 @@ func (e *ecrecover) run(input []byte) ([]byte, error) {
 		}
 	}
 	v := input[63] - 27
-	if !helper.ValidateSignatureValues(v, input[64:96], input[96:128]) {
+	if !validateSignatureValues(v, input[64:96], input[96:128]) {
 		return nil, nil
 	}
 
-	pubKey, err := helper.Ecrecover(input[:32], append(input[64:128], v))
+	addr, err := wallet.Ecrecover(input[:32], append(input[64:128], v))
 	if err != nil {
 		return nil, nil
 	}
-
-	dst := web3.Keccak256(pubKey[1:])
-	dst = e.p.leftPad(dst[12:], 32)
-
+	dst := e.p.leftPad(addr.Bytes(), 32)
 	return dst, nil
 }
 
@@ -83,4 +83,54 @@ func (r *ripemd160h) run(input []byte) ([]byte, error) {
 
 func baseGasCalc(input []byte, base, word uint64) uint64 {
 	return base + uint64(len(input)+31)/32*word
+}
+
+// DecodeHex converts a hex string to a byte array
+func DecodeHex(str string) ([]byte, error) {
+	str = strings.TrimPrefix(str, "0x")
+
+	return hex.DecodeString(str)
+}
+
+// MustDecodeHex type-checks and converts a hex string to a byte array
+func MustDecodeHex(str string) []byte {
+	buf, err := DecodeHex(str)
+	if err != nil {
+		panic(fmt.Errorf("could not decode hex: %v", err))
+	}
+	return buf
+}
+
+var (
+	secp256k1N = MustDecodeHex("0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141")
+	one        = []byte{0x01}
+)
+
+func trimLeftZeros(b []byte) []byte {
+	i := 0
+	for i = range b {
+		if b[i] != 0 {
+			break
+		}
+	}
+	return b[i:]
+}
+
+// ValidateSignatureValues checks if the signature values are correct
+func validateSignatureValues(v byte, r, s []byte) bool {
+	// TODO: ECDSA malleability
+	if v > 1 {
+		return false
+	}
+
+	r = trimLeftZeros(r)
+	if bytes.Compare(r, secp256k1N) >= 0 || bytes.Compare(r, one) < 0 {
+		return false
+	}
+
+	s = trimLeftZeros(s)
+	if bytes.Compare(s, secp256k1N) >= 0 || bytes.Compare(s, one) < 0 {
+		return false
+	}
+	return true
 }
