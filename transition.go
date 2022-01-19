@@ -271,7 +271,7 @@ func (t *Transition) apply(msg *Transaction) (*runtime.ExecutionResult, error) {
 
 func (t *Transition) Create(caller types.Address, code []byte, value *big.Int, gas uint64) *runtime.ExecutionResult {
 	address := CreateAddress(caller, t.txn.GetNonce(caller))
-	contract := runtime.NewContractCreation(1, caller, address, value, gas, code)
+	contract := runtime.NewContractCreation(0, caller, address, value, gas, code)
 
 	res := t.applyCreate(contract)
 	res.CreateAddress = address
@@ -279,7 +279,7 @@ func (t *Transition) Create(caller types.Address, code []byte, value *big.Int, g
 }
 
 func (t *Transition) Call(caller types.Address, to types.Address, input []byte, value *big.Int, gas uint64) *runtime.ExecutionResult {
-	c := runtime.NewContractCall(1, caller, to, value, gas, t.txn.GetCode(evmc.Address(to)), input)
+	c := runtime.NewContractCall(0, caller, to, value, gas, t.txn.GetCode(evmc.Address(to)), input)
 	return t.applyCall(c, evmc.Call)
 }
 

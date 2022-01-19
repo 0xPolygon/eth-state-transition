@@ -1032,7 +1032,7 @@ func opCreate(op OpCode) instruction {
 			return
 		}
 
-		if c.msg.Depth > int(1024) {
+		if c.msg.Depth >= int(1024) {
 			c.push1().Set(zero)
 			c.gas += contract.Gas
 			return
@@ -1113,7 +1113,7 @@ func opCall(op OpCode) instruction {
 			return
 		}
 
-		if c.msg.Depth > int(1024) {
+		if c.msg.Depth >= int(1024) {
 			c.push1().Set(zero)
 			c.gas += contract.Gas
 			return
