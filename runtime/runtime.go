@@ -71,7 +71,6 @@ type Contract struct {
 	Type        evmc.CallKind
 	CodeAddress types.Address
 	Address     types.Address
-	Origin      types.Address
 	Caller      types.Address
 	Depth       int
 	Value       *big.Int
@@ -81,11 +80,10 @@ type Contract struct {
 	Salt        types.Hash
 }
 
-func NewContract(typ evmc.CallKind, depth int, origin types.Address, from types.Address, to types.Address, value *big.Int, gas uint64, code []byte) *Contract {
+func NewContract(typ evmc.CallKind, depth int, from types.Address, to types.Address, value *big.Int, gas uint64, code []byte) *Contract {
 	f := &Contract{
 		Type:        typ,
 		Caller:      from,
-		Origin:      origin,
 		CodeAddress: to,
 		Address:     to,
 		Gas:         gas,
@@ -96,13 +94,13 @@ func NewContract(typ evmc.CallKind, depth int, origin types.Address, from types.
 	return f
 }
 
-func NewContractCreation(depth int, origin types.Address, from types.Address, to types.Address, value *big.Int, gas uint64, code []byte) *Contract {
-	c := NewContract(evmc.Create, depth, origin, from, to, value, gas, code)
+func NewContractCreation(depth int, from types.Address, to types.Address, value *big.Int, gas uint64, code []byte) *Contract {
+	c := NewContract(evmc.Create, depth, from, to, value, gas, code)
 	return c
 }
 
-func NewContractCall(depth int, origin types.Address, from types.Address, to types.Address, value *big.Int, gas uint64, code []byte, input []byte) *Contract {
-	c := NewContract(evmc.Call, depth, origin, from, to, value, gas, code)
+func NewContractCall(depth int, from types.Address, to types.Address, value *big.Int, gas uint64, code []byte, input []byte) *Contract {
+	c := NewContract(evmc.Call, depth, from, to, value, gas, code)
 	c.Input = input
 	return c
 }

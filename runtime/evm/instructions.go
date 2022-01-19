@@ -1224,7 +1224,7 @@ func (c *state) buildCallContract(op OpCode) (*runtime.Contract, uint64, uint64,
 
 	parent := c
 
-	contract := runtime.NewContractCall(c.msg.Depth+1, parent.msg.Origin, parent.msg.Address, addr, value, gas, c.host.GetCode(evmc.Address(addr)), args)
+	contract := runtime.NewContractCall(c.msg.Depth+1, parent.msg.Address, addr, value, gas, c.host.GetCode(evmc.Address(addr)), args)
 
 	if op == STATICCALL || parent.msg.Static {
 		contract.Static = true
@@ -1305,7 +1305,7 @@ func (c *state) buildCreateContract(op OpCode) (*runtime.Contract, error) {
 	}
 
 	// Calculate address
-	contract := runtime.NewContractCreation(c.msg.Depth+1, c.msg.Origin, c.msg.Address, types.Address{}, value, gas, input)
+	contract := runtime.NewContractCreation(c.msg.Depth+1, c.msg.Address, types.Address{}, value, gas, input)
 	if op == CREATE2 {
 		contract.Salt = bigToHash(salt)
 	}
