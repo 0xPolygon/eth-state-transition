@@ -1,5 +1,6 @@
 package itrie
 
+/*
 import (
 	"testing"
 
@@ -17,3 +18,4 @@ func buildPreState(pre state.PreStates) state.SnapshotWriter {
 
 	return snap
 }
+*/

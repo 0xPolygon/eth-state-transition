@@ -219,7 +219,7 @@ func (t *Transition) apply(msg *Transaction) (*runtime.ExecutionResult, error) {
 		}
 
 		// 6. caller has enough balance to cover asset transfer for **topmost** call
-		if balance := txn.GetBalance(msg.From); balance.Cmp(msg.Value) < 0 {
+		if balance := txn.GetBalance(evmc.Address(msg.From)); balance.Cmp(msg.Value) < 0 {
 			return ErrNotEnoughFunds
 		}
 		return nil
@@ -279,7 +279,7 @@ func (t *Transition) Create(caller types.Address, code []byte, value *big.Int, g
 }
 
 func (t *Transition) Call(caller types.Address, to types.Address, input []byte, value *big.Int, gas uint64) *runtime.ExecutionResult {
-	c := runtime.NewContractCall(1, caller, caller, to, value, gas, t.txn.GetCode(to), input)
+	c := runtime.NewContractCall(1, caller, caller, to, value, gas, t.txn.GetCode(evmc.Address(to)), input)
 	return t.applyCall(c, evmc.Call)
 }
 
@@ -370,7 +370,7 @@ func (t *Transition) hasCodeOrNonce(addr types.Address) bool {
 	if nonce != 0 {
 		return true
 	}
-	codeHash := t.txn.GetCodeHash(addr)
+	codeHash := t.txn.GetCodeHash(evmc.Address(addr))
 	if codeHash != emptyCodeHashTwo && codeHash != emptyHash {
 		return true
 	}
@@ -478,39 +478,39 @@ func (t *Transition) GetTxContext() evmc.TxContext {
 	return ctx
 }
 
-func (t *Transition) GetBlockHash(number int64) (res types.Hash) {
-	return t.getHash(uint64(number))
+func (t *Transition) GetBlockHash(number int64) (res evmc.Hash) {
+	return evmc.Hash(t.getHash(uint64(number)))
 }
 
-func (t *Transition) EmitLog(addr types.Address, topics []types.Hash, data []byte) {
+func (t *Transition) EmitLog(addr evmc.Address, topics []types.Hash, data []byte) {
 	t.txn.EmitLog(addr, topics, data)
 }
 
-func (t *Transition) GetCodeSize(addr types.Address) int {
+func (t *Transition) GetCodeSize(addr evmc.Address) int {
 	return t.txn.GetCodeSize(addr)
 }
 
-func (t *Transition) GetCodeHash(addr types.Address) (res types.Hash) {
-	return t.txn.GetCodeHash(addr)
+func (t *Transition) GetCodeHash(addr evmc.Address) (res evmc.Hash) {
+	return evmc.Hash(t.txn.GetCodeHash(addr))
 }
 
-func (t *Transition) GetCode(addr types.Address) []byte {
+func (t *Transition) GetCode(addr evmc.Address) []byte {
 	return t.txn.GetCode(addr)
 }
 
-func (t *Transition) GetBalance(addr types.Address) *big.Int {
+func (t *Transition) GetBalance(addr evmc.Address) *big.Int {
 	return t.txn.GetBalance(addr)
 }
 
-func (t *Transition) GetStorage(addr types.Address, key types.Hash) types.Hash {
+func (t *Transition) GetStorage(addr evmc.Address, key evmc.Hash) types.Hash {
 	return t.txn.GetState(addr, key)
 }
 
-func (t *Transition) AccountExists(addr types.Address) bool {
+func (t *Transition) AccountExists(addr evmc.Address) bool {
 	return t.txn.Exist(addr)
 }
 
-func (t *Transition) Empty(addr types.Address) bool {
+func (t *Transition) Empty(addr evmc.Address) bool {
 	return t.txn.Empty(addr)
 }
 
@@ -518,12 +518,12 @@ func (t *Transition) GetNonce(addr types.Address) uint64 {
 	return t.txn.GetNonce(addr)
 }
 
-func (t *Transition) Selfdestruct(addr types.Address, beneficiary types.Address) {
-	if !t.txn.HasSuicided(addr) {
+func (t *Transition) Selfdestruct(addr evmc.Address, beneficiary evmc.Address) {
+	if !t.txn.HasSuicided(types.Address(addr)) {
 		t.txn.AddRefund(24000)
 	}
-	t.txn.AddBalance(beneficiary, t.txn.GetBalance(addr))
-	t.txn.Suicide(addr)
+	t.txn.AddBalance(types.Address(beneficiary), t.txn.GetBalance(evmc.Address(addr)))
+	t.txn.Suicide(types.Address(addr))
 }
 
 func (t *Transition) Cally(kind evmc.CallKind,

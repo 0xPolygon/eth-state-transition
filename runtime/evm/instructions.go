@@ -460,7 +460,7 @@ func opSload(c *state) {
 		return
 	}
 
-	val := c.host.GetStorage(c.msg.Address, bigToHash(loc))
+	val := c.host.GetStorage(evmc.Address(c.msg.Address), evmc.Hash(bigToHash(loc)))
 	loc.SetBytes(val.Bytes())
 }
 
@@ -565,7 +565,7 @@ func opBalance(c *state) {
 		return
 	}
 
-	c.push1().Set(c.host.GetBalance(addr))
+	c.push1().Set(c.host.GetBalance(evmc.Address(addr)))
 }
 
 func opSelfBalance(c *state) {
@@ -574,7 +574,7 @@ func opSelfBalance(c *state) {
 		return
 	}
 
-	c.push1().Set(c.host.GetBalance(c.msg.Address))
+	c.push1().Set(c.host.GetBalance(evmc.Address(c.msg.Address)))
 }
 
 func opChainID(c *state) {
@@ -643,7 +643,7 @@ func opExtCodeSize(c *state) {
 		return
 	}
 
-	c.push1().SetUint64(uint64(c.host.GetCodeSize(addr)))
+	c.push1().SetUint64(uint64(c.host.GetCodeSize(evmc.Address(addr))))
 }
 
 func opGasPrice(c *state) {
@@ -678,7 +678,9 @@ func opExtCodeHash(c *state) {
 	}
 
 	v := c.push1()
-	v.SetBytes(c.host.GetCodeHash(address).Bytes())
+
+	codeHash := c.host.GetCodeHash(evmc.Address(address))
+	v.SetBytes(codeHash[:])
 }
 
 func opPC(c *state) {
@@ -744,7 +746,7 @@ func opExtCodeCopy(c *state) {
 		return
 	}
 
-	code := c.host.GetCode(address)
+	code := c.host.GetCode(evmc.Address(address))
 	if size != 0 {
 		c.setBytes(c.memory[memOffset.Uint64():], code, size, codeOffset)
 	}
@@ -835,7 +837,8 @@ func opBlockHash(c *state) {
 	lastBlock := c.host.GetTxContext().Number
 
 	if lastBlock-257 < n && n < lastBlock {
-		num.SetBytes(c.host.GetBlockHash(n).Bytes())
+		blockHash := c.host.GetBlockHash(n)
+		num.SetBytes(blockHash[:])
 	} else {
 		num.Set(zero)
 	}
@@ -879,10 +882,10 @@ func opSelfDestruct(c *state) {
 		gas = 5000
 		if c.isRevision(evmc.TangerineWhistle) {
 			// if empty and transfers value
-			if c.host.Empty(address) && c.host.GetBalance(c.msg.Address).Sign() != 0 {
+			if c.host.Empty(evmc.Address(address)) && c.host.GetBalance(evmc.Address(c.msg.Address)).Sign() != 0 {
 				gas += 25000
 			}
-		} else if !c.host.AccountExists(address) {
+		} else if !c.host.AccountExists(evmc.Address(address)) {
 			gas += 25000
 		}
 	}
@@ -891,7 +894,7 @@ func opSelfDestruct(c *state) {
 		return
 	}
 
-	c.host.Selfdestruct(c.msg.Address, address)
+	c.host.Selfdestruct(evmc.Address(c.msg.Address), evmc.Address(address))
 	c.halt()
 }
 
@@ -985,7 +988,7 @@ func opLog(size int) instruction {
 			return
 		}
 
-		c.host.EmitLog(c.msg.Address, topics, c.tmp)
+		c.host.EmitLog(evmc.Address(c.msg.Address), topics, c.tmp)
 
 		if !c.consumeGas(uint64(size) * 375) {
 			return
@@ -1178,10 +1181,10 @@ func (c *state) buildCallContract(op OpCode) (*runtime.Contract, uint64, uint64,
 
 	if op == CALL {
 		if eip158 {
-			if transfersValue && c.host.Empty(addr) {
+			if transfersValue && c.host.Empty(evmc.Address(addr)) {
 				gasCost += 25000
 			}
-		} else if !c.host.AccountExists(addr) {
+		} else if !c.host.AccountExists(evmc.Address(addr)) {
 			gasCost += 25000
 		}
 	}
@@ -1221,7 +1224,7 @@ func (c *state) buildCallContract(op OpCode) (*runtime.Contract, uint64, uint64,
 
 	parent := c
 
-	contract := runtime.NewContractCall(c.msg.Depth+1, parent.msg.Origin, parent.msg.Address, addr, value, gas, c.host.GetCode(addr), args)
+	contract := runtime.NewContractCall(c.msg.Depth+1, parent.msg.Origin, parent.msg.Address, addr, value, gas, c.host.GetCode(evmc.Address(addr)), args)
 
 	if op == STATICCALL || parent.msg.Static {
 		contract.Static = true
@@ -1235,7 +1238,7 @@ func (c *state) buildCallContract(op OpCode) (*runtime.Contract, uint64, uint64,
 	}
 
 	if transfersValue {
-		if c.host.GetBalance(c.msg.Address).Cmp(value) < 0 {
+		if c.host.GetBalance(evmc.Address(c.msg.Address)).Cmp(value) < 0 {
 			return contract, 0, 0, fmt.Errorf("bad")
 		}
 	}
@@ -1276,7 +1279,7 @@ func (c *state) buildCreateContract(op OpCode) (*runtime.Contract, error) {
 	}
 
 	if hasTransfer {
-		if c.host.GetBalance(c.msg.Address).Cmp(value) < 0 {
+		if c.host.GetBalance(evmc.Address(c.msg.Address)).Cmp(value) < 0 {
 			return nil, fmt.Errorf("bad")
 		}
 	}

@@ -1,5 +1,6 @@
 package state
 
+/*
 import (
 	"bytes"
 	"encoding/hex"
@@ -82,12 +83,6 @@ func newStateWithPreState(preState map[types.Address]*PreState) *mockSnapshot {
 
 		v := account.MarshalWith(ar)
 		accountRlp := v.MarshalTo(nil)
-		/*
-			accountRlp, err := rlp.EncodeToBytes(account)
-			if err != nil {
-				panic(err)
-			}
-		*/
 		snapshot.data[hex.EncodeToString(hashit(addr.Bytes()))] = accountRlp
 	}
 
@@ -152,3 +147,4 @@ func hashit(k []byte) []byte {
 	h.Write(k)
 	return h.Sum(nil)
 }
+*/

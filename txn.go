@@ -147,7 +147,7 @@ func (txn *Txn) SubBalance(addr types.Address, amount *big.Int) error {
 	}
 
 	// Check if we have enough balance to deduce amount from
-	if balance := txn.GetBalance(addr); balance.Cmp(amount) < 0 {
+	if balance := txn.GetBalance(evmc.Address(addr)); balance.Cmp(amount) < 0 {
 		return runtime.ErrNotEnoughFunds
 	}
 
@@ -167,17 +167,17 @@ func (txn *Txn) SetBalance(addr types.Address, balance *big.Int) {
 }
 
 // GetBalance returns the balance of an address
-func (txn *Txn) GetBalance(addr types.Address) *big.Int {
-	object, exists := txn.getStateObject(addr)
+func (txn *Txn) GetBalance(addr evmc.Address) *big.Int {
+	object, exists := txn.getStateObject(types.Address(addr))
 	if !exists {
 		return big.NewInt(0)
 	}
 	return object.Account.Balance
 }
 
-func (txn *Txn) EmitLog(addr types.Address, topics []types.Hash, data []byte) {
+func (txn *Txn) EmitLog(addr evmc.Address, topics []types.Hash, data []byte) {
 	log := &Log{
-		Address: addr,
+		Address: types.Address(addr),
 		Topics:  topics,
 	}
 	log.Data = append(log.Data, data...)
@@ -203,7 +203,7 @@ func (txn *Txn) isRevision(rev evmc.Revision) bool {
 }
 
 func (txn *Txn) SetStorage(addr types.Address, key types.Hash, value types.Hash) (status evmc.StorageStatus) {
-	oldValue := txn.GetState(addr, key)
+	oldValue := txn.GetState(evmc.Address(addr), evmc.Hash(key))
 	if oldValue == value {
 		return evmc.StorageUnchanged
 	}
@@ -279,8 +279,8 @@ func (txn *Txn) SetState(addr types.Address, key, value types.Hash) {
 }
 
 // GetState returns the state of the address at a given key
-func (txn *Txn) GetState(addr types.Address, key types.Hash) types.Hash {
-	object, exists := txn.getStateObject(addr)
+func (txn *Txn) GetState(addr evmc.Address, key evmc.Hash) types.Hash {
+	object, exists := txn.getStateObject(types.Address(addr))
 	if !exists {
 		return types.Hash{}
 	}
@@ -289,14 +289,14 @@ func (txn *Txn) GetState(addr types.Address, key types.Hash) types.Hash {
 	// Because the latest account state should be in in-memory radix tree
 	// if account state update happened in previous transactions of same block
 	if object.Txn != nil {
-		if val, ok := object.Txn.Get(key.Bytes()); ok {
+		if val, ok := object.Txn.Get(key[:]); ok {
 			if val == nil {
 				return types.Hash{}
 			}
 			return types.BytesToHash(val.([]byte))
 		}
 	}
-	return txn.snapshot.GetStorage(object.Account.Root, key)
+	return txn.snapshot.GetStorage(object.Account.Root, types.Hash(key))
 }
 
 // Nonce
@@ -335,8 +335,8 @@ func (txn *Txn) SetCode(addr types.Address, code []byte) {
 	})
 }
 
-func (txn *Txn) GetCode(addr types.Address) []byte {
-	object, exists := txn.getStateObject(addr)
+func (txn *Txn) GetCode(addr evmc.Address) []byte {
+	object, exists := txn.getStateObject(types.Address(addr))
 	if !exists {
 		return nil
 	}
@@ -347,15 +347,15 @@ func (txn *Txn) GetCode(addr types.Address) []byte {
 	return code
 }
 
-func (txn *Txn) GetCodeSize(addr types.Address) int {
+func (txn *Txn) GetCodeSize(addr evmc.Address) int {
 	return len(txn.GetCode(addr))
 }
 
-func (txn *Txn) GetCodeHash(addr types.Address) types.Hash {
+func (txn *Txn) GetCodeHash(addr evmc.Address) types.Hash {
 	if txn.Empty(addr) {
 		return types.Hash{}
 	}
-	object, exists := txn.getStateObject(addr)
+	object, exists := txn.getStateObject(types.Address(addr))
 	if !exists {
 		return types.Hash{}
 	}
@@ -432,13 +432,13 @@ func (txn *Txn) TouchAccount(addr types.Address) {
 
 // TODO, check panics with this ones
 
-func (txn *Txn) Exist(addr types.Address) bool {
-	_, exists := txn.getStateObject(addr)
+func (txn *Txn) Exist(addr evmc.Address) bool {
+	_, exists := txn.getStateObject(types.Address(addr))
 	return exists
 }
 
-func (txn *Txn) Empty(addr types.Address) bool {
-	obj, exists := txn.getStateObject(addr)
+func (txn *Txn) Empty(addr evmc.Address) bool {
+	obj, exists := txn.getStateObject(types.Address(addr))
 	if !exists {
 		return true
 	}
