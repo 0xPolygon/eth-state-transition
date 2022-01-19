@@ -9,6 +9,7 @@ import (
 
 	state "github.com/0xPolygon/eth-state-transition"
 	"github.com/0xPolygon/eth-state-transition/helper"
+	itrie "github.com/0xPolygon/eth-state-transition/immutable-trie"
 	"github.com/0xPolygon/eth-state-transition/types"
 	"github.com/stretchr/testify/assert"
 )
@@ -90,6 +91,8 @@ func RunSpecificTest(file string, t *testing.T, c stateCase, name, fork string, 
 		t.Fatalf("config %s not found", fork)
 	}
 
+	// fmt.Println("----------------")
+
 	env := c.Env.ToEnv(t)
 
 	msg, err := c.Transaction.At(p.Indexes)
@@ -110,7 +113,13 @@ func RunSpecificTest(file string, t *testing.T, c stateCase, name, fork string, 
 	assert.NoError(t, err)
 
 	// txn.CleanDeleteObjects(forks.EIP158)
-	_, root := snap.Commit(transition.Commit())
+	objs := transition.Commit()
+	_, root := snap.Commit(objs)
+
+	root2, _ := computeRoot(c.Pre, objs)
+	if !bytes.Equal(root2, root) {
+		panic("BAD")
+	}
 	if !bytes.Equal(root, p.Root.Bytes()) {
 		t.Fatalf("root mismatch (%s %s %s %d): expected %s but found %s", file, name, fork, index, p.Root.String(), helper.EncodeToHex(root))
 	}
@@ -118,6 +127,52 @@ func RunSpecificTest(file string, t *testing.T, c stateCase, name, fork string, 
 	if logs := rlpHashLogs(result.Logs); logs != p.Logs {
 		t.Fatalf("logs mismatch (%s, %s %d): expected %s but found %s", name, fork, index, p.Logs.String(), logs.String())
 	}
+}
+
+var EmptyStateHash = types.StringToHash("0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421")
+
+var EmptyCodeHash = helper.Keccak256(nil)
+
+var zeroHash = types.Hash{}
+
+func computeRoot(pre map[types.Address]*GenesisAccount, post []*state.Object) ([]byte, []byte) {
+	s := itrie.NewArchiveState(itrie.NewMemoryStorage())
+	snap := s.NewSnapshot()
+
+	objs := []*state.Object{}
+	for addr, data := range pre {
+		single := &state.Object{
+			Address:  addr,
+			Balance:  data.Balance,
+			Nonce:    data.Nonce,
+			CodeHash: types.BytesToHash(EmptyCodeHash),
+			Storage:  []*state.StorageObject{},
+			Root:     EmptyStateHash,
+		}
+		if len(data.Code) != 0 {
+			single.DirtyCode = true
+			single.Code = data.Code
+			single.CodeHash = types.BytesToHash(helper.Keccak256(data.Code))
+		}
+
+		for k, v := range data.Storage {
+			entry := &state.StorageObject{
+				Key: k.Bytes(),
+			}
+			if v == zeroHash {
+				entry.Deleted = true
+			} else {
+				entry.Val = v.Bytes()
+			}
+			single.Storage = append(single.Storage, entry)
+		}
+		objs = append(objs, single)
+	}
+
+	objs = append(objs, post...)
+	_, root := snap.Commit(objs)
+
+	return root, nil
 }
 
 func TestState(t *testing.T) {
