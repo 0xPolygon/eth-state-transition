@@ -8,19 +8,6 @@ import (
 	"github.com/ethereum/evmc/v10/bindings/go/evmc"
 )
 
-// TxContext is the context of the transaction
-type TxContext struct {
-	Hash       types.Hash
-	GasPrice   types.Hash
-	Origin     types.Address
-	Coinbase   types.Address
-	Number     int64
-	Timestamp  int64
-	GasLimit   int64
-	ChainID    int64
-	Difficulty types.Hash
-}
-
 // Host is the execution host
 type Host interface {
 	AccountExists(addr types.Address) bool

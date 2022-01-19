@@ -38,7 +38,7 @@ type Transition struct {
 	txn *Txn
 
 	// ctx is the block context
-	ctx runtime.TxContext
+	ctx TxContext
 
 	// GetHash GetHashByNumberHelper
 	getHash GetHashByNumber
@@ -47,8 +47,21 @@ type Transition struct {
 	totalGas uint64
 }
 
+// TxContext is the context of the transaction
+type TxContext struct {
+	Hash       types.Hash
+	GasPrice   types.Hash
+	Origin     types.Address
+	Coinbase   types.Address
+	Number     int64
+	Timestamp  int64
+	GasLimit   int64
+	ChainID    int64
+	Difficulty types.Hash
+}
+
 // NewExecutor creates a new executor
-func NewTransition(rev evmc.Revision, ctx runtime.TxContext, snap Snapshot) *Transition {
+func NewTransition(rev evmc.Revision, ctx TxContext, snap Snapshot) *Transition {
 	txn := NewTxn(snap)
 	txn.rev = rev
 

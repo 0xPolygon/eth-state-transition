@@ -13,7 +13,6 @@ import (
 
 	state "github.com/0xPolygon/eth-state-transition"
 	itrie "github.com/0xPolygon/eth-state-transition/immutable-trie"
-	"github.com/0xPolygon/eth-state-transition/runtime"
 	"github.com/0xPolygon/eth-state-transition/types"
 	"github.com/ethereum/evmc/v10/bindings/go/evmc"
 	"github.com/stretchr/testify/assert"
@@ -116,8 +115,8 @@ func stringToInt64T(t *testing.T, str string) int64 {
 	return int64(n)
 }
 
-func (e *env) ToHeader(t *testing.T) runtime.TxContext {
-	return runtime.TxContext{
+func (e *env) ToHeader(t *testing.T) state.TxContext {
+	return state.TxContext{
 		Coinbase:   stringToAddressT(t, e.Coinbase),
 		Difficulty: stringToHashT(t, e.Difficulty),
 		GasLimit:   stringToInt64T(t, e.GasLimit),
@@ -126,8 +125,8 @@ func (e *env) ToHeader(t *testing.T) runtime.TxContext {
 	}
 }
 
-func (e *env) ToEnv(t *testing.T) runtime.TxContext {
-	return runtime.TxContext{
+func (e *env) ToEnv(t *testing.T) state.TxContext {
+	return state.TxContext{
 		Coinbase:   stringToAddressT(t, e.Coinbase),
 		Difficulty: stringToHashT(t, e.Difficulty),
 		GasLimit:   stringToInt64T(t, e.GasLimit),
