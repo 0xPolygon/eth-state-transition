@@ -5,8 +5,13 @@ import (
 	"github.com/ethereum/evmc/v10/bindings/go/evmc"
 )
 
+type EVM struct {
+	Host runtime.Host
+	Rev  evmc.Revision
+}
+
 // Run implements the runtime interface
-func Run(c *runtime.Contract, host runtime.Host, rev evmc.Revision) *runtime.ExecutionResult {
+func (e *EVM) Run(c *runtime.Contract) *runtime.ExecutionResult {
 
 	s := acquireState()
 	s.resetReturnData()
@@ -21,8 +26,8 @@ func Run(c *runtime.Contract, host runtime.Host, rev evmc.Revision) *runtime.Exe
 
 	s.code = c.Code
 	s.gas = c.Gas
-	s.host = host
-	s.rev = rev
+	s.host = e.Host
+	s.rev = e.Rev
 	s.bitmap.setCode(c.Code)
 
 	ret, err := s.Run()
