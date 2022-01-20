@@ -32,18 +32,18 @@ type stateCase struct {
 var ripemd = types.StringToAddress("0000000000000000000000000000000000000003")
 
 type wrapper struct {
-	cc      map[types.Address]*GenesisAccount
-	code    map[types.Hash][]byte
-	raw     state.Snapshot
-	storage map[types.Hash]map[types.Hash]types.Hash
+	cc map[types.Address]*GenesisAccount
+	//code    map[types.Hash][]byte
+	raw state.Snapshot
+	//storage map[types.Hash]map[types.Hash]types.Hash
 }
 
 func newWrapper(raw state.Snapshot, cc map[types.Address]*GenesisAccount) *wrapper {
 	w := &wrapper{
-		cc:      cc,
-		raw:     raw,
-		code:    map[types.Hash][]byte{},
-		storage: map[types.Hash]map[types.Hash]types.Hash{},
+		cc:  cc,
+		raw: raw,
+		//code:    map[types.Hash][]byte{},
+		//storage: map[types.Hash]map[types.Hash]types.Hash{},
 	}
 	return w
 }
@@ -58,8 +58,8 @@ func (w *wrapper) GetCode(hash types.Hash, addr types.Address) ([]byte, bool) {
 	}
 	return acct.Code, true
 
-	code, ok := w.code[hash]
-	return code, ok
+	//code, ok := w.code[hash]
+	//return code, ok
 }
 
 func (w *wrapper) GetStorage(addr types.Address, root types.Hash, key types.Hash) types.Hash {
@@ -91,12 +91,12 @@ func (w *wrapper) GetAccount(addr types.Address) (*state.Account, error) {
 		CodeHash: acct.CodeHash,
 		Root:     acct.Root,
 	}
-	if !bytes.Equal(newAcct.CodeHash, EmptyCodeHash) {
-		w.code[types.BytesToHash(newAcct.CodeHash)] = w.cc[addr].Code
-	}
-	if !bytes.Equal(acct.Root.Bytes(), EmptyStateHash.Bytes()) {
-		w.storage[newAcct.Root] = w.cc[addr].Storage
-	}
+	//if !bytes.Equal(newAcct.CodeHash, EmptyCodeHash) {
+	//w.code[types.BytesToHash(newAcct.CodeHash)] = w.cc[addr].Code
+	//}
+	//if !bytes.Equal(acct.Root.Bytes(), EmptyStateHash.Bytes()) {
+	//w.storage[newAcct.Root] = w.cc[addr].Storage
+	//}
 
 	/*
 		if code := w.cc[addr].Code; len(code) != 0 {
