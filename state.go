@@ -79,7 +79,7 @@ type StorageObject struct {
 	Val     []byte
 }
 
-type Result struct {
+type Output struct {
 	Logs            []*Log
 	Success         bool
 	GasUsed         uint64

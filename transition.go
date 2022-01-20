@@ -99,7 +99,7 @@ func (e *Transition) SetRuntime(r runtime.Runtime) {
 
 type BlockResult struct {
 	Root     types.Hash
-	Receipts []*Result
+	Receipts []*Output
 	TotalGas uint64
 }
 
@@ -112,10 +112,7 @@ func (t *Transition) Txn() *Txn {
 }
 
 // Write writes another transaction to the executor
-func (t *Transition) Write(txn *Transaction) (*Result, error) {
-
-	// Make a local copy and apply the transaction
-	msg := txn.Copy()
+func (t *Transition) Write(msg *Message) (*Output, error) {
 
 	result, err := t.applyImpl(msg)
 	if err != nil {
@@ -124,7 +121,7 @@ func (t *Transition) Write(txn *Transaction) (*Result, error) {
 
 	logs := t.txn.Logs()
 
-	receipt := &Result{
+	receipt := &Output{
 		ReturnValue: result.ReturnValue,
 	}
 
@@ -145,7 +142,7 @@ func (t *Transition) Write(txn *Transaction) (*Result, error) {
 
 	// if the transaction created a contract, store the creation address in the receipt.
 	if msg.To == nil {
-		receipt.ContractAddress = CreateAddress(msg.From, txn.Nonce)
+		receipt.ContractAddress = CreateAddress(msg.From, msg.Nonce)
 	}
 
 	// Set the receipt logs and create a bloom for filtering
@@ -155,13 +152,13 @@ func (t *Transition) Write(txn *Transaction) (*Result, error) {
 }
 
 // Apply applies a new transaction
-func (t *Transition) applyImpl(msg *Transaction) (*runtime.ExecutionResult, error) {
-	s := t.txn.Snapshot()
-	result, err := t.apply(msg)
-	if err != nil {
-		t.txn.RevertToSnapshot(s)
+func (t *Transition) applyImpl(msg *Message) (*runtime.ExecutionResult, error) {
+	if err := t.preCheck(msg); err != nil {
+		return nil, err
 	}
-	return result, err
+	result := t.apply(msg)
+	t.postCheck(msg, result)
+	return result, nil
 }
 
 var (
@@ -178,74 +175,55 @@ func (t *Transition) isRevision(rev evmc.Revision) bool {
 	return rev <= t.rev
 }
 
-func (t *Transition) apply(msg *Transaction) (*runtime.ExecutionResult, error) {
-	txn := t.txn
-
-	gasLeft := uint64(0)
-
-	// First check this message satisfies all consensus rules before
-	// applying the message.
-	preCheck := func() error {
-		// 1. the nonce of the message caller is correct
-		nonce := t.txn.GetNonce(msg.From)
-		if nonce != msg.Nonce {
-			return ErrNonceIncorrect
-		}
-
-		// 2. deduct the upfront max gas cost to cover transaction fee(gaslimit * gasprice)
-		upfrontGasCost := new(big.Int).Set(msg.GasPrice)
-		upfrontGasCost.Mul(upfrontGasCost, new(big.Int).SetUint64(msg.Gas))
-
-		if err := t.txn.SubBalance(msg.From, upfrontGasCost); err != nil {
-			if err == runtime.ErrNotEnoughFunds {
-				return ErrNotEnoughFundsForGas
-			}
-			return err
-		}
-
-		// 4. there is no overflow when calculating intrinsic gas
-		intrinsicGasCost, err := TransactionGasCost(msg, t.isRevision(evmc.Homestead), t.isRevision(evmc.Istanbul))
-		if err != nil {
-			return err
-		}
-
-		// 5. the purchased gas is enough to cover intrinsic usage
-		gasLeft = msg.Gas - intrinsicGasCost
-		// Because we are working with unsigned integers for gas, the `>` operator is used instead of the more intuitive `<`
-		if gasLeft > msg.Gas {
-			return ErrNotEnoughIntrinsicGas
-		}
-
-		// 6. caller has enough balance to cover asset transfer for **topmost** call
-		if balance := txn.GetBalance(evmc.Address(msg.From)); balance.Cmp(msg.Value) < 0 {
-			return ErrNotEnoughFunds
-		}
-		return nil
+func (t *Transition) preCheck(msg *Message) error {
+	// 1. the nonce of the message caller is correct
+	nonce := t.txn.GetNonce(msg.From)
+	if nonce != msg.Nonce {
+		return ErrNonceIncorrect
 	}
 
-	if err := preCheck(); err != nil {
-		return nil, err
+	// 2. deduct the upfront max gas cost to cover transaction fee(gaslimit * gasprice)
+	upfrontGasCost := new(big.Int).Set(msg.GasPrice)
+	upfrontGasCost.Mul(upfrontGasCost, new(big.Int).SetUint64(msg.Gas))
+
+	err := t.txn.SubBalance(msg.From, upfrontGasCost)
+	if err != nil {
+		if err == runtime.ErrNotEnoughFunds {
+			return ErrNotEnoughFundsForGas
+		}
+		return err
 	}
 
-	gasPrice := new(big.Int).Set(msg.GasPrice)
-	value := new(big.Int).Set(msg.Value)
-
-	// Override the context and set the specific transaction fields
-	t.ctx.GasPrice = types.BytesToHash(gasPrice.Bytes())
-	t.ctx.Origin = msg.From
-
-	var result *runtime.ExecutionResult = nil
-	if msg.IsContractCreation() {
-		result = t.Create(msg.From, msg.Input, value, gasLeft)
-	} else {
-		txn.IncrNonce(msg.From)
-		result = t.Call(msg.From, *msg.To, msg.Input, value, gasLeft)
+	// 4. there is no overflow when calculating intrinsic gas
+	intrinsicGasCost, err := TransactionGasCost(msg, t.isRevision(evmc.Homestead), t.isRevision(evmc.Istanbul))
+	if err != nil {
+		return err
 	}
 
+	// 5. the purchased gas is enough to cover intrinsic usage
+	gasLeft := msg.Gas - intrinsicGasCost
+	// Because we are working with unsigned integers for gas, the `>` operator is used instead of the more intuitive `<`
+	if gasLeft > msg.Gas {
+		return ErrNotEnoughIntrinsicGas
+	}
+
+	// 6. caller has enough balance to cover asset transfer for **topmost** call
+	if balance := t.txn.GetBalance(evmc.Address(msg.From)); balance.Cmp(msg.Value) < 0 {
+		return ErrNotEnoughFunds
+	}
+
+	msg.Gas = gasLeft
+	return nil
+}
+
+func (t *Transition) postCheck(msg *Message, result *runtime.ExecutionResult) {
 	var gasUsed uint64
 
+	intrinsicGasCost, _ := TransactionGasCost(msg, t.isRevision(evmc.Homestead), t.isRevision(evmc.Istanbul))
+	msg.Gas += intrinsicGasCost
+
 	// Update gas used depending on the refund.
-	refund := txn.GetRefund()
+	refund := t.txn.GetRefund()
 	{
 		gasUsed = msg.Gas - result.GasLeft
 		maxRefund := gasUsed / 2
@@ -258,30 +236,38 @@ func (t *Transition) apply(msg *Transaction) (*runtime.ExecutionResult, error) {
 		gasUsed -= refund
 	}
 
+	gasPrice := new(big.Int).Set(msg.GasPrice)
+
 	// refund the sender
 	remaining := new(big.Int).Mul(new(big.Int).SetUint64(result.GasLeft), gasPrice)
-	txn.AddBalance(msg.From, remaining)
+	t.txn.AddBalance(msg.From, remaining)
 
 	// pay the coinbase for the transaction
 	coinbaseFee := new(big.Int).Mul(new(big.Int).SetUint64(gasUsed), gasPrice)
-	txn.AddBalance(t.ctx.Coinbase, coinbaseFee)
+	t.txn.AddBalance(t.ctx.Coinbase, coinbaseFee)
 
 	t.totalGas += gasUsed
-	return result, nil
 }
 
-func (t *Transition) Create(caller types.Address, code []byte, value *big.Int, gas uint64) *runtime.ExecutionResult {
-	address := CreateAddress(caller, t.txn.GetNonce(caller))
-	contract := runtime.NewContractCreation(0, caller, address, value, gas, code)
+func (t *Transition) apply(msg *Message) *runtime.ExecutionResult {
+	gasPrice := new(big.Int).Set(msg.GasPrice)
+	value := new(big.Int).Set(msg.Value)
 
-	res := t.applyCreate(contract)
-	res.CreateAddress = address
-	return res
-}
+	// Override the context and set the specific transaction fields
+	t.ctx.GasPrice = types.BytesToHash(gasPrice.Bytes())
+	t.ctx.Origin = msg.From
 
-func (t *Transition) Call(caller types.Address, to types.Address, input []byte, value *big.Int, gas uint64) *runtime.ExecutionResult {
-	c := runtime.NewContractCall(0, caller, to, value, gas, t.txn.GetCode(evmc.Address(to)), input)
-	return t.applyCall(c, evmc.Call)
+	if msg.IsContractCreation() {
+		address := CreateAddress(msg.From, t.txn.GetNonce(msg.From))
+		contract := runtime.NewContractCreation(0, msg.From, address, value, msg.Gas, msg.Input)
+		res := t.applyCreate(contract)
+		res.CreateAddress = address
+		return res
+	} else {
+		t.txn.IncrNonce(msg.From)
+		c := runtime.NewContractCall(0, msg.From, *msg.To, value, msg.Gas, t.txn.GetCode(evmc.Address(*msg.To)), msg.Input)
+		return t.applyCall(c, evmc.Call)
+	}
 }
 
 var (
@@ -545,7 +531,7 @@ func (t *Transition) Callx(c *runtime.Contract) *runtime.ExecutionResult {
 	return t.applyCall(c, c.Type)
 }
 
-func TransactionGasCost(msg *Transaction, isHomestead, isIstanbul bool) (uint64, error) {
+func TransactionGasCost(msg *Message, isHomestead, isIstanbul bool) (uint64, error) {
 	cost := uint64(0)
 
 	// Contract creation is only paid on the homestead fork
