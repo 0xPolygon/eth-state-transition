@@ -99,7 +99,19 @@ type Snapshot struct {
 	trieRoot *Trie
 }
 
-func (s *Snapshot) GetCode(hash types.Hash) ([]byte, bool) {
+func (s *Snapshot) GetCode(hash types.Hash, addr types.Address) ([]byte, bool) {
+
+	acct, err := s.GetAccount(addr)
+	if err != nil {
+		return nil, false
+	}
+	if acct == nil {
+		return nil, false
+	}
+	if !bytes.Equal(acct.CodeHash, hash.Bytes()) {
+		panic("X")
+	}
+
 	return s.state.GetCode(hash)
 }
 

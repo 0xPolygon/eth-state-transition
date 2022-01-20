@@ -343,7 +343,7 @@ func (txn *Txn) GetCode(addr evmc.Address) []byte {
 	if object.DirtyCode {
 		return object.Code
 	}
-	code, _ := txn.snapshot.GetCode(types.BytesToHash(object.Account.CodeHash))
+	code, _ := txn.snapshot.GetCode(types.BytesToHash(object.Account.CodeHash), types.Address(addr))
 	return code
 }
 

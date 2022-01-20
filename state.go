@@ -17,7 +17,7 @@ type SnapshotWriter interface {
 }
 
 type Snapshot interface {
-	GetCode(hash types.Hash) ([]byte, bool)
+	GetCode(hash types.Hash, addr types.Address) ([]byte, bool)
 	GetStorage(root types.Hash, key types.Hash) types.Hash
 	GetAccount(addr types.Address) (*Account, error)
 }
