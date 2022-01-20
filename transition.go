@@ -121,12 +121,10 @@ func (t *Transition) Write(txn *Transaction) (*Result, error) {
 	if err != nil {
 		return nil, err
 	}
-	t.totalGas += result.GasUsed
 
 	logs := t.txn.Logs()
 
 	receipt := &Result{
-		GasUsed:     result.GasUsed,
 		ReturnValue: result.ReturnValue,
 	}
 
@@ -244,18 +242,20 @@ func (t *Transition) apply(msg *Transaction) (*runtime.ExecutionResult, error) {
 		result = t.Call(msg.From, *msg.To, msg.Input, value, gasLeft)
 	}
 
+	var gasUsed uint64
+
 	// Update gas used depending on the refund.
 	refund := txn.GetRefund()
 	{
-		result.GasUsed = msg.Gas - result.GasLeft
-		maxRefund := result.GasUsed / 2
+		gasUsed = msg.Gas - result.GasLeft
+		maxRefund := gasUsed / 2
 		// Refund can go up to half the gas used
 		if refund > maxRefund {
 			refund = maxRefund
 		}
 
 		result.GasLeft += refund
-		result.GasUsed -= refund
+		gasUsed -= refund
 	}
 
 	// refund the sender
@@ -263,9 +263,10 @@ func (t *Transition) apply(msg *Transaction) (*runtime.ExecutionResult, error) {
 	txn.AddBalance(msg.From, remaining)
 
 	// pay the coinbase for the transaction
-	coinbaseFee := new(big.Int).Mul(new(big.Int).SetUint64(result.GasUsed), gasPrice)
+	coinbaseFee := new(big.Int).Mul(new(big.Int).SetUint64(gasUsed), gasPrice)
 	txn.AddBalance(t.ctx.Coinbase, coinbaseFee)
 
+	t.totalGas += gasUsed
 	return result, nil
 }
 
