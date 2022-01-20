@@ -318,13 +318,13 @@ func (t *Transition) isPrecompiled(codeAddr types.Address) bool {
 	return true
 }
 
-func (t *Transition) run(contract *runtime.Contract, host runtime.Host) *runtime.ExecutionResult {
+func (t *Transition) run(contract *runtime.Contract) *runtime.ExecutionResult {
 	if t.isPrecompiled(contract.CodeAddress) {
 		return precompiled.Run(contract.CodeAddress, contract.Input, contract.Gas, t.rev)
 	}
 
 	evm := evm.EVM{
-		Host: host,
+		Host: t,
 		Rev:  t.rev,
 	}
 	return evm.Run(contract)
@@ -360,7 +360,7 @@ func (t *Transition) applyCall(c *runtime.Contract, callType evmc.CallKind) *run
 		}
 	}
 
-	result := t.run(c, t)
+	result := t.run(c)
 	if result.Failed() {
 		t.txn.RevertToSnapshot(snapshot)
 	}
@@ -425,7 +425,7 @@ func (t *Transition) applyCreate(c *runtime.Contract) *runtime.ExecutionResult {
 		}
 	}
 
-	result := t.run(c, t)
+	result := t.run(c)
 
 	if result.Failed() {
 		t.txn.RevertToSnapshot(snapshot)
