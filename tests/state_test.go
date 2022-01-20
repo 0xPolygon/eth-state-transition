@@ -49,6 +49,15 @@ func newWrapper(raw state.Snapshot, cc map[types.Address]*GenesisAccount) *wrapp
 }
 
 func (w *wrapper) GetCode(hash types.Hash, addr types.Address) ([]byte, bool) {
+	acct, ok := w.cc[addr]
+	if !ok {
+		return nil, false
+	}
+	if len(acct.Code) == 0 {
+		return nil, false
+	}
+	return acct.Code, true
+
 	code, ok := w.code[hash]
 	return code, ok
 }
