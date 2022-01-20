@@ -5,9 +5,9 @@ import (
 	"math"
 	"math/big"
 
+	"github.com/0xPolygon/eth-state-transition/precompiled"
 	"github.com/0xPolygon/eth-state-transition/runtime"
 	"github.com/0xPolygon/eth-state-transition/runtime/evm"
-	"github.com/0xPolygon/eth-state-transition/runtime/precompiled"
 	"github.com/0xPolygon/eth-state-transition/types"
 	"github.com/ethereum/evmc/v10/bindings/go/evmc"
 	"github.com/umbracle/go-web3"
