@@ -84,6 +84,8 @@ func (txn *Txn) getStateObject(addr types.Address) (*stateObject, bool) {
 		if obj.Deleted {
 			return nil, false
 		}
+		//fmt.Println("- get account 2 --")
+		//fmt.Println(addr, obj.Account.Root)
 		return obj.Copy(), true
 	}
 
@@ -94,6 +96,10 @@ func (txn *Txn) getStateObject(addr types.Address) (*stateObject, bool) {
 	if account == nil {
 		return nil, false
 	}
+
+	//fmt.Println("-- get account --")
+	//fmt.Println(account)
+	//fmt.Println(addr, account.Root)
 
 	obj := &stateObject{
 		Account: account.Copy(),
@@ -107,7 +113,7 @@ func (txn *Txn) upsertAccount(addr types.Address, create bool, f func(object *st
 		object = &stateObject{
 			Account: &Account{
 				Balance:  big.NewInt(0),
-				CodeHash: EmptyCodeHash,
+				CodeHash: EmptyCodeHash[:],
 				Root:     EmptyStateHash,
 			},
 		}
@@ -296,7 +302,8 @@ func (txn *Txn) GetState(addr evmc.Address, key evmc.Hash) types.Hash {
 			return types.BytesToHash(val.([]byte))
 		}
 	}
-	return txn.snapshot.GetStorage(object.Account.Root, types.Hash(key))
+	//fmt.Println("-- get storage 1", types.Address(addr), object.Account.Root)
+	return txn.snapshot.GetStorage(types.Address(addr), object.Account.Root, types.Hash(key))
 }
 
 // Nonce
@@ -421,7 +428,8 @@ func (txn *Txn) GetCommittedState(addr types.Address, key types.Hash) types.Hash
 	if !ok {
 		return types.Hash{}
 	}
-	return txn.snapshot.GetStorage(obj.Account.Root, key)
+	//fmt.Println("-- get storage 2", addr, obj.Account.Root)
+	return txn.snapshot.GetStorage(addr, obj.Account.Root, key)
 }
 
 func (txn *Txn) TouchAccount(addr types.Address) {
@@ -449,7 +457,7 @@ func newStateObject(txn *Txn) *stateObject {
 	return &stateObject{
 		Account: &Account{
 			Balance:  big.NewInt(0),
-			CodeHash: EmptyCodeHash,
+			CodeHash: EmptyCodeHash[:],
 			Root:     EmptyStateHash,
 		},
 	}
@@ -459,7 +467,7 @@ func (txn *Txn) CreateAccount(addr types.Address) {
 	obj := &stateObject{
 		Account: &Account{
 			Balance:  big.NewInt(0),
-			CodeHash: EmptyCodeHash,
+			CodeHash: EmptyCodeHash[:],
 			Root:     EmptyStateHash,
 		},
 	}

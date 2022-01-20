@@ -18,11 +18,11 @@ type SnapshotWriter interface {
 
 type Snapshot interface {
 	GetCode(hash types.Hash, addr types.Address) ([]byte, bool)
-	GetStorage(root types.Hash, key types.Hash) types.Hash
+	GetStorage(addr types.Address, root types.Hash, key types.Hash) types.Hash
 	GetAccount(addr types.Address) (*Account, error)
 }
 
-var EmptyCodeHash = web3.Keccak256(nil)
+var EmptyCodeHash = types.BytesToHash(web3.Keccak256(nil))
 
 // StateObject is the internal representation of the account
 type stateObject struct {
@@ -35,7 +35,7 @@ type stateObject struct {
 }
 
 func (s *stateObject) Empty() bool {
-	return s.Account.Nonce == 0 && s.Account.Balance.Sign() == 0 && bytes.Equal(s.Account.CodeHash, EmptyCodeHash)
+	return s.Account.Nonce == 0 && s.Account.Balance.Sign() == 0 && bytes.Equal(s.Account.CodeHash, EmptyCodeHash.Bytes())
 }
 
 // Copy makes a copy of the state object

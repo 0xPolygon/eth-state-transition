@@ -121,7 +121,22 @@ var stateArenaPool fastrlp.ArenaPool // TODO, Remove once we do update in fastrl
 
 var stateStateParserPool fastrlp.ParserPool
 
-func (s *Snapshot) GetStorage(root types.Hash, raw types.Hash) types.Hash {
+func (s *Snapshot) GetStorage(addr types.Address, root types.Hash, raw types.Hash) types.Hash {
+
+	if root == state.EmptyRootHash {
+		return types.Hash{}
+	}
+
+	acct, err := s.GetAccount(addr)
+	if err != nil {
+		return types.Hash{}
+	}
+	if acct == nil {
+		return types.Hash{}
+	}
+	if acct.Root != root {
+		panic("X")
+	}
 
 	// Load trie from memory if there is some state
 	var dummySnap *Snapshot
@@ -186,6 +201,8 @@ func (s *Snapshot) Commit(objs []*state.Object) (state.SnapshotWriter, []byte) {
 	ar1 := stateArenaPool.Get()
 	defer stateArenaPool.Put(ar1)
 
+	//fmt.Println("-- commit --")
+
 	for _, obj := range objs {
 		if obj.Deleted {
 			tt.Delete(hashit(obj.Address.Bytes()))
@@ -223,6 +240,7 @@ func (s *Snapshot) Commit(objs []*state.Object) (state.SnapshotWriter, []byte) {
 				// Add this to the cache
 				s.state.AddState(types.BytesToHash(accountStateRoot), accountStateTrie)
 
+				//fmt.Println("-- new root", obj.Address, hex.EncodeToString(accountStateRoot))
 				account.Root = types.BytesToHash(accountStateRoot)
 			}
 
