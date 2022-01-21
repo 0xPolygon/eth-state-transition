@@ -24,20 +24,12 @@ import (
 // TESTS is the default location of the tests folder
 const TESTS = "./tests"
 
-type info struct {
-	Comment     string `json:"comment"`
-	FilledWith  string `json:"filledwith"`
-	LllcVersion string `json:"lllcversion"`
-	Source      string `json:"source"`
-	SourceHash  string `json:"sourcehash"`
-}
-
 type env struct {
-	Coinbase   string `json:"currentCoinbase"`
-	Difficulty string `json:"currentDifficulty"`
-	GasLimit   string `json:"currentGasLimit"`
-	Number     string `json:"currentNumber"`
-	Timestamp  string `json:"currentTimestamp"`
+	Coinbase   argAddr   `json:"currentCoinbase"`
+	Difficulty argHash   `json:"currentDifficulty"`
+	GasLimit   argUint64 `json:"currentGasLimit"`
+	Number     argUint64 `json:"currentNumber"`
+	Timestamp  argUint64 `json:"currentTimestamp"`
 }
 
 func remove0xPrefix(str string) string {
@@ -45,20 +37,6 @@ func remove0xPrefix(str string) string {
 		return strings.Replace(str, "0x", "", -1)
 	}
 	return str
-}
-
-func stringToAddress(str string) (types.Address, error) {
-	if str == "" {
-		return types.Address{}, fmt.Errorf("value not found")
-	}
-	return types.StringToAddress(str), nil
-}
-
-func stringToHash(str string) (types.Hash, error) {
-	if str == "" {
-		return types.Hash{}, fmt.Errorf("value not found")
-	}
-	return types.StringToHash(str), nil
 }
 
 func stringToBigInt(str string) (*big.Int, error) {
@@ -76,22 +54,6 @@ func stringToBigInt(str string) (*big.Int, error) {
 	return n, nil
 }
 
-func stringToAddressT(t *testing.T, str string) types.Address {
-	address, err := stringToAddress(str)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return address
-}
-
-func stringToHashT(t *testing.T, str string) types.Hash {
-	address, err := stringToHash(str)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return address
-}
-
 func stringToUint64(str string) (uint64, error) {
 	n, err := stringToBigInt(str)
 	if err != nil {
@@ -100,39 +62,13 @@ func stringToUint64(str string) (uint64, error) {
 	return n.Uint64(), nil
 }
 
-func stringToUint64T(t *testing.T, str string) uint64 {
-	n, err := stringToUint64(str)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return n
-}
-
-func stringToInt64T(t *testing.T, str string) int64 {
-	n, err := stringToUint64(str)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return int64(n)
-}
-
-func (e *env) ToHeader(t *testing.T) state.TxContext {
-	return state.TxContext{
-		Coinbase:   stringToAddressT(t, e.Coinbase),
-		Difficulty: stringToHashT(t, e.Difficulty),
-		GasLimit:   stringToInt64T(t, e.GasLimit),
-		Number:     stringToInt64T(t, e.Number),
-		Timestamp:  stringToInt64T(t, e.Timestamp),
-	}
-}
-
 func (e *env) ToEnv(t *testing.T) state.TxContext {
 	return state.TxContext{
-		Coinbase:   stringToAddressT(t, e.Coinbase),
-		Difficulty: stringToHashT(t, e.Difficulty),
-		GasLimit:   stringToInt64T(t, e.GasLimit),
-		Number:     stringToInt64T(t, e.Number),
-		Timestamp:  stringToInt64T(t, e.Timestamp),
+		Coinbase:   types.Address(e.Coinbase),
+		Difficulty: types.Hash(e.Difficulty),
+		GasLimit:   int64(e.GasLimit.Uint64()),
+		Number:     int64(e.Number.Uint64()),
+		Timestamp:  int64(e.Timestamp.Uint64()),
 	}
 }
 
@@ -530,6 +466,30 @@ func (b *argBytes) UnmarshalText(input []byte) error {
 
 func (b *argBytes) Bytes() []byte {
 	return *b
+}
+
+type argAddr types.Address
+
+func (a *argAddr) UnmarshalText(input []byte) error {
+	hh, err := decodeToHex(input)
+	if err != nil {
+		return nil
+	}
+	addr := types.BytesToAddress(hh)
+	*a = argAddr(addr)
+	return nil
+}
+
+type argHash types.Hash
+
+func (a *argHash) UnmarshalText(input []byte) error {
+	hh, err := decodeToHex(input)
+	if err != nil {
+		return nil
+	}
+	hash := types.BytesToHash(hh)
+	*a = argHash(hash)
+	return nil
 }
 
 func decodeToHex(b []byte) ([]byte, error) {

@@ -22,14 +22,11 @@ var (
 )
 
 type stateCase struct {
-	Info        *info                             `json:"_info"`
 	Env         *env                              `json:"env"`
 	Pre         map[types.Address]*GenesisAccount `json:"pre"`
 	Post        map[string]postState              `json:"post"`
 	Transaction *stTransaction                    `json:"transaction"`
 }
-
-var ripemd = types.StringToAddress("0000000000000000000000000000000000000003")
 
 type wrapper struct {
 	cc map[types.Address]*GenesisAccount
@@ -158,7 +155,7 @@ func RunSpecificTest(file string, t *testing.T, c stateCase, name, fork string, 
 
 	snap, _ := buildState(t, c.Pre)
 
-	runtimeCtx := c.Env.ToHeader(t)
+	runtimeCtx := env
 	runtimeCtx.ChainID = 1
 
 	wr := newWrapper(snap, c.Pre)
