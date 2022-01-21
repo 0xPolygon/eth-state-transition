@@ -145,7 +145,7 @@ var Forks2 = map[string]blockB{
 		return evmc.TangerineWhistle
 	},
 	"EIP158": func(i int) evmc.Revision {
-		return evmc.TangerineWhistle
+		return evmc.SpuriousDragon
 	},
 	"Byzantium": func(i int) evmc.Revision {
 		return evmc.Byzantium
@@ -173,7 +173,7 @@ var Forks2 = map[string]blockB{
 	},
 	"EIP158ToByzantiumAt5": func(i int) evmc.Revision {
 		if i < 5 {
-			return evmc.TangerineWhistle
+			return evmc.SpuriousDragon
 		}
 		return evmc.Byzantium
 	},

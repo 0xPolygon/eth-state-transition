@@ -100,7 +100,7 @@ func (t *Transition) Write(msg *Message) (*Output, error) {
 		t.txn.CleanDeleteObjects(true)
 	} else {
 		// TODO: If byzntium is enabled you need a special step to commit the data yourself
-		t.txn.CleanDeleteObjects(t.isRevision(evmc.TangerineWhistle))
+		t.txn.CleanDeleteObjects(t.isRevision(evmc.SpuriousDragon))
 	}
 
 	return output, nil
@@ -364,7 +364,7 @@ func (t *Transition) applyCreate(c *runtime.Contract) ([]byte, int64, error) {
 	// Take snapshot of the current state
 	snapshot := t.txn.Snapshot()
 
-	if t.isRevision(evmc.TangerineWhistle) {
+	if t.isRevision(evmc.SpuriousDragon) {
 		// Force the creation of the account
 		t.txn.CreateAccount(c.Address)
 		t.txn.IncrNonce(c.Address)
@@ -382,7 +382,7 @@ func (t *Transition) applyCreate(c *runtime.Contract) ([]byte, int64, error) {
 		return retValue, gasLeft, err
 	}
 
-	if t.isRevision(evmc.TangerineWhistle) && len(retValue) > spuriousDragonMaxCodeSize {
+	if t.isRevision(evmc.SpuriousDragon) && len(retValue) > spuriousDragonMaxCodeSize {
 		// Contract size exceeds 'SpuriousDragon' size limit
 		t.txn.RevertToSnapshot(snapshot)
 		return nil, 0, runtime.ErrMaxCodeSizeExceeded

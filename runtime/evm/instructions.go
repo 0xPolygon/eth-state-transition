@@ -123,7 +123,7 @@ func opExp(c *state) {
 	y := c.top()
 
 	var gas uint64
-	if c.isRevision(evmc.TangerineWhistle) {
+	if c.isRevision(evmc.SpuriousDragon) {
 		gas = 50
 	} else {
 		gas = 10
@@ -880,7 +880,7 @@ func opSelfDestruct(c *state) {
 	// EIP150 reprice fork
 	if c.isRevision(evmc.TangerineWhistle) {
 		gas = 5000
-		if c.isRevision(evmc.TangerineWhistle) {
+		if c.isRevision(evmc.SpuriousDragon) {
 			// if empty and transfers value
 			if c.host.Empty(evmc.Address(address)) && c.host.GetBalance(evmc.Address(c.Address)).Sign() != 0 {
 				gas += 25000
@@ -1176,7 +1176,7 @@ func (c *state) buildCallContract(op OpCode) (*runtime.Contract, uint64, uint64,
 		gasCost = 40
 	}
 
-	isTangerine := c.isRevision(evmc.TangerineWhistle)
+	isTangerine := c.isRevision(evmc.SpuriousDragon)
 	transfersValue := (op == CALL || op == CALLCODE) && value != nil && value.Sign() != 0
 
 	if op == CALL {

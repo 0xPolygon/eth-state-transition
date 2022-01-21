@@ -127,7 +127,7 @@ func (w *wrapper) GetAccount(addr types.Address) (*state.Account, error) {
 func RunSpecificTest(file string, t *testing.T, c stateCase, name, fork string, index int, p postEntry) {
 	if fork == "EIP150" {
 		// already self contained in the EIP 158
-		return
+		//return
 	}
 
 	//if name != "RevertInCreateInInitCreate2" || fork != "Istanbul" {
