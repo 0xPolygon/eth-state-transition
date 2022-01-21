@@ -30,27 +30,6 @@ type Host interface {
 		static bool, salt types.Hash, codeAddress types.Address) (output []byte, gasLeft int64, createAddr types.Address, err error)
 }
 
-// ExecutionResult includes all output after executing given evm
-// message no matter the execution itself is successful or not.
-type ExecutionResult struct {
-	ReturnValue   []byte // Returned data from the runtime (function result or data supplied with revert opcode)
-	GasLeft       uint64 // Total gas left as result of execution
-	Err           error  // Any error encountered during the execution, listed below
-	CreateAddress types.Address
-}
-
-func (r *ExecutionResult) Succeeded() bool {
-	return r.Err == nil
-}
-
-func (r *ExecutionResult) Failed() bool {
-	return r.Err != nil
-}
-
-func (r *ExecutionResult) Reverted() bool {
-	return r.Err == ErrExecutionReverted
-}
-
 var (
 	ErrOutOfGas                 = errors.New("out of gas")
 	ErrStackOverflow            = errors.New("stack overflow")
