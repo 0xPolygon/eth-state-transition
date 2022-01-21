@@ -200,8 +200,8 @@ func computeRoot(pre map[types.Address]*GenesisAccount, post []*state.Object) ([
 	for addr, data := range pre {
 		single := &state.Object{
 			Address:  addr,
-			Balance:  data.Balance,
-			Nonce:    data.Nonce,
+			Balance:  data.Balance.Big(),
+			Nonce:    data.Nonce.Uint64(),
 			CodeHash: types.BytesToHash(EmptyCodeHash),
 			Storage:  []*state.StorageObject{},
 			Root:     EmptyStateHash,
