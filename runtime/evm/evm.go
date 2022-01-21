@@ -11,7 +11,7 @@ type EVM struct {
 }
 
 // Run implements the runtime interface
-func (e *EVM) Run(c *runtime.Contract) *runtime.ExecutionResult {
+func (e *EVM) Run(c *runtime.Contract) ([]byte, int64, error) {
 
 	s := acquireState()
 	s.resetReturnData()
@@ -44,9 +44,5 @@ func (e *EVM) Run(c *runtime.Contract) *runtime.ExecutionResult {
 		gasLeft = 0
 	}
 
-	return &runtime.ExecutionResult{
-		ReturnValue: returnValue,
-		GasLeft:     gasLeft,
-		Err:         err,
-	}
+	return returnValue, int64(gasLeft), err
 }

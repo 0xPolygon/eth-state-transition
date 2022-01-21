@@ -278,7 +278,7 @@ func (t *Transition) isPrecompiled(codeAddr types.Address) bool {
 	return true
 }
 
-func (t *Transition) run(contract *runtime.Contract) *runtime.ExecutionResult {
+func (t *Transition) run(contract *runtime.Contract) ([]byte, int64, error) {
 	if t.isPrecompiled(contract.CodeAddress) {
 		return precompiled.Run(contract.CodeAddress, contract.Input, contract.Gas, t.rev)
 	}
@@ -317,12 +317,11 @@ func (t *Transition) applyCall(c *runtime.Contract, callType evmc.CallKind) ([]b
 		}
 	}
 
-	result := t.run(c)
-	if result.Failed() {
+	retValue, gasLeft, err := t.run(c)
+	if err != nil {
 		t.txn.RevertToSnapshot(snapshot)
 	}
-
-	return result.ReturnValue, int64(result.GasLeft), result.Err
+	return retValue, gasLeft, err
 }
 
 var emptyHash types.Hash
@@ -376,38 +375,38 @@ func (t *Transition) applyCreate(c *runtime.Contract) ([]byte, int64, error) {
 		return nil, int64(gasLimit), err
 	}
 
-	result := t.run(c)
+	retValue, gasLeft, err := t.run(c)
 
-	if result.Failed() {
+	if err != nil {
 		t.txn.RevertToSnapshot(snapshot)
-		return result.ReturnValue, int64(result.GasLeft), result.Err
+		return retValue, gasLeft, err
 	}
 
-	if t.isRevision(evmc.TangerineWhistle) && len(result.ReturnValue) > spuriousDragonMaxCodeSize {
+	if t.isRevision(evmc.TangerineWhistle) && len(retValue) > spuriousDragonMaxCodeSize {
 		// Contract size exceeds 'SpuriousDragon' size limit
 		t.txn.RevertToSnapshot(snapshot)
 		return nil, 0, runtime.ErrMaxCodeSizeExceeded
 	}
 
-	gasCost := uint64(len(result.ReturnValue)) * 200
+	gasCost := int64(len(retValue)) * 200
 
-	if result.GasLeft < gasCost {
-		result.Err = runtime.ErrCodeStoreOutOfGas
-		result.ReturnValue = nil
+	if gasLeft < gasCost {
+		err = runtime.ErrCodeStoreOutOfGas
+		retValue = nil
 
 		// Out of gas creating the contract
 		if t.isRevision(evmc.Homestead) {
 			t.txn.RevertToSnapshot(snapshot)
-			result.GasLeft = 0
+			gasLeft = 0
 		}
 
-		return result.ReturnValue, int64(result.GasLeft), result.Err
+		return retValue, gasLeft, err
 	}
 
-	result.GasLeft -= gasCost
-	t.txn.SetCode(c.Address, result.ReturnValue)
+	gasLeft -= gasCost
+	t.txn.SetCode(c.Address, retValue)
 
-	return result.ReturnValue, int64(result.GasLeft), result.Err
+	return retValue, gasLeft, err
 }
 
 func (t *Transition) SetStorage(addr types.Address, key types.Hash, value types.Hash) evmc.StorageStatus {

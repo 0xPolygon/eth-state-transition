@@ -46,33 +46,21 @@ type Precompiled struct {
 }
 
 // Run runs an execution
-func Run(codeAddress types.Address, input []byte, gas uint64, rev evmc.Revision) *runtime.ExecutionResult {
+func Run(codeAddress types.Address, input []byte, gas uint64, rev evmc.Revision) ([]byte, int64, error) {
 	contract := Contracts[codeAddress]
 	gasCost := contract.gas(input, rev)
 
 	// In the case of not enough gas for precompiled execution we return ErrOutOfGas
 	if gas < gasCost {
-		return &runtime.ExecutionResult{
-			GasLeft: 0,
-			Err:     runtime.ErrOutOfGas,
-		}
+		return nil, 0, runtime.ErrOutOfGas
 	}
 
 	gas = gas - gasCost
 	returnValue, err := contract.run(input)
-
-	result := &runtime.ExecutionResult{
-		ReturnValue: returnValue,
-		GasLeft:     gas,
-		Err:         err,
+	if err != nil {
+		return nil, 0, err
 	}
-
-	if result.Failed() {
-		result.GasLeft = 0
-		result.ReturnValue = nil
-	}
-
-	return result
+	return returnValue, int64(gas), nil
 }
 
 var zeroPadding = make([]byte, 64)
