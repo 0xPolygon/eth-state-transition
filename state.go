@@ -82,7 +82,7 @@ type StorageObject struct {
 type Output struct {
 	Logs            []*Log
 	Success         bool
-	GasUsed         uint64
+	GasLeft         uint64
 	ContractAddress types.Address
 	ReturnValue     []byte
 }

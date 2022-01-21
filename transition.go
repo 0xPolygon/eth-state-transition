@@ -42,9 +42,6 @@ type Transition struct {
 
 	// GetHash GetHashByNumberHelper
 	getHash GetHashByNumber
-
-	// counter on the total gas used so far
-	totalGas uint64
 }
 
 // TxContext is the context of the transaction
@@ -66,14 +63,10 @@ func NewTransition(rev evmc.Revision, ctx TxContext, snap Snapshot) *Transition 
 	txn.rev = rev
 
 	transition := &Transition{
-		ctx:      ctx,
-		txn:      txn,
-		rev:      rev,
-		totalGas: 0,
+		ctx: ctx,
+		txn: txn,
+		rev: rev,
 	}
-
-	//transition.SetRuntime(evm.NewEVM())
-	//transition.SetRuntime(precompiled.NewPrecompiled())
 
 	// by default for getHash use a simple one
 	transition.getHash = func(n uint64) types.Hash {
@@ -87,22 +80,6 @@ func (e *Transition) Commit() []*Object {
 	return e.txn.Commit()
 }
 
-func (t *Transition) TotalGas() uint64 {
-	return t.totalGas
-}
-
-/*
-func (e *Transition) SetRuntime(r runtime.Runtime) {
-	e.runtimes = append([]runtime.Runtime{r}, e.runtimes...)
-}
-*/
-
-type BlockResult struct {
-	Root     types.Hash
-	Receipts []*Output
-	TotalGas uint64
-}
-
 func (t *Transition) SetGetHash(helper GetHashByNumberHelper) {
 	t.getHash = helper(uint64(t.ctx.Number), t.ctx.Hash)
 }
@@ -113,52 +90,30 @@ func (t *Transition) Txn() *Txn {
 
 // Write writes another transaction to the executor
 func (t *Transition) Write(msg *Message) (*Output, error) {
-
-	result, err := t.applyImpl(msg)
+	output, err := t.applyImpl(msg)
 	if err != nil {
 		return nil, err
-	}
-
-	logs := t.txn.Logs()
-
-	receipt := &Output{
-		ReturnValue: result.ReturnValue,
 	}
 
 	if t.isRevision(evmc.Byzantium) {
 		// The suicided accounts are set as deleted for the next iteration
 		t.txn.CleanDeleteObjects(true)
-
-		if result.Failed() {
-			receipt.Success = false
-		} else {
-			receipt.Success = true
-		}
-
 	} else {
 		// TODO: If byzntium is enabled you need a special step to commit the data yourself
 		t.txn.CleanDeleteObjects(t.isRevision(evmc.TangerineWhistle))
 	}
 
-	// if the transaction created a contract, store the creation address in the receipt.
-	if msg.To == nil {
-		receipt.ContractAddress = CreateAddress(msg.From, msg.Nonce)
-	}
-
-	// Set the receipt logs and create a bloom for filtering
-	receipt.Logs = logs
-
-	return receipt, nil
+	return output, nil
 }
 
 // Apply applies a new transaction
-func (t *Transition) applyImpl(msg *Message) (*runtime.ExecutionResult, error) {
+func (t *Transition) applyImpl(msg *Message) (*Output, error) {
 	if err := t.preCheck(msg); err != nil {
 		return nil, err
 	}
-	result := t.apply(msg)
-	t.postCheck(msg, result)
-	return result, nil
+	output := t.apply(msg)
+	t.postCheck(msg, output)
+	return output, nil
 }
 
 var (
@@ -216,7 +171,7 @@ func (t *Transition) preCheck(msg *Message) error {
 	return nil
 }
 
-func (t *Transition) postCheck(msg *Message, result *runtime.ExecutionResult) {
+func (t *Transition) postCheck(msg *Message, output *Output) {
 	var gasUsed uint64
 
 	intrinsicGasCost, _ := TransactionGasCost(msg, t.isRevision(evmc.Homestead), t.isRevision(evmc.Istanbul))
@@ -225,31 +180,29 @@ func (t *Transition) postCheck(msg *Message, result *runtime.ExecutionResult) {
 	// Update gas used depending on the refund.
 	refund := t.txn.GetRefund()
 	{
-		gasUsed = msg.Gas - result.GasLeft
+		gasUsed = msg.Gas - output.GasLeft
 		maxRefund := gasUsed / 2
 		// Refund can go up to half the gas used
 		if refund > maxRefund {
 			refund = maxRefund
 		}
 
-		result.GasLeft += refund
+		output.GasLeft += refund
 		gasUsed -= refund
 	}
 
 	gasPrice := new(big.Int).Set(msg.GasPrice)
 
 	// refund the sender
-	remaining := new(big.Int).Mul(new(big.Int).SetUint64(result.GasLeft), gasPrice)
+	remaining := new(big.Int).Mul(new(big.Int).SetUint64(output.GasLeft), gasPrice)
 	t.txn.AddBalance(msg.From, remaining)
 
 	// pay the coinbase for the transaction
 	coinbaseFee := new(big.Int).Mul(new(big.Int).SetUint64(gasUsed), gasPrice)
 	t.txn.AddBalance(t.ctx.Coinbase, coinbaseFee)
-
-	t.totalGas += gasUsed
 }
 
-func (t *Transition) apply(msg *Message) *runtime.ExecutionResult {
+func (t *Transition) apply(msg *Message) *Output {
 	gasPrice := new(big.Int).Set(msg.GasPrice)
 	value := new(big.Int).Set(msg.Value)
 
@@ -257,17 +210,35 @@ func (t *Transition) apply(msg *Message) *runtime.ExecutionResult {
 	t.ctx.GasPrice = types.BytesToHash(gasPrice.Bytes())
 	t.ctx.Origin = msg.From
 
+	var result *runtime.ExecutionResult
 	if msg.IsContractCreation() {
 		address := CreateAddress(msg.From, t.txn.GetNonce(msg.From))
 		contract := runtime.NewContractCreation(0, msg.From, address, value, msg.Gas, msg.Input)
-		res := t.applyCreate(contract)
-		res.CreateAddress = address
-		return res
+		result = t.applyCreate(contract)
 	} else {
 		t.txn.IncrNonce(msg.From)
 		c := runtime.NewContractCall(0, msg.From, *msg.To, value, msg.Gas, t.txn.GetCode(evmc.Address(*msg.To)), msg.Input)
-		return t.applyCall(c, evmc.Call)
+		result = t.applyCall(c, evmc.Call)
 	}
+
+	output := &Output{
+		ReturnValue: result.ReturnValue,
+		Logs:        t.txn.Logs(),
+		GasLeft:     result.GasLeft,
+	}
+
+	if result.Failed() {
+		output.Success = false
+	} else {
+		output.Success = true
+	}
+
+	// if the transaction created a contract, store the creation address in the receipt.
+	if msg.To == nil {
+		output.ContractAddress = CreateAddress(msg.From, msg.Nonce)
+	}
+
+	return output
 }
 
 var (
