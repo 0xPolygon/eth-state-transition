@@ -2,7 +2,6 @@ package tests
 
 import (
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"math/big"
@@ -30,36 +29,6 @@ type env struct {
 	GasLimit   argUint64 `json:"currentGasLimit"`
 	Number     argUint64 `json:"currentNumber"`
 	Timestamp  argUint64 `json:"currentTimestamp"`
-}
-
-func remove0xPrefix(str string) string {
-	if strings.HasPrefix(str, "0x") {
-		return strings.Replace(str, "0x", "", -1)
-	}
-	return str
-}
-
-func stringToBigInt(str string) (*big.Int, error) {
-	if str == "" {
-		return nil, fmt.Errorf("value not found")
-	}
-	base := 10
-	if strings.HasPrefix(str, "0x") {
-		str, base = remove0xPrefix(str), 16
-	}
-	n, ok := big.NewInt(1).SetString(str, base)
-	if !ok {
-		return nil, fmt.Errorf("failed to convert %s to big.Int with base %d", str, base)
-	}
-	return n, nil
-}
-
-func stringToUint64(str string) (uint64, error) {
-	n, err := stringToBigInt(str)
-	if err != nil {
-		return 0, err
-	}
-	return n.Uint64(), nil
 }
 
 func (e *env) ToEnv(t *testing.T) state.TxContext {
@@ -116,13 +85,13 @@ type postEntry struct {
 type postState []postEntry
 
 type stTransaction struct {
-	Data     []string       `json:"data"`
-	GasLimit []uint64       `json:"gasLimit"`
-	Value    []*big.Int     `json:"value"`
-	GasPrice *big.Int       `json:"gasPrice"`
-	Nonce    uint64         `json:"nonce"`
-	From     types.Address  `json:"secretKey"`
-	To       *types.Address `json:"to"`
+	Data      []argBytes  `json:"data"`
+	GasLimit  []argUint64 `json:"gasLimit"`
+	Value     []argBig    `json:"value"`
+	GasPrice  argBig      `json:"gasPrice"`
+	Nonce     argUint64   `json:"nonce"`
+	SecretKey argBytes    `json:"secretKey"`
+	To        string      `json:"to"`
 }
 
 func (t *stTransaction) At(i indexes) (*state.Message, error) {
@@ -136,90 +105,29 @@ func (t *stTransaction) At(i indexes) (*state.Message, error) {
 		return nil, fmt.Errorf("value index %d out of bounds (%d)", i.Value, len(t.Value))
 	}
 
-	input, err := hex.DecodeString(t.Data[i.Data][2:]) // starts with 0x
-	if err != nil {
-		panic(err)
-	}
-
 	msg := &state.Message{
-		To:       t.To,
-		Nonce:    t.Nonce,
-		Value:    new(big.Int).Set(t.Value[i.Value]),
-		Gas:      t.GasLimit[i.Gas],
-		GasPrice: new(big.Int).Set(t.GasPrice),
-		Input:    input,
+		Nonce:    t.Nonce.Uint64(),
+		Value:    t.Value[i.Value].Big(),
+		Gas:      t.GasLimit[i.Gas].Uint64(),
+		GasPrice: t.GasPrice.Big(),
+		Input:    t.Data[i.Data],
+	}
+	if t.To != "" {
+		address := types.StringToAddress(t.To)
+		msg.To = &address
 	}
 
-	msg.From = t.From
+	var from types.Address
+	if len(t.SecretKey) > 0 {
+		key, err := wallet.ParsePrivateKey(t.SecretKey)
+		if err != nil {
+			return nil, fmt.Errorf("invalid private key: %v", err)
+		}
+		from = types.Address(wallet.NewKey(key).Address())
+	}
+
+	msg.From = from
 	return msg, nil
-}
-
-func (t *stTransaction) UnmarshalJSON(input []byte) error {
-	type txUnmarshall struct {
-		Data      []string `json:"data"`
-		GasLimit  []string `json:"gasLimit"`
-		Value     []string `json:"value"`
-		GasPrice  string   `json:"gasPrice"`
-		Nonce     string   `json:"nonce"`
-		SecretKey string   `json:"secretKey"`
-		To        string   `json:"to"`
-	}
-
-	var dec txUnmarshall
-	err := json.Unmarshal(input, &dec)
-	if err != nil {
-		return err
-	}
-
-	t.Data = dec.Data
-	for _, i := range dec.GasLimit {
-		if j, err := stringToUint64(i); err != nil {
-			return err
-		} else {
-			t.GasLimit = append(t.GasLimit, j)
-		}
-	}
-
-	for _, i := range dec.Value {
-		value := new(big.Int)
-		if i != "0x" {
-			v, err := ParseUint256orHex(&i)
-			if err != nil {
-				return err
-			}
-			value = v
-		}
-		t.Value = append(t.Value, value)
-	}
-
-	t.GasPrice, err = stringToBigInt(dec.GasPrice)
-	if err != nil {
-		return err
-	}
-
-	t.Nonce, err = stringToUint64(dec.Nonce)
-	if err != nil {
-		return err
-	}
-
-	t.From = types.Address{}
-	if len(dec.SecretKey) > 0 {
-		secretKey, err := ParseBytes(&dec.SecretKey)
-		if err != nil {
-			return err
-		}
-		key, err := wallet.ParsePrivateKey(secretKey)
-		if err != nil {
-			return fmt.Errorf("invalid private key: %v", err)
-		}
-		t.From = types.Address(wallet.NewKey(key).Address())
-	}
-
-	if dec.To != "" {
-		address := types.StringToAddress(dec.To)
-		t.To = &address
-	}
-	return nil
 }
 
 // forks
@@ -363,11 +271,6 @@ type GenesisAccount struct {
 
 type argBig big.Int
 
-func argBigPtr(b *big.Int) *argBig {
-	v := argBig(*b)
-	return &v
-}
-
 func (a *argBig) UnmarshalText(input []byte) error {
 	buf, err := decodeToHex(input)
 	if err != nil {
@@ -391,11 +294,6 @@ func (a argBig) Big() *big.Int {
 
 type argUint64 uint64
 
-func argUintPtr(n uint64) *argUint64 {
-	v := argUint64(n)
-	return &v
-}
-
 func (b argUint64) MarshalText() ([]byte, error) {
 	buf := make([]byte, 2, 10)
 	copy(buf, `0x`)
@@ -418,11 +316,6 @@ func (u *argUint64) Uint64() uint64 {
 }
 
 type argBytes []byte
-
-func argBytesPtr(b []byte) *argBytes {
-	bb := argBytes(b)
-	return &bb
-}
 
 func (b argBytes) MarshalText() ([]byte, error) {
 	return encodeToHex(b), nil
