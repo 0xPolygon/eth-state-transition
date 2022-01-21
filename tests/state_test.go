@@ -172,12 +172,12 @@ func RunSpecificTest(file string, t *testing.T, c stateCase, name, fork string, 
 	//if !bytes.Equal(root2, root) {
 	//	panic("BAD")
 	//}
-	if !bytes.Equal(root, p.Root.Bytes()) {
-		t.Fatalf("root mismatch (%s %s %s %d): expected %s but found %s", file, name, fork, index, p.Root.String(), hex.EncodeToString(root))
+	if !bytes.Equal(root, p.Root[:]) {
+		t.Fatalf("root mismatch (%s %s %s %d): expected %s but found %s", file, name, fork, index, p.Root, hex.EncodeToString(root))
 	}
 
-	if logs := rlpHashLogs(result.Logs); logs != p.Logs {
-		t.Fatalf("logs mismatch (%s, %s %d): expected %s but found %s", name, fork, index, p.Logs.String(), logs.String())
+	if logs := rlpHashLogs(result.Logs); !bytes.Equal(logs.Bytes(), p.Logs[:]) {
+		t.Fatalf("logs mismatch (%s, %s %d): expected %s but found %s", name, fork, index, p.Logs, logs.String())
 	}
 
 	// panic("X")

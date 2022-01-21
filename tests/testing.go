@@ -108,31 +108,12 @@ type indexes struct {
 }
 
 type postEntry struct {
-	Root    types.Hash
-	Logs    types.Hash
-	Indexes indexes
+	Root    argHash `json:"hash"`
+	Logs    argHash `json:"logs"`
+	Indexes indexes `json:"indexes"`
 }
 
 type postState []postEntry
-
-func (p *postEntry) UnmarshalJSON(input []byte) error {
-	type stateUnmarshall struct {
-		Root    string  `json:"hash"`
-		Logs    string  `json:"logs"`
-		Indexes indexes `json:"indexes"`
-	}
-
-	var dec stateUnmarshall
-	if err := json.Unmarshal(input, &dec); err != nil {
-		return err
-	}
-
-	p.Root = types.StringToHash(dec.Root)
-	p.Logs = types.StringToHash(dec.Logs)
-	p.Indexes = dec.Indexes
-
-	return nil
-}
 
 type stTransaction struct {
 	Data     []string       `json:"data"`
