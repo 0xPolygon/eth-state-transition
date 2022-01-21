@@ -1045,21 +1045,21 @@ func opCreate(op OpCode) instruction {
 		}
 
 		// Correct call
-		result := c.host.Callx(contract)
+		retValue, gasLeft, err := c.host.Callx(contract)
 
 		v := c.push1()
-		if op == CREATE && c.isRevision(evmc.Homestead) && result.Err == runtime.ErrCodeStoreOutOfGas {
+		if op == CREATE && c.isRevision(evmc.Homestead) && err == runtime.ErrCodeStoreOutOfGas {
 			v.Set(zero)
-		} else if result.Failed() && result.Err != runtime.ErrCodeStoreOutOfGas {
+		} else if err != nil && err != runtime.ErrCodeStoreOutOfGas {
 			v.Set(zero)
 		} else {
 			v.SetBytes(contract.Address.Bytes())
 		}
 
-		c.gas += result.GasLeft
+		c.gas += uint64(gasLeft)
 
-		if result.Reverted() {
-			c.returnData = append(c.returnData[:0], result.ReturnValue...)
+		if err == runtime.ErrExecutionReverted {
+			c.returnData = append(c.returnData[:0], retValue...)
 		}
 	}
 }
@@ -1121,23 +1121,23 @@ func opCall(op OpCode) instruction {
 
 		contract.Type = callType
 
-		result := c.host.Callx(contract)
+		retValue, gasLeft, err := c.host.Callx(contract)
 
 		v := c.push1()
-		if result.Succeeded() {
-			v.Set(one)
-		} else {
+		if err != nil {
 			v.Set(zero)
+		} else {
+			v.Set(one)
 		}
 
-		if result.Succeeded() || result.Reverted() {
-			if len(result.ReturnValue) != 0 {
-				copy(c.memory[offset:offset+size], result.ReturnValue)
+		if err == nil || err == runtime.ErrExecutionReverted {
+			if len(retValue) != 0 {
+				copy(c.memory[offset:offset+size], retValue)
 			}
 		}
 
-		c.gas += result.GasLeft
-		c.returnData = append(c.returnData[:0], result.ReturnValue...)
+		c.gas += uint64(gasLeft)
+		c.returnData = append(c.returnData[:0], retValue...)
 	}
 }
 

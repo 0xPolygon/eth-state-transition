@@ -22,7 +22,7 @@ type Host interface {
 	GetTxContext() evmc.TxContext
 	GetBlockHash(number int64) evmc.Hash
 	EmitLog(addr evmc.Address, topics []types.Hash, data []byte)
-	Callx(*Contract) *ExecutionResult
+	Callx(*Contract) ([]byte, int64, error)
 	Empty(addr evmc.Address) bool
 
 	Cally(kind evmc.CallKind,

@@ -210,24 +210,27 @@ func (t *Transition) apply(msg *Message) *Output {
 	t.ctx.GasPrice = types.BytesToHash(gasPrice.Bytes())
 	t.ctx.Origin = msg.From
 
-	var result *runtime.ExecutionResult
+	var retValue []byte
+	var gasLeft int64
+	var err error
+
 	if msg.IsContractCreation() {
 		address := CreateAddress(msg.From, t.txn.GetNonce(msg.From))
 		contract := runtime.NewContractCreation(0, msg.From, address, value, msg.Gas, msg.Input)
-		result = t.applyCreate(contract)
+		retValue, gasLeft, err = t.applyCreate(contract)
 	} else {
 		t.txn.IncrNonce(msg.From)
 		c := runtime.NewContractCall(0, msg.From, *msg.To, value, msg.Gas, t.txn.GetCode(evmc.Address(*msg.To)), msg.Input)
-		result = t.applyCall(c, evmc.Call)
+		retValue, gasLeft, err = t.applyCall(c, evmc.Call)
 	}
 
 	output := &Output{
-		ReturnValue: result.ReturnValue,
+		ReturnValue: retValue,
 		Logs:        t.txn.Logs(),
-		GasLeft:     result.GasLeft,
+		GasLeft:     uint64(gasLeft),
 	}
 
-	if result.Failed() {
+	if err != nil {
 		output.Success = false
 	} else {
 		output.Success = true
@@ -303,17 +306,14 @@ func (t *Transition) transfer(from, to types.Address, amount *big.Int) error {
 	return nil
 }
 
-func (t *Transition) applyCall(c *runtime.Contract, callType evmc.CallKind) *runtime.ExecutionResult {
+func (t *Transition) applyCall(c *runtime.Contract, callType evmc.CallKind) ([]byte, int64, error) {
 	snapshot := t.txn.Snapshot()
 	t.txn.TouchAccount(c.Address)
 
 	if callType == evmc.Call {
 		// Transfers only allowed on calls
 		if err := t.transfer(c.Caller, c.Address, c.Value); err != nil {
-			return &runtime.ExecutionResult{
-				GasLeft: c.Gas,
-				Err:     err,
-			}
+			return nil, int64(c.Gas), err
 		}
 	}
 
@@ -322,7 +322,7 @@ func (t *Transition) applyCall(c *runtime.Contract, callType evmc.CallKind) *run
 		t.txn.RevertToSnapshot(snapshot)
 	}
 
-	return result
+	return result.ReturnValue, int64(result.GasLeft), result.Err
 }
 
 var emptyHash types.Hash
@@ -339,7 +339,7 @@ func (t *Transition) hasCodeOrNonce(addr types.Address) bool {
 	return false
 }
 
-func (t *Transition) applyCreate(c *runtime.Contract) *runtime.ExecutionResult {
+func (t *Transition) applyCreate(c *runtime.Contract) ([]byte, int64, error) {
 	gasLimit := c.Gas
 
 	var address types.Address
@@ -359,10 +359,7 @@ func (t *Transition) applyCreate(c *runtime.Contract) *runtime.ExecutionResult {
 
 	// Check if there if there is a collision and the address already exists
 	if t.hasCodeOrNonce(c.Address) {
-		return &runtime.ExecutionResult{
-			GasLeft: 0,
-			Err:     runtime.ErrContractAddressCollision,
-		}
+		return nil, 0, runtime.ErrContractAddressCollision
 	}
 
 	// Take snapshot of the current state
@@ -376,26 +373,20 @@ func (t *Transition) applyCreate(c *runtime.Contract) *runtime.ExecutionResult {
 
 	// Transfer the value
 	if err := t.transfer(c.Caller, c.Address, c.Value); err != nil {
-		return &runtime.ExecutionResult{
-			GasLeft: gasLimit,
-			Err:     err,
-		}
+		return nil, int64(gasLimit), err
 	}
 
 	result := t.run(c)
 
 	if result.Failed() {
 		t.txn.RevertToSnapshot(snapshot)
-		return result
+		return result.ReturnValue, int64(result.GasLeft), result.Err
 	}
 
 	if t.isRevision(evmc.TangerineWhistle) && len(result.ReturnValue) > spuriousDragonMaxCodeSize {
 		// Contract size exceeds 'SpuriousDragon' size limit
 		t.txn.RevertToSnapshot(snapshot)
-		return &runtime.ExecutionResult{
-			GasLeft: 0,
-			Err:     runtime.ErrMaxCodeSizeExceeded,
-		}
+		return nil, 0, runtime.ErrMaxCodeSizeExceeded
 	}
 
 	gasCost := uint64(len(result.ReturnValue)) * 200
@@ -410,13 +401,13 @@ func (t *Transition) applyCreate(c *runtime.Contract) *runtime.ExecutionResult {
 			result.GasLeft = 0
 		}
 
-		return result
+		return result.ReturnValue, int64(result.GasLeft), result.Err
 	}
 
 	result.GasLeft -= gasCost
 	t.txn.SetCode(c.Address, result.ReturnValue)
 
-	return result
+	return result.ReturnValue, int64(result.GasLeft), result.Err
 }
 
 func (t *Transition) SetStorage(addr types.Address, key types.Hash, value types.Hash) evmc.StorageStatus {
@@ -495,7 +486,7 @@ func (t *Transition) Cally(kind evmc.CallKind,
 	return nil, 0, types.Address{}, nil
 }
 
-func (t *Transition) Callx(c *runtime.Contract) *runtime.ExecutionResult {
+func (t *Transition) Callx(c *runtime.Contract) ([]byte, int64, error) {
 	if c.Type == evmc.Create || c.Type == evmc.Create2 {
 		return t.applyCreate(c)
 	}
