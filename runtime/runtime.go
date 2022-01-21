@@ -11,9 +11,9 @@ import (
 // Host is the execution host
 type Host interface {
 	AccountExists(addr evmc.Address) bool
-	GetStorage(addr evmc.Address, key evmc.Hash) types.Hash
+	GetStorage(addr evmc.Address, key evmc.Hash) evmc.Hash
 
-	SetStorage(addr types.Address, key types.Hash, value types.Hash) evmc.StorageStatus
+	SetStorage(addr evmc.Address, key evmc.Hash, value evmc.Hash) evmc.StorageStatus
 	GetBalance(addr evmc.Address) *big.Int
 	GetCodeSize(addr evmc.Address) int
 	GetCodeHash(addr evmc.Address) evmc.Hash
@@ -21,7 +21,7 @@ type Host interface {
 	Selfdestruct(addr evmc.Address, beneficiary evmc.Address)
 	GetTxContext() evmc.TxContext
 	GetBlockHash(number int64) evmc.Hash
-	EmitLog(addr evmc.Address, topics []types.Hash, data []byte)
+	EmitLog(addr evmc.Address, topics []evmc.Hash, data []byte)
 	Callx(*Contract) ([]byte, int64, error)
 	Empty(addr evmc.Address) bool
 

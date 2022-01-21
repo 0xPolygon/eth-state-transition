@@ -181,10 +181,12 @@ func (txn *Txn) GetBalance(addr evmc.Address) *big.Int {
 	return object.Account.Balance
 }
 
-func (txn *Txn) EmitLog(addr evmc.Address, topics []types.Hash, data []byte) {
+func (txn *Txn) EmitLog(addr evmc.Address, topics []evmc.Hash, data []byte) {
 	log := &Log{
 		Address: types.Address(addr),
-		Topics:  topics,
+	}
+	for _, t := range topics {
+		log.Topics = append(log.Topics, types.Hash(t))
 	}
 	log.Data = append(log.Data, data...)
 
@@ -208,49 +210,49 @@ func (txn *Txn) isRevision(rev evmc.Revision) bool {
 	return rev <= txn.rev
 }
 
-func (txn *Txn) SetStorage(addr types.Address, key types.Hash, value types.Hash) (status evmc.StorageStatus) {
+func (txn *Txn) SetStorage(addr evmc.Address, key evmc.Hash, value evmc.Hash) (status evmc.StorageStatus) {
 	oldValue := txn.GetState(evmc.Address(addr), evmc.Hash(key))
 	if oldValue == value {
 		return evmc.StorageUnchanged
 	}
 
-	current := oldValue                          // current - storage dirtied by previous lines of this contract
-	original := txn.GetCommittedState(addr, key) // storage slot before this transaction started
+	current := oldValue                                                     // current - storage dirtied by previous lines of this contract
+	original := txn.GetCommittedState(types.Address(addr), types.Hash(key)) // storage slot before this transaction started
 
-	txn.SetState(addr, key, value)
+	txn.SetState(types.Address(addr), types.Hash(key), types.Hash(value))
 
 	isIstanbul := txn.isRevision(evmc.Istanbul)
 	legacyGasMetering := !isIstanbul && (txn.isRevision(evmc.Petersburg) || !txn.isRevision(evmc.Constantinople))
 
 	if legacyGasMetering {
 		status = evmc.StorageModified
-		if oldValue == zeroHash {
+		if types.Hash(oldValue) == zeroHash {
 			return evmc.StorageAdded
-		} else if value == zeroHash {
+		} else if types.Hash(value) == zeroHash {
 			txn.AddRefund(15000)
 			return evmc.StorageDeleted
 		}
 		return evmc.StorageModified
 	}
 
-	if original == current {
+	if evmc.Hash(original) == current {
 		if original == zeroHash { // create slot (2.1.1)
 			return evmc.StorageAdded
 		}
-		if value == zeroHash { // delete slot (2.1.2b)
+		if types.Hash(value) == zeroHash { // delete slot (2.1.2b)
 			txn.AddRefund(15000)
 			return evmc.StorageDeleted
 		}
 		return evmc.StorageModified
 	}
 	if original != zeroHash { // Storage slot was populated before this transaction started
-		if current == zeroHash { // recreate slot (2.2.1.1)
+		if types.Hash(current) == zeroHash { // recreate slot (2.2.1.1)
 			txn.SubRefund(15000)
-		} else if value == zeroHash { // delete slot (2.2.1.2)
+		} else if types.Hash(value) == zeroHash { // delete slot (2.2.1.2)
 			txn.AddRefund(15000)
 		}
 	}
-	if original == value {
+	if evmc.Hash(original) == value {
 		if original == zeroHash { // reset to original nonexistent slot (2.2.2.1)
 			// Storage was used as memory (allocation and deallocation occurred within the same contract)
 			if isIstanbul {
@@ -285,10 +287,10 @@ func (txn *Txn) SetState(addr types.Address, key, value types.Hash) {
 }
 
 // GetState returns the state of the address at a given key
-func (txn *Txn) GetState(addr evmc.Address, key evmc.Hash) types.Hash {
+func (txn *Txn) GetState(addr evmc.Address, key evmc.Hash) evmc.Hash {
 	object, exists := txn.getStateObject(types.Address(addr))
 	if !exists {
-		return types.Hash{}
+		return evmc.Hash{}
 	}
 
 	// Try to get account state from radix tree first
@@ -297,13 +299,13 @@ func (txn *Txn) GetState(addr evmc.Address, key evmc.Hash) types.Hash {
 	if object.Txn != nil {
 		if val, ok := object.Txn.Get(key[:]); ok {
 			if val == nil {
-				return types.Hash{}
+				return evmc.Hash{}
 			}
-			return types.BytesToHash(val.([]byte))
+			return evmc.Hash(types.BytesToHash(val.([]byte)))
 		}
 	}
 	//fmt.Println("-- get storage 1", types.Address(addr), object.Account.Root)
-	return txn.snapshot.GetStorage(types.Address(addr), object.Account.Root, types.Hash(key))
+	return evmc.Hash(txn.snapshot.GetStorage(types.Address(addr), object.Account.Root, types.Hash(key)))
 }
 
 // Nonce

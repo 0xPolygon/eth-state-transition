@@ -461,7 +461,7 @@ func opSload(c *state) {
 	}
 
 	val := c.host.GetStorage(evmc.Address(c.Address), evmc.Hash(bigToHash(loc)))
-	loc.SetBytes(val.Bytes())
+	loc.SetBytes(val[:])
 }
 
 func opSStore(c *state) {
@@ -480,7 +480,7 @@ func opSStore(c *state) {
 
 	legacyGasMetering := !c.isRevision(evmc.Istanbul) && (c.isRevision(evmc.Petersburg) || !c.isRevision(evmc.Constantinople))
 
-	status := c.host.SetStorage(c.Address, key, val)
+	status := c.host.SetStorage(evmc.Address(c.Address), evmc.Hash(key), evmc.Hash(val))
 	cost := uint64(0)
 
 	switch status {
@@ -977,9 +977,9 @@ func opLog(size int) instruction {
 		mStart := c.pop()
 		mSize := c.pop()
 
-		topics := make([]types.Hash, size)
+		topics := make([]evmc.Hash, size)
 		for i := 0; i < size; i++ {
-			topics[i] = bigToHash(c.pop())
+			topics[i] = evmc.Hash(bigToHash(c.pop()))
 		}
 
 		var ok bool

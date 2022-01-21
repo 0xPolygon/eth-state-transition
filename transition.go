@@ -409,7 +409,7 @@ func (t *Transition) applyCreate(c *runtime.Contract) ([]byte, int64, error) {
 	return retValue, gasLeft, err
 }
 
-func (t *Transition) SetStorage(addr types.Address, key types.Hash, value types.Hash) evmc.StorageStatus {
+func (t *Transition) SetStorage(addr evmc.Address, key evmc.Hash, value evmc.Hash) evmc.StorageStatus {
 	return t.txn.SetStorage(addr, key, value)
 }
 
@@ -434,7 +434,7 @@ func (t *Transition) GetBlockHash(number int64) (res evmc.Hash) {
 	return evmc.Hash(t.getHash(uint64(number)))
 }
 
-func (t *Transition) EmitLog(addr evmc.Address, topics []types.Hash, data []byte) {
+func (t *Transition) EmitLog(addr evmc.Address, topics []evmc.Hash, data []byte) {
 	t.txn.EmitLog(addr, topics, data)
 }
 
@@ -454,7 +454,7 @@ func (t *Transition) GetBalance(addr evmc.Address) *big.Int {
 	return t.txn.GetBalance(addr)
 }
 
-func (t *Transition) GetStorage(addr evmc.Address, key evmc.Hash) types.Hash {
+func (t *Transition) GetStorage(addr evmc.Address, key evmc.Hash) evmc.Hash {
 	return t.txn.GetState(addr, key)
 }
 
